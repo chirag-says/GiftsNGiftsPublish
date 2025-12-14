@@ -75,7 +75,18 @@ function Layout({ children }) {
       <div className="flex flex-col flex-1 min-w-0 h-full">
         <Header />
         <main className="flex-1 w-full bg-gray-50 overflow-y-auto px-5 relative">
-          <ToastContainer position="top-start" />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            limit={3}
+          />
           {children}
         </main>
       </div>

@@ -237,15 +237,6 @@ function SideBar() {
       ]
     },
     {
-      title: "Content & Pages",
-      icon: <FaRegFileAlt />,
-      color: "text-indigo-500",
-      bg: "bg-indigo-50",
-      isDropdown: true,
-      submenu: [
-      ]
-    },
-    {
       title: "Analytics & Reports",
       path: "/analytics",
       icon: <TbReportAnalytics />,

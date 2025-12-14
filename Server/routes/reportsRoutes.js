@@ -2,6 +2,7 @@ import express from 'express';
 import {
     getRevenueAnalytics,
     getVendorPerformance,
+    getSellerSalesReport,
     getProductAnalytics,
     getCustomerInsights,
     getTrafficReports,
@@ -26,6 +27,7 @@ router.get('/revenue', getRevenueAnalytics);
 
 // Vendor Performance
 router.get('/vendor-performance', getVendorPerformance);
+router.get('/seller-sales', getSellerSalesReport);
 
 // Product Analytics
 router.get('/product-analytics', getProductAnalytics);

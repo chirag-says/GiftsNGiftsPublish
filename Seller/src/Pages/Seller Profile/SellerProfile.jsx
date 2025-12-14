@@ -22,7 +22,7 @@ function SellerProfile() {
       if (data.success) {
         setProfile(data.seller);
         setImagePreview(null);
-        setImageFile(null); 
+        setImageFile(null);
       }
     } catch (err) {
       console.error(err);
@@ -37,8 +37,8 @@ function SellerProfile() {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -47,13 +47,13 @@ function SellerProfile() {
   };
 
   const handleAddressChange = (e) => {
-    const currentAddress = profile.address || {}; 
+    const currentAddress = profile.address || {};
     setProfile((prev) => ({
       ...prev,
       address: { ...currentAddress, [e.target.name]: e.target.value },
     }));
   };
-    
+
   const handleCancelClick = () => {
     setEditing(false);
     getProfile();
@@ -64,11 +64,11 @@ function SellerProfile() {
 
     const formData = new FormData();
     formData.append("name", profile.name);
-    formData.append("phone", profile.phone || ""); 
+    formData.append("phone", profile.phone || "");
     formData.append("email", profile.email);
-    
+
     // --- ADDED: Alternate Phone ---
-    formData.append("alternatePhone", profile.alternatePhone || ""); 
+    formData.append("alternatePhone", profile.alternatePhone || "");
 
     const address = profile.address || {};
     formData.append("street", address.street || "");
@@ -95,7 +95,7 @@ function SellerProfile() {
         setEditing(false);
         getProfile();
       } else {
-          toast.error(data.message || "Failed to save profile.");
+        toast.error(data.message || "Failed to save profile.");
       }
     } catch (err) {
       console.error(err);
@@ -113,7 +113,7 @@ function SellerProfile() {
       </div>
     </div>
   );
-  
+
   // Helper Component for Inputs
   const CustomInput = ({ name, label, value, onChange, type = "text", required = false, disabled = false }) => (
     <div className="w-full">
@@ -128,11 +128,10 @@ function SellerProfile() {
         onChange={onChange}
         required={required}
         disabled={disabled}
-        className={`block w-full rounded-lg border py-2.5 px-4 text-gray-900 shadow-sm transition duration-150 sm:text-sm ${
-          disabled 
-            ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' 
+        className={`block w-full rounded-lg border py-2.5 px-4 text-gray-900 shadow-sm transition duration-150 sm:text-sm ${disabled
+            ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
             : 'bg-white border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50'
-        }`}
+          }`}
       />
     </div>
   );
@@ -146,7 +145,7 @@ function SellerProfile() {
 
   return (
     <div className="max-w-7xl mx-auto p-2 sm:p-6 space-y-8 bg-gray-50">
-      
+
       {/* PROFILE CARD - VIEW MODE */}
       <div className="bg-white rounded shadow-2xl overflow-hidden border border-gray-100">
         {/* Header Section */}
@@ -165,7 +164,23 @@ function SellerProfile() {
 
             <div className="text-center sm:text-left pt-2">
               <h2 className="text-3xl font-extrabold text-gray-900">{profile.name}</h2>
-              <p className="text-lg text-indigo-700 mt-1 font-medium">Verified Seller Account</p>
+              {profile.uniqueId && (
+                <div className="mt-2 inline-flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md">
+                  <span>Seller ID:</span>
+                  <span className="font-mono tracking-wider">{profile.uniqueId}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(profile.uniqueId);
+                      toast.success("Seller ID copied!");
+                    }}
+                    className="ml-1 p-1 hover:bg-indigo-500 rounded transition"
+                    title="Copy Seller ID"
+                  >
+                    📋
+                  </button>
+                </div>
+              )}
+              <p className="text-lg text-indigo-700 mt-2 font-medium">Verified Seller Account</p>
               <p className="text-sm text-gray-600 mt-1">
                 Joined: <span className="font-semibold">{new Date(profile.date).toLocaleDateString()}</span>
               </p>
@@ -176,17 +191,17 @@ function SellerProfile() {
         {/* Details Grid */}
         <div className="p-6 sm:p-8 grid md:grid-cols-2 gap-8 bg-white">
           <ProfileField icon={FaEnvelope} label="Email Address" value={profile.email} />
-          
+
           {/* Phone Numbers Section */}
           <ProfileField icon={FaPhone} label="Primary Phone" value={profile.phone} />
           <ProfileField icon={FaPhoneSquareAlt} label="Alternate Phone" value={profile.alternatePhone} />
-          
+
           <div className="md:col-span-2">
             <ProfileField
               icon={FaMapMarkerAlt}
               label="Registered Address"
-              value={profile.address ? 
-                `${profile.address.street || ''}${profile.address.street ? ', ' : ''}${profile.address.city || ''}${profile.address.city ? ', ' : ''}${profile.address.state || ''}${profile.address.state ? ' - ' : ''}${profile.address.pincode || ''}`.replace(/,\s*-/g, '').trim().replace(/,\s*$/, '').trim() 
+              value={profile.address ?
+                `${profile.address.street || ''}${profile.address.street ? ', ' : ''}${profile.address.city || ''}${profile.address.city ? ', ' : ''}${profile.address.state || ''}${profile.address.state ? ' - ' : ''}${profile.address.pincode || ''}`.replace(/,\s*-/g, '').trim().replace(/,\s*$/, '').trim()
                 : "Address not set."
               }
             />
@@ -208,48 +223,48 @@ function SellerProfile() {
       {editing && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 sm:p-8">
           <div className="flex justify-end">
-              <button
-                  type="button"
-                  onClick={handleCancelClick}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-gray-100"
-                  aria-label="Close form"
-              >
-                  <FaTimes className="w-5 h-5" />
-              </button>
+            <button
+              type="button"
+              onClick={handleCancelClick}
+              className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-gray-100"
+              aria-label="Close form"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="-mt-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-3 text-indigo-600">
-                <FaUserEdit className="inline w-6 h-6 mr-2 mb-1" />
-                Update Profile Details
+              <FaUserEdit className="inline w-6 h-6 mr-2 mb-1" />
+              Update Profile Details
             </h3>
 
             {/* IMAGE UPLOAD */}
             <div className="mb-8 border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/70">
-                <label htmlFor="file-upload" className="cursor-pointer block">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <FaUpload className="w-5 h-5 mr-3 text-emerald-500" />
-                            <span className="text-sm font-medium text-gray-700">
-                                {imagePreview ? 'New image selected' : 'Click to upload a new profile image'}
-                            </span>
-                        </div>
-                        <input
-                            id="file-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                        />
-                        {(imagePreview || profile.image) && (
-                            <img
-                                src={imagePreview || profile.image}
-                                alt="Current Profile"
-                                className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md"
-                            />
-                        )}
-                    </div>
-                </label>
+              <label htmlFor="file-upload" className="cursor-pointer block">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FaUpload className="w-5 h-5 mr-3 text-emerald-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {imagePreview ? 'New image selected' : 'Click to upload a new profile image'}
+                    </span>
+                  </div>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  {(imagePreview || profile.image) && (
+                    <img
+                      src={imagePreview || profile.image}
+                      alt="Current Profile"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md"
+                    />
+                  )}
+                </div>
+              </label>
             </div>
 
             {/* NAME & EMAIL */}
@@ -266,7 +281,7 @@ function SellerProfile() {
                 label="Email Address"
                 value={profile.email}
                 onChange={handleChange}
-                disabled 
+                disabled
               />
             </div>
 
@@ -291,7 +306,7 @@ function SellerProfile() {
 
             {/* ADDRESS SECTION */}
             <h4 className="text-xl font-bold mb-4 text-gray-800 flex items-center">
-                <FaMapMarkerAlt className="w-5 h-5 mr-2 text-indigo-500" /> Shipping Address
+              <FaMapMarkerAlt className="w-5 h-5 mr-2 text-indigo-500" /> Shipping Address
             </h4>
 
             <div className="grid md:grid-cols-2 gap-6">

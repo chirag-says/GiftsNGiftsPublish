@@ -11,66 +11,67 @@ import { sendEmail } from "../config/mail.js";
 
 // ========================= REGISTER SELLER =========================
 export const registerseller = async (req, res) => {
-    try {
-        // 3. Extract 'region' from request body
-        const { name, email, password, nickName, phone, street, city, state, pincode, region } = req.body;
+  try {
+    // 3. Extract fields from request body
+    const { name, email, password, nickName, phone, street, city, state, pincode, region } = req.body;
 
-        if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode || !region)
-            return res.json({ success: false, message: "All fields including Address and Region are required." });
+    if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode)
+      return res.json({ success: false, message: "All fields including Address are required." });
 
-        if (!validator.isEmail(email)) 
-            return res.json({ success: false, message: "Invalid email format" });
+    if (!validator.isEmail(email))
+      return res.json({ success: false, message: "Invalid email format" });
 
-        const existing = await sellermodel.findOne({ email });
-        if (existing) return res.json({ success: false, message: "Seller already exists" });
+    const existing = await sellermodel.findOne({ email });
+    if (existing) return res.json({ success: false, message: "Seller already exists" });
 
-        // 6. UNIQUE ID GENERATION LOGIC
-        // Logic: GNGDEL + Last 3 Digits of Pincode + First letter of Shop/Seller Name
-        const pinSuffix = pincode.toString().slice(-3);
-        const nameInitial = name.charAt(0).toUpperCase();
-        
-        // We append 2 random digits to ensure 100% database uniqueness even if 
-        // two sellers have the same Name Initial and Pincode.
-        const randomDigits = Math.floor(10 + Math.random() * 90); 
-        
-        const generatedId = `GNGDEL${pinSuffix}${nameInitial}${randomDigits}`; 
-        // ----------------------------------
+    // 6. UNIQUE ID GENERATION LOGIC
+    // Logic: GNGDEL + Last 3 Digits of Pincode + First letter of Shop/Brand Name (nickName)
+    const pinSuffix = pincode.toString().slice(-3);
+    const shopInitial = nickName.charAt(0).toUpperCase(); // Using brand/shop name initial
 
-        const hashed = await bcrypt.hash(password, 10);
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // We append 2 random digits to ensure 100% database uniqueness even if 
+    // two sellers have the same Shop Initial and Pincode.
+    const randomDigits = Math.floor(10 + Math.random() * 90);
 
-        const seller = await sellermodel.create({
-            uniqueId: generatedId, // 5. Save Unique ID
-            name,
-            email,
-            password: hashed,
-            nickName,
-            phone,
-            region: region,        // 3. Save Region for sorting
-            otp,
-            otpExpire: Date.now() + 10 * 60 * 1000,
-            verified: false,
-            address: { street, city, state, pincode },
-            lastLogin: Date.now() 
-        });
+    const generatedId = `GNGDEL${pinSuffix}${shopInitial}${randomDigits}`;
+    // Example: GNGDEL157X42 (for pincode 562157, brand "xKyzerOP")
+    // ----------------------------------
 
-        await sendEmail(email, "Your OTP Verification Code", `
+    const hashed = await bcrypt.hash(password, 10);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const seller = await sellermodel.create({
+      uniqueId: generatedId, // 5. Save Unique ID
+      name,
+      email,
+      password: hashed,
+      nickName,
+      phone,
+      region: region,        // 3. Save Region for sorting
+      otp,
+      otpExpire: Date.now() + 10 * 60 * 1000,
+      verified: false,
+      address: { street, city, state, pincode },
+      lastLogin: Date.now()
+    });
+
+    await sendEmail(email, "Your OTP Verification Code", `
             <h1>Welcome to GNG!</h1>
             <p>Your OTP is <b>${otp}</b></p>
             <p>Your Unique Seller ID is: <b>${generatedId}</b></p>
         `);
 
-        res.json({
-            success: true,
-            message: "Registered successfully",
-            uniqueId: generatedId,
-            email
-        });
+    res.json({
+      success: true,
+      message: "Registered successfully",
+      uniqueId: generatedId,
+      email
+    });
 
-    } catch (error) {
-        console.error("REGISTER ERROR:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 // ========================= LOGIN SELLER =========================
@@ -88,15 +89,15 @@ export const loginseller = async (req, res) => {
 
     // 4. INACTIVITY CHECK LOGIC
     let responseMessage = "Login successful";
-    
+
     if (seller.lastLogin) {
-        const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 Days
-        const timeDiff = Date.now() - new Date(seller.lastLogin).getTime();
-        
-        // If inactive for more than 1 month
-        if (timeDiff > thirtyDaysInMs) {
-            responseMessage = "You have not done any transaction in one month. How can we assist you?";
-        }
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 Days
+      const timeDiff = Date.now() - new Date(seller.lastLogin).getTime();
+
+      // If inactive for more than 1 month
+      if (timeDiff > thirtyDaysInMs) {
+        responseMessage = "You have not done any transaction in one month. How can we assist you?";
+      }
     }
 
     // Update Last Login to current time
@@ -240,17 +241,17 @@ export const addproducts = async (req, res) => {
 
     const {
       title, description, price, categoryname, subcategory,
-      oldprice, discount, ingredients, brand, additional_details, 
+      oldprice, discount, ingredients, brand, additional_details,
       size, stock
     } = req.body;
 
     if (!title || !description || !price || !categoryname || !subcategory || !stock) {
-      return res.status(400).json({ success:false, message: 'Missing required fields' });
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     const images = await Promise.all(
       req.files.map(file =>
-        cloudinary.uploader.upload(file.path, { resource_type:"image" })
+        cloudinary.uploader.upload(file.path, { resource_type: "image" })
       )
     );
 
@@ -278,11 +279,11 @@ export const addproducts = async (req, res) => {
 
     await newProduct.save();
 
-    return res.status(201).json({ success:true, message:"Product added successfully" });
+    return res.status(201).json({ success: true, message: "Product added successfully" });
 
   } catch (err) {
     console.error("ADD PRODUCT ERROR:", err);
-    return res.status(500).json({ success:false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -301,7 +302,7 @@ export const getSellerProfile = async (req, res) => {
 
 export const updateSellerProfile = async (req, res) => {
   try {
-    const sellerId = req.sellerId; 
+    const sellerId = req.sellerId;
 
     let seller = await sellermodel.findById(sellerId);
     if (!seller) return res.status(404).json({ success: false, message: "Seller not found" });
@@ -313,9 +314,9 @@ export const updateSellerProfile = async (req, res) => {
     seller.name = name || seller.name;
     seller.email = email || seller.email;
     seller.phone = phone || seller.phone;
-    
+
     // 2. Update the specific field
-    seller.alternatePhone = alternatePhone || seller.alternatePhone; 
+    seller.alternatePhone = alternatePhone || seller.alternatePhone;
 
     seller.address = {
       street: street || seller.address?.street,
@@ -347,7 +348,7 @@ export const updateSellerProfile = async (req, res) => {
 
 export const getSellerOrders = async (req, res) => {
   // const { sellerId } = req.body;
-const sellerId = req.sellerId;
+  const sellerId = req.sellerId;
   try {
     const orders = await orderModel.find({
       items: {
@@ -385,9 +386,9 @@ const sellerId = req.sellerId;
   }
 };
 export const getSeller = async (req, res) => {
-const sellerId = req.sellerId;
+  const sellerId = req.sellerId;
   // const { sellerId } = req.body
-  
+
   const seller = await sellermodel.find({ _id: sellerId })
 
   if (!seller.length) {
@@ -401,7 +402,7 @@ const sellerId = req.sellerId;
 export const getSellerDashboardStats = async (req, res) => {
   try {
     // const { sellerId } = req.body;
-   const sellerId = req.sellerId; 
+    const sellerId = req.sellerId;
     // Get seller's products
     const products = await addproductmodel.find({ sellerId });
 
@@ -473,14 +474,14 @@ export const updateSellerOrderStatus = async (req, res) => {
 // --- NEW: Get Seller Earnings & Transactions ---
 export const getSellerEarnings = async (req, res) => {
   try {
-    
+
     const sellerId = req.sellerId;  // ✔ from token
 
 
     const orders = await orderModel.find({
       "items.sellerId": sellerId,
       // Consider Delivered/Completed status for earnings
-      status: { $in: ["Delivered", "Completed", "Pending", "Processing", "Shipped"] } 
+      status: { $in: ["Delivered", "Completed", "Pending", "Processing", "Shipped"] }
     }).populate("user", "name email");
 
     let totalEarnings = 0;
@@ -489,7 +490,7 @@ export const getSellerEarnings = async (req, res) => {
     orders.forEach(order => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
       const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       if (orderTotal > 0) {
         totalEarnings += orderTotal;
         transactions.push({
@@ -504,8 +505,8 @@ export const getSellerEarnings = async (req, res) => {
 
     transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         totalEarnings,
         pendingClearance: 0,

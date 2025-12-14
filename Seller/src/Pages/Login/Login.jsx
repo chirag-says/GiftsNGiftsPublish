@@ -17,7 +17,7 @@ function Login() {
     const [name, setName] = useState('');
     const [nickName, setNickName] = useState('');
     const [phone, setPhone] = useState('');
-    
+
     const [street, setStreet] = useState('');
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
@@ -39,7 +39,7 @@ function Login() {
             toast.error(data.message);
         }
     };
-    
+
     const verifyOtp = async (e) => {
         e.preventDefault();
         const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
@@ -48,7 +48,7 @@ function Login() {
         if (data.success) {
             localStorage.setItem("stoken", data.token);
             setatoken(data.token);
-            navigate("/seller-profile"); 
+            navigate("/seller-profile");
             toast.success("OTP verified, login success");
         } else {
             toast.error(data.message);
@@ -74,11 +74,11 @@ function Login() {
     // Helper function for input classes (Padding reduced from p-3 to p-2.5 for smaller height)
     const inputClass = "w-full p-2 bg-white border border-gray-300 text-gray-900 rounded-lg shadow-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 outline-none transition duration-150 placeholder:text-gray-500";
     const buttonClass = "w-full bg-indigo-600 hover:bg-indigo-700 transition duration-300 text-white py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transform hover:scale-[1.01]";
-    
+
     return (
         <form className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
             <div className="w-full max-w-xl bg-white p-8 md:p-10 shadow-2xl rounded-2xl border-t-4 border-indigo-600">
-                
+
                 {/* Header Section */}
                 <div className="text-center mb-8">
                     {isOtpScreen ? (
@@ -124,7 +124,7 @@ function Login() {
                                 {/* Owner & Brand Fieldset */}
                                 <fieldset className="p-0 m-0 border-none space-y-4">
                                     <legend className="text-sm font-semibold text-gray-700 mb-2">Owner & Brand Information</legend>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="full-name" className="sr-only">Full Name (Owner)</label>
@@ -167,7 +167,7 @@ function Login() {
                                 {/* Address Fieldset */}
                                 <fieldset className="border-t border-gray-100 space-y-4">
                                     <legend className="text-sm font-semibold text-gray-700 ">Primary Business Address</legend>
-                                    
+
                                     <div>
                                         <label htmlFor="street" className="sr-only">Street Address</label>
                                         <input
@@ -279,11 +279,11 @@ function Login() {
                                 onClick={() => {
                                     setIsRegister(!isRegister);
                                     // Optional: Clear fields when switching forms for a clean start
-                                    setPassword(''); 
-                                    setStreet(''); 
-                                    setCity(''); 
-                                    setState(''); 
-                                    setPincode(''); 
+                                    setPassword('');
+                                    setStreet('');
+                                    setCity('');
+                                    setState('');
+                                    setPincode('');
                                 }}
                             >
                                 {isRegister ? "Log In" : "Register Now"}

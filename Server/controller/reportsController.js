@@ -119,6 +119,150 @@ export const getVendorPerformance = async (req, res) => {
     }
 };
 
+// ============ INDIVIDUAL SELLER SALES REPORT ============
+export const getSellerSalesReport = async (req, res) => {
+    try {
+        const { sellerId, period, startDate, endDate } = req.query;
+
+        if (!sellerId) {
+            return res.status(400).json({ success: false, message: "Seller ID is required" });
+        }
+
+        // Calculate date range based on period
+        let dateFrom, dateTo = new Date();
+        const now = new Date();
+
+        switch (period) {
+            case 'today':
+                dateFrom = new Date(now.setHours(0, 0, 0, 0));
+                dateTo = new Date();
+                break;
+            case 'week':
+                dateFrom = new Date(now.setDate(now.getDate() - 7));
+                dateTo = new Date();
+                break;
+            case 'month':
+                dateFrom = new Date(now.setMonth(now.getMonth() - 1));
+                dateTo = new Date();
+                break;
+            case 'custom':
+                if (!startDate || !endDate) {
+                    return res.status(400).json({ success: false, message: "Start and end dates are required for custom period" });
+                }
+                dateFrom = new Date(startDate);
+                dateTo = new Date(endDate);
+                dateTo.setHours(23, 59, 59, 999); // Include full end day
+                break;
+            default:
+                // All time - no date filter
+                dateFrom = null;
+                dateTo = null;
+        }
+
+        // Build match query
+        const matchQuery = {
+            "items.sellerId": sellerId
+        };
+        if (dateFrom && dateTo) {
+            matchQuery.placedAt = { $gte: dateFrom, $lte: dateTo };
+        }
+
+        // Get seller info
+        const sellerInfo = await seller.findById(sellerId).select('name nickName email uniqueId image');
+        if (!sellerInfo) {
+            return res.status(404).json({ success: false, message: "Seller not found" });
+        }
+
+        // Get orders for this seller within date range
+        const orders = await orderModel.find(matchQuery)
+            .populate("items.productId", "title images price")
+            .sort({ placedAt: -1 });
+
+        // Calculate stats
+        let totalRevenue = 0;
+        let totalOrders = 0;
+        let totalItems = 0;
+        const dailySales = {};
+        const productSales = {};
+
+        orders.forEach(order => {
+            const sellerItems = order.items.filter(item =>
+                item.sellerId?.toString() === sellerId.toString()
+            );
+
+            if (sellerItems.length > 0) {
+                totalOrders++;
+                sellerItems.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    totalRevenue += itemTotal;
+                    totalItems += item.quantity;
+
+                    // Daily breakdown
+                    const dateKey = order.placedAt.toISOString().split('T')[0];
+                    if (!dailySales[dateKey]) {
+                        dailySales[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
+                    }
+                    dailySales[dateKey].revenue += itemTotal;
+                    dailySales[dateKey].orders++;
+
+                    // Product breakdown
+                    const prodId = item.productId?._id?.toString() || item.productId?.toString();
+                    if (prodId) {
+                        if (!productSales[prodId]) {
+                            productSales[prodId] = {
+                                productId: prodId,
+                                title: item.productId?.title || 'Unknown Product',
+                                image: item.productId?.images?.[0]?.url || null,
+                                quantity: 0,
+                                revenue: 0
+                            };
+                        }
+                        productSales[prodId].quantity += item.quantity;
+                        productSales[prodId].revenue += itemTotal;
+                    }
+                });
+            }
+        });
+
+        // Convert to arrays and sort
+        const dailySalesArray = Object.values(dailySales).sort((a, b) =>
+            new Date(a.date) - new Date(b.date)
+        );
+        const topProducts = Object.values(productSales)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10);
+
+        res.status(200).json({
+            success: true,
+            seller: {
+                _id: sellerInfo._id,
+                name: sellerInfo.name,
+                nickName: sellerInfo.nickName,
+                email: sellerInfo.email,
+                uniqueId: sellerInfo.uniqueId,
+                image: sellerInfo.image
+            },
+            period: period || 'all',
+            dateRange: {
+                from: dateFrom,
+                to: dateTo
+            },
+            summary: {
+                totalRevenue,
+                totalOrders,
+                totalItems,
+                avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
+            },
+            dailySales: dailySalesArray,
+            topProducts
+        });
+
+    } catch (error) {
+        console.error("Get Seller Sales Report Error:", error);
+        res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    }
+};
+
 // ============ PRODUCT ANALYTICS ============
 export const getProductAnalytics = async (req, res) => {
     try {

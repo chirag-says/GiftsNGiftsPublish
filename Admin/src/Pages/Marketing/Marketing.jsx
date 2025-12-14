@@ -6,6 +6,7 @@ import { Button, TextField, Tab, Tabs, Box, Chip, Card, CardContent, Switch, For
 import { MdEmail, MdSms, MdNotifications, MdTimer, MdLocalOffer, MdCampaign, MdPeople, MdDelete } from "react-icons/md";
 import { IoTicketOutline } from "react-icons/io5";
 import { FiPlus } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 function Marketing() {
   const { backendurl, atoken } = useContext(Admincontext);
@@ -46,17 +47,49 @@ function Marketing() {
   };
 
   const createCoupon = async () => {
-    try { await axios.post(`${backendurl}/api/admin/marketing/coupon`, newCoupon); fetchMarketing(); alert("Coupon Created"); } catch (e) { alert(e.message); }
+    if (!newCoupon.code || !newCoupon.value) {
+      toast.error("Please fill in coupon code and value");
+      return;
+    }
+    try {
+      await axios.post(`${backendurl}/api/admin/marketing/coupon`, newCoupon);
+      fetchMarketing();
+      toast.success("🎫 Coupon Created Successfully!");
+      setNewCoupon({ code: "", value: "", expiryDate: "", discountType: "fixed" });
+    } catch (e) { toast.error(e.response?.data?.message || e.message); }
   };
+
   const createFlashSale = async () => {
-    try { await axios.post(`${backendurl}/api/admin/marketing/flash-sale`, newFlashSale); fetchMarketing(); alert("Flash Sale Created"); } catch (e) { alert(e.message); }
+    if (!newFlashSale.name || !newFlashSale.discountPercentage) {
+      toast.error("Please fill in sale name and discount");
+      return;
+    }
+    try {
+      await axios.post(`${backendurl}/api/admin/marketing/flash-sale`, newFlashSale);
+      fetchMarketing();
+      toast.success("⚡ Flash Sale Created Successfully!");
+      setNewFlashSale({ name: "", discountPercentage: "", startTime: "", endTime: "" });
+    } catch (e) { toast.error(e.response?.data?.message || e.message); }
   };
 
   const createCampaign = async () => {
-    try { await axios.post(`${backendurl}/api/admin/marketing/campaign`, newCampaign); fetchMarketing(); alert("Campaign Created"); } catch (e) { alert(e.message); }
+    if (!newCampaign.title || !newCampaign.content) {
+      toast.error("Please fill in campaign title and content");
+      return;
+    }
+    try {
+      await axios.post(`${backendurl}/api/admin/marketing/campaign`, newCampaign);
+      fetchMarketing();
+      toast.success("🚀 Campaign Launched Successfully!");
+      setNewCampaign({ title: "", type: "Email", content: "" });
+    } catch (e) { toast.error(e.response?.data?.message || e.message); }
   };
+
   const updateAffiliate = async () => {
-    try { await axios.post(`${backendurl}/api/admin/marketing/affiliate`, affiliate); alert("Settings Updated"); } catch (e) { alert(e.message); }
+    try {
+      await axios.post(`${backendurl}/api/admin/marketing/affiliate`, affiliate);
+      toast.success("✅ Affiliate Settings Updated!");
+    } catch (e) { toast.error(e.response?.data?.message || e.message); }
   };
 
   return (
@@ -149,28 +182,124 @@ function Marketing() {
 
       {/* --- CAMPAIGNS (Tab 3) --- */}
       {tabValue === 3 && (
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 bg-gray-50 p-6 rounded-xl h-fit">
-            <h3 className="font-bold mb-4">Create Campaign</h3>
+        <div className="grid md:grid-cols-5 gap-6">
+          {/* Create Campaign Form */}
+          <div className="md:col-span-2 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100 h-fit">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <MdCampaign className="text-indigo-600 text-xl" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Create Campaign</h3>
+                <p className="text-xs text-gray-500">Launch a new marketing campaign</p>
+              </div>
+            </div>
             <div className="space-y-4">
-              <TextField label="Title" size="small" fullWidth value={newCampaign.title} onChange={e => setNewCampaign({ ...newCampaign, title: e.target.value })} />
-              <TextField select label="Type" SelectProps={{ native: true }} size="small" fullWidth value={newCampaign.type} onChange={e => setNewCampaign({ ...newCampaign, type: e.target.value })}>
-                <option>Email</option><option>SMS</option><option>Push</option>
+              <TextField
+                label="Campaign Title"
+                size="small"
+                fullWidth
+                value={newCampaign.title}
+                onChange={e => setNewCampaign({ ...newCampaign, title: e.target.value })}
+                placeholder="e.g., Holiday Sale Announcement"
+              />
+              <TextField
+                select
+                label="Campaign Type"
+                SelectProps={{ native: true }}
+                size="small"
+                fullWidth
+                value={newCampaign.type}
+                onChange={e => setNewCampaign({ ...newCampaign, type: e.target.value })}
+              >
+                <option value="Email">📧 Email Campaign</option>
+                <option value="SMS">💬 SMS Campaign</option>
+                <option value="Push">🔔 Push Notification</option>
               </TextField>
-              <TextField label="Content/Message" multiline rows={4} size="small" fullWidth value={newCampaign.content} onChange={e => setNewCampaign({ ...newCampaign, content: e.target.value })} />
-              <Button variant="contained" fullWidth onClick={createCampaign}>Launch Campaign</Button>
+              <TextField
+                label="Message Content"
+                multiline
+                rows={5}
+                size="small"
+                fullWidth
+                value={newCampaign.content}
+                onChange={e => setNewCampaign({ ...newCampaign, content: e.target.value })}
+                placeholder="Write your campaign message here..."
+              />
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={createCampaign}
+                sx={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  py: 1.5,
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  fontSize: '15px',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  }
+                }}
+              >
+                🚀 Launch Campaign
+              </Button>
             </div>
           </div>
-          <div className="md:col-span-2 space-y-4">
-            <h3 className="font-bold">Recent Campaigns</h3>
-            {campaigns.map(c => (
-              <div key={c._id} className="border p-4 rounded-lg flex justify-between items-center">
-                <div>
-                  <p className="font-bold">{c.title}</p>
-                  <p className="text-sm text-gray-500">{c.type} • {c.status}</p>
+
+          {/* Recent Campaigns List */}
+          <div className="md:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800 text-lg">Recent Campaigns</h3>
+              <span className="text-sm text-gray-500">{campaigns.length} total</span>
+            </div>
+
+            {campaigns.length === 0 ? (
+              <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MdCampaign className="text-purple-500 text-3xl" />
                 </div>
+                <h4 className="text-lg font-semibold text-gray-700 mb-2">No Campaigns Yet</h4>
+                <p className="text-gray-500 text-sm max-w-xs mx-auto">
+                  Create your first marketing campaign to engage with customers through Email, SMS, or Push notifications.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="space-y-3">
+                {campaigns.map(c => (
+                  <div key={c._id} className="bg-white border border-gray-200 p-5 rounded-xl flex justify-between items-center hover:shadow-md hover:border-indigo-200 transition-all duration-200">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-xl ${c.type === 'Email' ? 'bg-blue-100 text-blue-600' :
+                        c.type === 'SMS' ? 'bg-green-100 text-green-600' :
+                          'bg-orange-100 text-orange-600'
+                        }`}>
+                        {c.type === 'Email' ? <MdEmail size={24} /> :
+                          c.type === 'SMS' ? <MdSms size={24} /> :
+                            <MdNotifications size={24} />}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">{c.title}</p>
+                        <p className="text-sm text-gray-500">{c.type} Campaign</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Chip
+                        label={c.status || 'Draft'}
+                        size="small"
+                        color={c.status === 'Sent' ? 'success' : c.status === 'Scheduled' ? 'warning' : 'default'}
+                      />
+                      <Button size="small" variant="outlined" color="error" onClick={async () => {
+                        try {
+                          await axios.delete(`${backendurl}/api/admin/marketing/campaign/${c._id}`);
+                          fetchMarketing();
+                        } catch (e) { console.error(e); }
+                      }}>
+                        <MdDelete />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

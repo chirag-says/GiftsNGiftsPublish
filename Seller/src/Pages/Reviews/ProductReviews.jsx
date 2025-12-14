@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdStar, MdTrendingUp, MdTrendingDown, MdSearch } from "react-icons/md";
 import { FiImage, FiMessageCircle, FiEye } from "react-icons/fi";
 
 function ProductReviews() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -28,7 +30,7 @@ function ProductReviews() {
     }
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -118,9 +120,8 @@ function ProductReviews() {
 
                         {/* Trend */}
                         {product.trend && (
-                          <span className={`text-sm flex items-center gap-1 ${
-                            product.trend > 0 ? 'text-green-600' : 'text-red-600'
-                          }`}>
+                          <span className={`text-sm flex items-center gap-1 ${product.trend > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
                             {product.trend > 0 ? <MdTrendingUp /> : <MdTrendingDown />}
                             {Math.abs(product.trend).toFixed(1)}
                           </span>
@@ -138,10 +139,9 @@ function ProductReviews() {
                       return (
                         <div key={star} className="text-center">
                           <div className="h-12 bg-gray-100 rounded relative overflow-hidden">
-                            <div 
-                              className={`absolute bottom-0 w-full ${
-                                star >= 4 ? 'bg-green-400' : star === 3 ? 'bg-yellow-400' : 'bg-red-400'
-                              }`}
+                            <div
+                              className={`absolute bottom-0 w-full ${star >= 4 ? 'bg-green-400' : star === 3 ? 'bg-yellow-400' : 'bg-red-400'
+                                }`}
                               style={{ height: `${percentage}%` }}
                             ></div>
                           </div>
@@ -162,18 +162,18 @@ function ProductReviews() {
 
                   {/* Actions */}
                   <div className="flex gap-3 mt-4">
-                    <a 
-                      href={`/seller/reviews/product/${product._id}`}
+                    <button
+                      onClick={() => navigate(`/reviews/products`)}
                       className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center justify-center gap-2"
                     >
                       <FiEye /> View All
-                    </a>
-                    <a 
-                      href={`/seller/reviews/respond?product=${product._id}`}
+                    </button>
+                    <button
+                      onClick={() => navigate(`/reviews/respond`)}
                       className="flex-1 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
                     >
                       <FiMessageCircle /> Respond
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}

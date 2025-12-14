@@ -40,6 +40,7 @@ import Overview from './Pages/Payments/Overview.jsx';
 import Transactions from './Pages/Payments/Transactions.jsx';
 import Payouts from './Pages/Payments/Payouts.jsx';
 import BankDetails from './Pages/Finance/BankDetails.jsx';
+import GstBreakdown from './Pages/Finance/GstBreakdown.jsx';
 
 // Customers
 import MyCustomers from './Pages/Customers/MyCustomers.jsx';
@@ -128,10 +129,10 @@ function App() {
     { path: '/categorylist', element: <ProtectedRoute><Layout><CategoryList /></Layout></ProtectedRoute> },
     { path: '/subcategorylist', element: <ProtectedRoute><Layout><SubCategoryList /></Layout></ProtectedRoute> },
     { path: '/seller-profile', element: <ProtectedRoute><Layout><SellerProfile /></Layout></ProtectedRoute> },
-    
+
     // Reports
     { path: '/reports/product-performance', element: <ProtectedRoute><Layout><ProductPerformance /></Layout></ProtectedRoute> },
-    
+
     // Communication
     { path: '/communication/admin-messages', element: <ProtectedRoute><Layout><AdminMessages /></Layout></ProtectedRoute> },
     { path: '/communication/support-tickets', element: <ProtectedRoute><Layout><SupportTickets /></Layout></ProtectedRoute> },
@@ -144,6 +145,7 @@ function App() {
     { path: '/payments/transactions', element: <ProtectedRoute><Layout><Transactions /></Layout></ProtectedRoute> },
     { path: '/payments/payouts', element: <ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute> },
     { path: '/payments/bank-details', element: <ProtectedRoute><Layout><BankDetails /></Layout></ProtectedRoute> },
+    { path: '/payments/gst-breakdown', element: <ProtectedRoute><Layout><GstBreakdown /></Layout></ProtectedRoute> },
 
     // Customers
     { path: '/customers', element: <ProtectedRoute><Layout><MyCustomers /></Layout></ProtectedRoute> },

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdAccountBalanceWallet, MdTrendingUp, MdDownload } from "react-icons/md";
 import { FiDollarSign, FiClock, FiCheckCircle } from "react-icons/fi";
 import { exportToExcel, EARNINGS_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
 function Earnings() {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     totalEarnings: 0,
     pendingEarnings: 0,
@@ -62,7 +64,7 @@ function Earnings() {
             <option value="6months">Last 6 Months</option>
             <option value="month">This Month</option>
           </select>
-          <button 
+          <button
             onClick={() => {
               const exportData = [
                 { type: 'summary', description: 'Total Earnings', amount: data.totalEarnings },
@@ -105,9 +107,9 @@ function Earnings() {
                 <span className="text-sm font-medium">Withdrawable</span>
               </div>
               <h3 className="text-3xl font-bold">{formatINR(data.withdrawableBalance)}</h3>
-              <a href="/seller/payments/payout-requests" className="mt-3 text-sm underline opacity-90 block">
+              <button onClick={() => navigate('/payments/payouts')} className="mt-3 text-sm underline opacity-90 block text-left">
                 Request Payout →
-              </a>
+              </button>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -123,7 +125,7 @@ function Earnings() {
           {/* Earnings Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-6">Monthly Earnings Trend</h3>
-            
+
             {data.monthlyEarnings?.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No earnings data available
@@ -134,7 +136,7 @@ function Earnings() {
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
                     <div className="w-full flex flex-col items-center">
                       <span className="text-xs text-gray-600 mb-1">{formatINR(month.amount)}</span>
-                      <div 
+                      <div
                         className="w-full bg-gradient-to-t from-green-500 to-emerald-400 rounded-t-lg transition-all hover:from-green-600 hover:to-emerald-500"
                         style={{ height: `${(month.amount / maxEarning) * 200}px`, minHeight: '20px' }}
                       ></div>
@@ -158,18 +160,17 @@ function Earnings() {
               <div className="divide-y divide-gray-100">
                 {data.recentTransactions?.map((tx, i) => (
                   <div key={i} className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                    <div className={`p-3 rounded-xl ${
-                      tx.type === 'order' ? 'bg-green-100' :
-                      tx.type === 'refund' ? 'bg-red-100' :
-                      'bg-blue-100'
-                    }`}>
+                    <div className={`p-3 rounded-xl ${tx.type === 'order' ? 'bg-green-100' :
+                        tx.type === 'refund' ? 'bg-red-100' :
+                          'bg-blue-100'
+                      }`}>
                       <FiDollarSign className={
                         tx.type === 'order' ? 'text-green-600' :
-                        tx.type === 'refund' ? 'text-red-600' :
-                        'text-blue-600'
+                          tx.type === 'refund' ? 'text-red-600' :
+                            'text-blue-600'
                       } />
                     </div>
-                    
+
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-800">{tx.description}</h4>
                       <p className="text-sm text-gray-500">{tx.orderId}</p>

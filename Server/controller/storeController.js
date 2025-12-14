@@ -8,7 +8,7 @@ import Review from "../model/review.js";
 export const getStoreSettings = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     let settings = await StoreSettingsModel.findOne({ sellerId });
     const seller = await sellermodel.findById(sellerId);
 
@@ -56,12 +56,38 @@ export const updateStoreSettings = async (req, res) => {
 export const getBusinessInfo = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
+    // Get from seller model (primary source)
+    const seller = await sellermodel.findById(sellerId);
+
+    // Also check store settings for backward compatibility
     const settings = await StoreSettingsModel.findOne({ sellerId });
 
-    res.status(200).json({ 
-      success: true, 
-      data: settings?.businessInfo || {}
+    // Merge data with seller model taking priority
+    const businessInfo = {
+      // From seller model (new structure)
+      ownerName: seller?.businessInfo?.ownerName || seller?.name || '',
+      businessName: seller?.businessInfo?.businessName || settings?.businessInfo?.businessName || '',
+      businessType: seller?.businessInfo?.businessType || settings?.businessInfo?.businessType || 'Individual',
+      registrationNumber: seller?.businessInfo?.registrationNumber || settings?.businessInfo?.registrationNumber || '',
+      businessAddress: seller?.businessInfo?.businessAddress || settings?.businessInfo?.businessAddress || '',
+      businessCity: seller?.businessInfo?.businessCity || settings?.businessInfo?.businessCity || '',
+      businessState: seller?.businessInfo?.businessState || settings?.businessInfo?.businessState || '',
+      businessPincode: seller?.businessInfo?.businessPincode || settings?.businessInfo?.businessPincode || '',
+      businessCountry: seller?.businessInfo?.businessCountry || settings?.businessInfo?.businessCountry || 'India',
+
+      // PAN Details
+      panNumber: seller?.businessInfo?.panNumber || settings?.businessInfo?.panNumber || '',
+      personalPanNumber: seller?.businessInfo?.personalPanNumber || '',
+      businessPanNumber: seller?.businessInfo?.businessPanNumber || '',
+
+      // GST (Optional)
+      gstNumber: seller?.businessInfo?.gstNumber || settings?.businessInfo?.gstNumber || ''
+    };
+
+    res.status(200).json({
+      success: true,
+      data: businessInfo
     });
   } catch (error) {
     console.error("Business Info Error:", error);
@@ -73,23 +99,45 @@ export const getBusinessInfo = async (req, res) => {
 export const updateBusinessInfo = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    const { businessInfo } = req.body;
+    const businessInfoData = req.body.businessInfo || req.body;
 
+    // Update in seller model (primary storage)
+    const seller = await sellermodel.findById(sellerId);
+    if (seller) {
+      seller.businessInfo = {
+        ...seller.businessInfo,
+        ownerName: businessInfoData.ownerName || seller.businessInfo?.ownerName || '',
+        businessName: businessInfoData.businessName || seller.businessInfo?.businessName || '',
+        businessType: businessInfoData.businessType || seller.businessInfo?.businessType || 'Individual',
+        registrationNumber: businessInfoData.registrationNumber || seller.businessInfo?.registrationNumber || '',
+        businessAddress: businessInfoData.businessAddress || seller.businessInfo?.businessAddress || '',
+        businessCity: businessInfoData.businessCity || seller.businessInfo?.businessCity || '',
+        businessState: businessInfoData.businessState || seller.businessInfo?.businessState || '',
+        businessPincode: businessInfoData.businessPincode || seller.businessInfo?.businessPincode || '',
+        businessCountry: businessInfoData.businessCountry || seller.businessInfo?.businessCountry || 'India',
+        panNumber: businessInfoData.panNumber || seller.businessInfo?.panNumber || '',
+        personalPanNumber: businessInfoData.personalPanNumber || seller.businessInfo?.personalPanNumber || '',
+        businessPanNumber: businessInfoData.businessPanNumber || seller.businessInfo?.businessPanNumber || '',
+        gstNumber: businessInfoData.gstNumber || seller.businessInfo?.gstNumber || ''
+      };
+      await seller.save();
+    }
+
+    // Also update in store settings for backward compatibility
     let settings = await StoreSettingsModel.findOne({ sellerId });
-
     if (settings) {
-      settings.businessInfo = { ...settings.businessInfo, ...businessInfo };
+      settings.businessInfo = { ...settings.businessInfo, ...businessInfoData };
       await settings.save();
     } else {
-      settings = new StoreSettingsModel({ 
-        sellerId, 
+      settings = new StoreSettingsModel({
+        sellerId,
         storeName: "My Store",
-        businessInfo 
+        businessInfo: businessInfoData
       });
       await settings.save();
     }
 
-    res.status(200).json({ success: true, message: "Business info updated", data: settings.businessInfo });
+    res.status(200).json({ success: true, message: "Business info updated", data: seller?.businessInfo || businessInfoData });
   } catch (error) {
     console.error("Update Business Info Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -100,11 +148,11 @@ export const updateBusinessInfo = async (req, res) => {
 export const getStoreCustomization = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     const settings = await StoreSettingsModel.findOne({ sellerId });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         storeLogo: settings?.storeLogo,
         storeBanner: settings?.storeBanner,
@@ -135,8 +183,8 @@ export const updateStoreCustomization = async (req, res) => {
       if (policies) settings.policies = { ...settings.policies, ...policies };
       await settings.save();
     } else {
-      settings = new StoreSettingsModel({ 
-        sellerId, 
+      settings = new StoreSettingsModel({
+        sellerId,
         storeName: "My Store",
         storeLogo,
         storeBanner,
@@ -162,8 +210,8 @@ export const getHolidayMode = async (req, res) => {
     const settings = await StoreSettingsModel.findOne({ sellerId });
     const seller = await sellermodel.findById(sellerId);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         holidayMode: settings?.holidayMode || { isEnabled: false },
         sellerHolidayMode: seller?.holidayMode || false
@@ -191,10 +239,10 @@ export const updateHolidayMode = async (req, res) => {
       settings.holidayMode = holidayMode;
       await settings.save();
     } else {
-      settings = new StoreSettingsModel({ 
-        sellerId, 
+      settings = new StoreSettingsModel({
+        sellerId,
         storeName: "My Store",
-        holidayMode 
+        holidayMode
       });
       await settings.save();
     }
@@ -253,8 +301,8 @@ export const getStorePerformance = async (req, res) => {
     });
 
     const avgOrderValue = periodOrders > 0 ? periodRevenue / periodOrders : 0;
-    const avgRating = reviews.length > 0 
-      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
+    const avgRating = reviews.length > 0
+      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
       : 0;
 
     res.status(200).json({
@@ -283,12 +331,12 @@ export const getStorePerformance = async (req, res) => {
 export const getVerificationStatus = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     const settings = await StoreSettingsModel.findOne({ sellerId });
     const seller = await sellermodel.findById(sellerId);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         isApproved: seller?.approved || false,
         verificationStatus: settings?.verificationStatus || {
@@ -319,8 +367,8 @@ export const submitVerificationDocuments = async (req, res) => {
       }));
       await settings.save();
     } else {
-      settings = new StoreSettingsModel({ 
-        sellerId, 
+      settings = new StoreSettingsModel({
+        sellerId,
         storeName: "My Store",
         verificationStatus: {
           isVerified: false,

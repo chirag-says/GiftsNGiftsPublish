@@ -68,50 +68,54 @@ function RevenueAnalytics() {
 
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <CardContent>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-blue-100 text-sm">Total Revenue</p>
-                                <h3 className="text-3xl font-bold">{formatCurrency(summary.totalRevenue)}</h3>
-                            </div>
-                            <MdAttachMoney size={40} className="text-blue-200" />
+                <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-blue-600 text-sm font-semibold uppercase tracking-wide">Total Revenue</p>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(summary.totalRevenue)}</h3>
+                            <p className="text-gray-500 text-sm mt-1">All time earnings</p>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-                    <CardContent>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-green-100 text-sm">Total Orders</p>
-                                <h3 className="text-3xl font-bold">{summary.totalOrders}</h3>
-                            </div>
-                            <MdShoppingCart size={40} className="text-green-200" />
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center">
+                            <MdAttachMoney className="text-white text-2xl" />
                         </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-                    <CardContent>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-purple-100 text-sm">Average Order Value</p>
-                                <h3 className="text-3xl font-bold">{formatCurrency(summary.averageOrderValue)}</h3>
-                            </div>
-                            <MdShowChart size={40} className="text-purple-200" />
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-emerald-600 text-sm font-semibold uppercase tracking-wide">Total Orders</p>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-2">{summary.totalOrders}</h3>
+                            <p className="text-gray-500 text-sm mt-1">Completed orders</p>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-                    <CardContent>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-orange-100 text-sm">Avg Daily Revenue</p>
-                                <h3 className="text-3xl font-bold">{formatCurrency(data.length > 0 ? summary.totalRevenue / data.length : 0)}</h3>
-                            </div>
-                            <MdTrendingUp size={40} className="text-orange-200" />
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center">
+                            <MdShoppingCart className="text-white text-2xl" />
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-purple-600 text-sm font-semibold uppercase tracking-wide">Average Order Value</p>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(summary.averageOrderValue)}</h3>
+                            <p className="text-gray-500 text-sm mt-1">Per order</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center">
+                            <MdShowChart className="text-white text-2xl" />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg border border-orange-100 p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-orange-600 text-sm font-semibold uppercase tracking-wide">Avg Daily Revenue</p>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(data.length > 0 ? summary.totalRevenue / data.length : 0)}</h3>
+                            <p className="text-gray-500 text-sm mt-1">Based on {data.length} days</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+                            <MdTrendingUp className="text-white text-2xl" />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Revenue Chart */}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdStar, MdStorefront, MdTrendingUp, MdVerified } from "react-icons/md";
 import { FiMessageCircle, FiClock, FiThumbsUp } from "react-icons/fi";
 
 function StoreReviews() {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [storeStats, setStoreStats] = useState({
     overallRating: 0,
@@ -42,9 +44,9 @@ function StoreReviews() {
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
-      <MdStar 
-        key={i} 
-        className={i < rating ? "text-yellow-400" : "text-gray-300"} 
+      <MdStar
+        key={i}
+        className={i < rating ? "text-yellow-400" : "text-gray-300"}
       />
     ));
   };
@@ -81,7 +83,7 @@ function StoreReviews() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <div>
                   <p className="text-sm opacity-80">Response Rate</p>
@@ -105,10 +107,9 @@ function StoreReviews() {
                     <div key={star} className="flex items-center gap-2">
                       <span className="w-6 text-sm text-gray-600">{star}★</span>
                       <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all ${
-                            star >= 4 ? 'bg-green-500' : star === 3 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
+                        <div
+                          className={`h-full rounded-full transition-all ${star >= 4 ? 'bg-green-500' : star === 3 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
@@ -159,11 +160,10 @@ function StoreReviews() {
               <button
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                  filter === tab.value 
-                    ? "bg-blue-600 text-white" 
+                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${filter === tab.value
+                    ? "bg-blue-600 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -215,12 +215,12 @@ function StoreReviews() {
                     </div>
                   ) : (
                     <div className="mt-4 flex gap-3">
-                      <a 
-                        href={`/seller/reviews/respond/${review._id}`}
+                      <button
+                        onClick={() => navigate('/reviews/respond')}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
                       >
                         Respond to Review
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>

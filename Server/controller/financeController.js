@@ -2,6 +2,7 @@ import orderModel from "../model/order.js";
 import PayoutModel from "../model/payout.js";
 import BankDetailsModel from "../model/bankDetails.js";
 import addproductmodel from "../model/addproduct.js";
+import sellermodel from "../model/sellermodel.js";
 
 // ============ OVERVIEW / EARNINGS ============
 export const getEarningsOverview = async (req, res) => {
@@ -65,8 +66,8 @@ export const getEarningsOverview = async (req, res) => {
     });
 
     // Subtract processed payouts from withdrawable balance
-    const payouts = await PayoutModel.find({ 
-      sellerId, 
+    const payouts = await PayoutModel.find({
+      sellerId,
       status: { $in: ["Completed", "Processing", "Pending"] }
     });
     const totalPayouts = payouts.reduce((acc, p) => acc + p.amount, 0);
@@ -75,11 +76,11 @@ export const getEarningsOverview = async (req, res) => {
     // Calculate monthly earnings for chart
     const monthlyEarnings = [];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
+
     for (let i = 5; i >= 0; i--) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      
+
       const monthOrders = allOrders.filter(order => {
         const orderDate = new Date(order.placedAt);
         return orderDate >= monthDate && orderDate <= monthEnd && completedStatuses.includes(order.status);
@@ -139,9 +140,9 @@ export const getSettlements = async (req, res) => {
       const weekStart = new Date(orderDate);
       weekStart.setDate(orderDate.getDate() - orderDate.getDay());
       weekStart.setHours(0, 0, 0, 0);
-      
+
       const weekKey = weekStart.toISOString().split('T')[0];
-      
+
       if (!weekGroups[weekKey]) {
         weekGroups[weekKey] = {
           orders: [],
@@ -167,7 +168,7 @@ export const getSettlements = async (req, res) => {
 
       const deductions = grossAmount * commissionRate / 100;
       const netAmount = grossAmount - deductions;
-      
+
       // Simulate status based on age
       const daysSinceEnd = Math.floor((new Date() - group.periodEnd) / (24 * 60 * 60 * 1000));
       let settlementStatus = "pending";
@@ -313,7 +314,7 @@ export const getAllTransactions = async (req, res) => {
     const totalCredit = transactions
       .filter(t => t.type === "order")
       .reduce((acc, t) => acc + t.amount, 0);
-    
+
     const totalDebit = transactions
       .filter(t => ["refund", "commission", "payout"].includes(t.type))
       .reduce((acc, t) => acc + t.amount, 0);
@@ -341,7 +342,7 @@ export const getAllTransactions = async (req, res) => {
 export const getPendingPayments = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     const orders = await orderModel.find({
       "items.sellerId": sellerId,
       status: { $in: ["Pending", "Processing", "Shipped"] }
@@ -353,7 +354,7 @@ export const getPendingPayments = async (req, res) => {
     orders.forEach(order => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
       const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       if (orderTotal > 0) {
         pendingAmount += orderTotal;
         pendingOrders.push({
@@ -369,8 +370,8 @@ export const getPendingPayments = async (req, res) => {
 
     pendingOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         pendingAmount,
         pendingOrders,
@@ -390,7 +391,7 @@ export const getTransactionHistory = async (req, res) => {
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
     let query = { "items.sellerId": sellerId };
-    
+
     if (status) {
       query.status = status;
     }
@@ -414,7 +415,7 @@ export const getTransactionHistory = async (req, res) => {
     orders.forEach(order => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
       const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       if (orderTotal > 0) {
         totalAmount += orderTotal;
         transactions.push({
@@ -435,8 +436,8 @@ export const getTransactionHistory = async (req, res) => {
       }
     });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         transactions,
         totalAmount,
@@ -458,7 +459,7 @@ export const getTransactionHistory = async (req, res) => {
 export const getPayoutRequests = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     const payouts = await PayoutModel.find({ sellerId }).sort({ requestedAt: -1 });
 
     // Calculate available balance from completed orders
@@ -480,8 +481,8 @@ export const getPayoutRequests = async (req, res) => {
 
     availableBalance = Math.max(0, availableBalance - processedPayouts);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         payouts,
         availableBalance,
@@ -516,8 +517,8 @@ export const requestPayout = async (req, res) => {
       availableBalance += sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     });
 
-    const existingPayouts = await PayoutModel.find({ 
-      sellerId, 
+    const existingPayouts = await PayoutModel.find({
+      sellerId,
       status: { $in: ["Completed", "Processing", "Pending"] }
     });
     const processedAmount = existingPayouts.reduce((acc, p) => acc + p.amount, 0);
@@ -562,7 +563,7 @@ export const getCommissionDetails = async (req, res) => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
       const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
       const commission = orderTotal * (commissionRate / 100);
-      
+
       if (orderTotal > 0) {
         totalSales += orderTotal;
         totalCommission += commission;
@@ -577,8 +578,8 @@ export const getCommissionDetails = async (req, res) => {
       }
     });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         commissionRate,
         totalSales,
@@ -597,7 +598,7 @@ export const getCommissionDetails = async (req, res) => {
 export const getBankDetails = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
-    
+
     const bankDetails = await BankDetailsModel.findOne({ sellerId });
 
     res.status(200).json({ success: true, data: bankDetails });
@@ -670,7 +671,7 @@ export const getInvoices = async (req, res) => {
     const invoices = orders.map((order, index) => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
       const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       return {
         invoiceNumber: `INV-${order._id.toString().slice(-8).toUpperCase()}`,
         orderId: order._id,
@@ -693,8 +694,8 @@ export const getInvoices = async (req, res) => {
       };
     });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         invoices,
         pagination: {
@@ -706,6 +707,174 @@ export const getInvoices = async (req, res) => {
     });
   } catch (error) {
     console.error("Invoices Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ============ GST BREAKDOWN ============
+
+// Get GST Breakdown Details
+export const getGstBreakdown = async (req, res) => {
+  try {
+    const sellerId = req.sellerId || req.body.sellerId;
+
+    const seller = await sellermodel.findById(sellerId);
+
+    if (!seller) {
+      return res.status(404).json({ success: false, message: "Seller not found" });
+    }
+
+    const gstDetails = seller.gstDetails || {
+      gstPenalty: 0,
+      gstPayout: 0,
+      gstPendingPayout: 0,
+      gstTotalWithdrawCredited: 0,
+      gstBreakpointDebit: 0
+    };
+
+    // Calculate net GST position
+    const totalCredits = gstDetails.gstPayout + gstDetails.gstTotalWithdrawCredited;
+    const totalDebits = gstDetails.gstPenalty + gstDetails.gstBreakpointDebit;
+    const netGstPosition = totalCredits - totalDebits - gstDetails.gstPendingPayout;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...gstDetails,
+        netGstPosition,
+        totalCredits,
+        totalDebits,
+        hasGstNumber: !!seller.businessInfo?.gstNumber
+      }
+    });
+  } catch (error) {
+    console.error("GST Breakdown Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Update GST Breakdown (Admin only - can be used for setting penalty/adjustments)
+export const updateGstBreakdown = async (req, res) => {
+  try {
+    const sellerId = req.sellerId || req.body.sellerId;
+    const gstData = req.body;
+
+    const seller = await sellermodel.findById(sellerId);
+
+    if (!seller) {
+      return res.status(404).json({ success: false, message: "Seller not found" });
+    }
+
+    seller.gstDetails = {
+      gstPenalty: gstData.gstPenalty ?? seller.gstDetails?.gstPenalty ?? 0,
+      gstPayout: gstData.gstPayout ?? seller.gstDetails?.gstPayout ?? 0,
+      gstPendingPayout: gstData.gstPendingPayout ?? seller.gstDetails?.gstPendingPayout ?? 0,
+      gstTotalWithdrawCredited: gstData.gstTotalWithdrawCredited ?? seller.gstDetails?.gstTotalWithdrawCredited ?? 0,
+      gstBreakpointDebit: gstData.gstBreakpointDebit ?? seller.gstDetails?.gstBreakpointDebit ?? 0
+    };
+
+    await seller.save();
+
+    res.status(200).json({
+      success: true,
+      message: "GST breakdown updated",
+      data: seller.gstDetails
+    });
+  } catch (error) {
+    console.error("Update GST Breakdown Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ============ ENHANCED BANK DETAILS WITH CANCEL CHEQUE ============
+
+// Get Bank Details (Enhanced)
+export const getBankDetailsEnhanced = async (req, res) => {
+  try {
+    const sellerId = req.sellerId || req.body.sellerId;
+
+    // Get from seller model first
+    const seller = await sellermodel.findById(sellerId);
+
+    // Also check BankDetailsModel for backward compatibility
+    const bankDetails = await BankDetailsModel.findOne({ sellerId });
+
+    // Merge data with seller model taking priority
+    const data = {
+      accountHolderName: seller?.bankDetails?.accountHolderName || bankDetails?.accountHolderName || '',
+      bankName: seller?.bankDetails?.bankName || bankDetails?.bankName || '',
+      accountNumber: seller?.bankDetails?.accountNumber || bankDetails?.accountNumber || '',
+      ifscCode: seller?.bankDetails?.ifscCode || bankDetails?.ifscCode || '',
+      branchName: seller?.bankDetails?.branchName || bankDetails?.branchName || '',
+      upiId: seller?.bankDetails?.upiId || bankDetails?.upiId || '',
+      cancelledChequeUrl: seller?.bankDetails?.cancelledChequeUrl || '',
+      isBankVerified: seller?.bankDetails?.isBankVerified || false
+    };
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Bank Details Enhanced Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Save Bank Details (Enhanced with Cancel Cheque)
+export const saveBankDetailsEnhanced = async (req, res) => {
+  try {
+    const sellerId = req.sellerId || req.body.sellerId;
+    const { accountHolderName, bankName, accountNumber, ifscCode, branchName, upiId, cancelledChequeUrl } = req.body;
+
+    if (!accountHolderName || !bankName || !accountNumber || !ifscCode) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    // Update in seller model (primary storage)
+    const seller = await sellermodel.findById(sellerId);
+    if (seller) {
+      seller.bankDetails = {
+        accountHolderName,
+        bankName,
+        accountNumber,
+        ifscCode,
+        branchName: branchName || '',
+        upiId: upiId || '',
+        cancelledChequeUrl: cancelledChequeUrl || seller.bankDetails?.cancelledChequeUrl || '',
+        isBankVerified: seller.bankDetails?.isBankVerified || false
+      };
+      await seller.save();
+    }
+
+    // Also update BankDetailsModel for backward compatibility
+    let bankDetails = await BankDetailsModel.findOne({ sellerId });
+
+    if (bankDetails) {
+      bankDetails.accountHolderName = accountHolderName;
+      bankDetails.bankName = bankName;
+      bankDetails.accountNumber = accountNumber;
+      bankDetails.ifscCode = ifscCode;
+      bankDetails.branchName = branchName;
+      bankDetails.upiId = upiId;
+      await bankDetails.save();
+    } else {
+      bankDetails = new BankDetailsModel({
+        sellerId,
+        accountHolderName,
+        bankName,
+        accountNumber,
+        ifscCode,
+        branchName,
+        upiId
+      });
+      await bankDetails.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Bank details saved successfully",
+      data: seller?.bankDetails || bankDetails
+    });
+  } catch (error) {
+    console.error("Save Bank Details Enhanced Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

@@ -9,11 +9,12 @@ function VerificationStatus() {
     documents: [],
     completionPercentage: 0,
     requirements: [
-      { name: "Identity Proof", key: "identity", status: "pending", required: true },
-      { name: "Business Registration", key: "business", status: "pending", required: true },
-      { name: "GST Certificate", key: "gst", status: "pending", required: false },
-      { name: "Bank Details", key: "bank", status: "pending", required: true },
-      { name: "Address Proof", key: "address", status: "pending", required: true }
+      { name: "Owner Passport Photo", key: "ownerPhoto", status: "pending", required: true, description: "Passport size photo of owner" },
+      { name: "Business Logo", key: "businessLogo", status: "pending", required: true, description: "Your store/business logo" },
+      { name: "Identity Proof", key: "identityProof", status: "pending", required: true, description: "PAN Card / Aadhaar / Voter ID" },
+      { name: "Trade License", key: "tradeLicense", status: "pending", required: true, description: "Business registration certificate" },
+      { name: "Address Proof", key: "addressProof", status: "pending", required: true, description: "Utility bill / Rent agreement" },
+      { name: "GST Certificate", key: "gstCertificate", status: "pending", required: false, description: "Optional - GST registration certificate" }
     ],
     verifiedAt: null
   });
@@ -28,8 +29,8 @@ function VerificationStatus() {
           headers: { stoken }
         });
         if (res.data.success && res.data.data) {
-          setData(prev => ({ 
-            ...prev, 
+          setData(prev => ({
+            ...prev,
             status: res.data.data.isApproved ? 'Verified' : 'Pending',
             ...res.data.data.verificationStatus
           }));
@@ -66,7 +67,7 @@ function VerificationStatus() {
           alert("Document uploaded successfully!");
           setData(prev => ({
             ...prev,
-            requirements: prev.requirements.map(r => 
+            requirements: prev.requirements.map(r =>
               r.key === docType ? { ...r, status: 'pending_review' } : r
             )
           }));
@@ -82,7 +83,7 @@ function VerificationStatus() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return "text-green-600 bg-green-100";
       case "pending_review": return "text-yellow-600 bg-yellow-100";
       case "rejected": return "text-red-600 bg-red-100";
@@ -91,7 +92,7 @@ function VerificationStatus() {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return <MdCheckCircle className="text-green-500 text-xl" />;
       case "pending_review": return <MdPending className="text-yellow-500 text-xl" />;
       case "rejected": return <MdError className="text-red-500 text-xl" />;
@@ -100,7 +101,7 @@ function VerificationStatus() {
   };
 
   const getStatusText = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return "Verified";
       case "pending_review": return "Under Review";
       case "rejected": return "Rejected";
@@ -109,12 +110,13 @@ function VerificationStatus() {
   };
 
   const getDocIcon = (key) => {
-    switch(key) {
-      case "identity": return <FiCamera />;
-      case "business": return <FiFileText />;
-      case "gst": return <FiFileText />;
-      case "bank": return <FiCreditCard />;
-      case "address": return <FiFileText />;
+    switch (key) {
+      case "ownerPhoto": return <FiCamera />;
+      case "businessLogo": return <FiCamera />;
+      case "identityProof": return <FiFileText />;
+      case "tradeLicense": return <FiFileText />;
+      case "addressProof": return <FiFileText />;
+      case "gstCertificate": return <FiFileText />;
       default: return <FiFileText />;
     }
   };
@@ -155,7 +157,7 @@ function VerificationStatus() {
               {data.status === 'Verified' ? 'Your Store is Verified!' : 'Verification In Progress'}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              {data.status === 'Verified' 
+              {data.status === 'Verified'
                 ? `Verified on ${new Date(data.verifiedAt).toLocaleDateString()}`
                 : `${completedCount} of ${data.requirements.length} documents verified`}
             </p>
@@ -176,7 +178,7 @@ function VerificationStatus() {
               <span>{Math.round(progressPercentage)}%</span>
             </div>
             <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all"
                 style={{ width: `${progressPercentage}%` }}
               ></div>
@@ -228,20 +230,18 @@ function VerificationStatus() {
               <div className={`p-3 rounded-xl ${doc.status === 'verified' ? 'bg-green-100' : 'bg-gray-100'}`}>
                 {getDocIcon(doc.key)}
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h4 className="font-medium text-gray-800">{doc.name}</h4>
-                  {doc.required && (
-                    <span className="text-xs text-red-500">Required</span>
+                  {doc.required ? (
+                    <span className="text-xs text-red-500">Required *</span>
+                  ) : (
+                    <span className="text-xs text-gray-400">Optional</span>
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {doc.key === 'identity' && 'PAN Card, Aadhaar, or Passport'}
-                  {doc.key === 'business' && 'GST Registration or Shop License'}
-                  {doc.key === 'gst' && 'GST Certificate (if applicable)'}
-                  {doc.key === 'bank' && 'Cancelled cheque or bank statement'}
-                  {doc.key === 'address' && 'Utility bill or rent agreement'}
+                  {doc.description}
                 </p>
               </div>
 

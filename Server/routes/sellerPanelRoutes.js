@@ -13,7 +13,11 @@ import {
   getInvoices,
   getEarningsOverview,
   getSettlements,
-  getAllTransactions
+  getAllTransactions,
+  getGstBreakdown,
+  updateGstBreakdown,
+  getBankDetailsEnhanced,
+  saveBankDetailsEnhanced
 } from "../controller/financeController.js";
 
 // Customer Controllers
@@ -139,6 +143,14 @@ sellerPanelRouter.get("/finance/commission", authseller, getCommissionDetails);
 sellerPanelRouter.get("/finance/bank-details", authseller, getBankDetails);
 sellerPanelRouter.post("/finance/bank-details", authseller, saveBankDetails);
 sellerPanelRouter.get("/finance/invoices", authseller, getInvoices);
+
+// GST Breakdown Routes
+sellerPanelRouter.get("/finance/gst-breakdown", authseller, getGstBreakdown);
+sellerPanelRouter.post("/finance/gst-breakdown", authseller, updateGstBreakdown);
+
+// Enhanced Bank Details with Cancel Cheque
+sellerPanelRouter.get("/finance/bank-details-enhanced", authseller, getBankDetailsEnhanced);
+sellerPanelRouter.post("/finance/bank-details-enhanced", authseller, saveBankDetailsEnhanced);
 
 // ============ CUSTOMER ROUTES ============
 sellerPanelRouter.get("/customers/order-history", authseller, getCustomerOrderHistory);

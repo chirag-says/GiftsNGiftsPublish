@@ -60,6 +60,7 @@ const menuSections = [
       { label: "Transactions", path: "/payments/transactions" },
       { label: "Payouts", path: "/payments/payouts" },
       { label: "Bank Details", path: "/payments/bank-details" },
+      { label: "GST Breakdown", path: "/payments/gst-breakdown" },
     ],
   },
   {
@@ -217,24 +218,23 @@ function SideBar() {
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
                   transition-all duration-200 ease-out group
-                  ${submenuIndex === index 
-                    ? 'bg-indigo-50 text-indigo-700' 
+                  ${submenuIndex === index
+                    ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                 `}
               >
                 <div className={`
                   p-2 rounded-lg transition-colors
-                  ${submenuIndex === index 
-                    ? 'bg-indigo-100 text-indigo-600' 
+                  ${submenuIndex === index
+                    ? 'bg-indigo-100 text-indigo-600'
                     : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700'}
                 `}>
                   <section.icon className="text-lg" />
                 </div>
                 <span className="flex-1 font-medium text-[15px]">{section.title}</span>
-                <FiChevronDown 
-                  className={`text-gray-400 transition-transform duration-200 ${
-                    submenuIndex === index ? "rotate-180 text-indigo-500" : ""
-                  }`} 
+                <FiChevronDown
+                  className={`text-gray-400 transition-transform duration-200 ${submenuIndex === index ? "rotate-180 text-indigo-500" : ""
+                    }`}
                 />
               </button>
 
@@ -252,8 +252,8 @@ function SideBar() {
                         className={`
                           flex w-full items-center gap-3 py-2.5 px-3 rounded-lg text-sm
                           transition-all duration-150
-                          ${isActive 
-                            ? 'bg-indigo-50 text-indigo-700 font-medium' 
+                          ${isActive
+                            ? 'bg-indigo-50 text-indigo-700 font-medium'
                             : isInteractive
                               ? 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                               : 'text-gray-400 cursor-default'}
@@ -275,7 +275,7 @@ function SideBar() {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-100">
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-red-600 
                        hover:bg-red-50 rounded-xl transition-all duration-200 group"

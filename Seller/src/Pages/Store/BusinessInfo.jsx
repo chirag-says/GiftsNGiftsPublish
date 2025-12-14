@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { MdBusiness, MdEdit, MdSave, MdClose, MdVerified } from "react-icons/md";
-import { FiFileText, FiCreditCard, FiMapPin } from "react-icons/fi";
+import { MdBusiness, MdEdit, MdSave, MdClose, MdVerified, MdPerson } from "react-icons/md";
+import { FiFileText, FiCreditCard, FiMapPin, FiInfo } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 function BusinessInfo() {
   const [info, setInfo] = useState({
+    // Owner Details (Required)
+    ownerName: "",
+    // Business Details
     businessName: "",
     businessType: "Individual",
     registrationNumber: "",
-    gstNumber: "",
-    panNumber: "",
+    // Address (Required)
     businessAddress: "",
     businessCity: "",
     businessState: "",
     businessPincode: "",
-    businessCountry: "India"
+    businessCountry: "India",
+    // PAN Details
+    panNumber: "", // Required
+    personalPanNumber: "", // Optional
+    businessPanNumber: "", // Optional
+    // GST (Optional)
+    gstNumber: ""
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,7 +37,7 @@ function BusinessInfo() {
           headers: { stoken }
         });
         if (res.data.success && res.data.data) {
-          setInfo(res.data.data);
+          setInfo(prev => ({ ...prev, ...res.data.data }));
         }
       } catch (err) {
         console.error(err);
@@ -40,27 +49,65 @@ function BusinessInfo() {
   }, []);
 
   const handleSave = async () => {
+    // Validation for required fields
+    if (!info.ownerName?.trim()) {
+      toast.error("Owner Name is required");
+      return;
+    }
+    if (!info.businessAddress?.trim()) {
+      toast.error("Business Address is required");
+      return;
+    }
+    if (!info.businessCity?.trim()) {
+      toast.error("City is required");
+      return;
+    }
+    if (!info.businessState?.trim()) {
+      toast.error("State is required");
+      return;
+    }
+    if (!info.panNumber?.trim()) {
+      toast.error("PAN Number is required");
+      return;
+    }
+
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`, 
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`,
         { businessInfo: info },
         { headers: { stoken } }
       );
       if (res.data.success) {
         setEditing(false);
-        alert("Business info saved successfully!");
+        toast.success("Business info saved successfully!");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to save business info");
+      toast.error("Failed to save business info");
     } finally {
       setSaving(false);
     }
   };
 
   const handleChange = (e) => {
-    setInfo(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const value = e.target.name.includes("pan") || e.target.name === "gstNumber"
+      ? e.target.value.toUpperCase()
+      : e.target.value;
+    setInfo(prev => ({ ...prev, [e.target.name]: value }));
   };
+
+  // Required Label Helper
+  const RequiredLabel = ({ children }) => (
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {children} <span className="text-red-500">*</span>
+    </label>
+  );
+
+  const OptionalLabel = ({ children }) => (
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {children} <span className="text-gray-400 text-xs">(Optional)</span>
+    </label>
+  );
 
   if (loading) {
     return (
@@ -106,6 +153,14 @@ function BusinessInfo() {
         </div>
       </div>
 
+      {/* Required Fields Notice */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <p className="text-sm text-blue-700">
+          <strong>Note:</strong> Fields marked with <span className="text-red-500">*</span> are mandatory for verification.
+          GST is optional but recommended for business operations above ₹40 lakhs turnover.
+        </p>
+      </div>
+
       {/* Important Notice */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
         <div className="flex items-start gap-3">
@@ -119,6 +174,27 @@ function BusinessInfo() {
         </div>
       </div>
 
+      {/* Owner Details - New Section */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+        <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+          <MdPerson className="text-purple-500" /> Owner Details
+        </h3>
+
+        <div>
+          <RequiredLabel>Owner/Proprietor Name</RequiredLabel>
+          <input
+            type="text"
+            name="ownerName"
+            value={info.ownerName}
+            onChange={handleChange}
+            disabled={!editing}
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
+            placeholder="Full name of business owner"
+          />
+          <p className="text-xs text-gray-500 mt-1">Name as per identity proof documents</p>
+        </div>
+      </div>
+
       {/* Business Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Business Profile */}
@@ -128,7 +204,7 @@ function BusinessInfo() {
           </h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Legal Business Name</label>
+            <OptionalLabel>Legal Business Name</OptionalLabel>
             <input
               type="text"
               name="businessName"
@@ -141,7 +217,7 @@ function BusinessInfo() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+            <RequiredLabel>Business Type</RequiredLabel>
             <select
               name="businessType"
               value={info.businessType}
@@ -158,7 +234,7 @@ function BusinessInfo() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+            <OptionalLabel>Registration Number</OptionalLabel>
             <input
               type="text"
               name="registrationNumber"
@@ -178,31 +254,62 @@ function BusinessInfo() {
           </h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">GST Number</label>
-            <input
-              type="text"
-              name="gstNumber"
-              value={info.gstNumber}
-              onChange={handleChange}
-              disabled={!editing}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
-              placeholder="22AAAAA0000A1Z5"
-            />
-            <p className="text-xs text-gray-500 mt-1">15-character GST identification number</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">PAN Number</label>
+            <RequiredLabel>PAN Number</RequiredLabel>
             <input
               type="text"
               name="panNumber"
               value={info.panNumber}
               onChange={handleChange}
               disabled={!editing}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 uppercase"
               placeholder="AAAAA0000A"
+              maxLength={10}
             />
-            <p className="text-xs text-gray-500 mt-1">10-character PAN card number</p>
+            <p className="text-xs text-gray-500 mt-1">10-character PAN card number (Required)</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <OptionalLabel>Personal PAN</OptionalLabel>
+              <input
+                type="text"
+                name="personalPanNumber"
+                value={info.personalPanNumber}
+                onChange={handleChange}
+                disabled={!editing}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 uppercase"
+                placeholder="AAAAA0000A"
+                maxLength={10}
+              />
+            </div>
+            <div>
+              <OptionalLabel>Business PAN</OptionalLabel>
+              <input
+                type="text"
+                name="businessPanNumber"
+                value={info.businessPanNumber}
+                onChange={handleChange}
+                disabled={!editing}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 uppercase"
+                placeholder="AAAAA0000A"
+                maxLength={10}
+              />
+            </div>
+          </div>
+
+          <div>
+            <OptionalLabel>GST Number</OptionalLabel>
+            <input
+              type="text"
+              name="gstNumber"
+              value={info.gstNumber}
+              onChange={handleChange}
+              disabled={!editing}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 uppercase"
+              placeholder="22AAAAA0000A1Z5"
+              maxLength={15}
+            />
+            <p className="text-xs text-gray-500 mt-1">15-character GST identification number (if applicable)</p>
           </div>
 
           <div className="p-4 bg-green-50 rounded-xl">
@@ -217,12 +324,12 @@ function BusinessInfo() {
       {/* Business Address */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
         <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-          <FiMapPin className="text-red-500" /> Registered Business Address
+          <FiMapPin className="text-red-500" /> Registered Business Address <span className="text-red-500 text-sm">(Required)</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+            <RequiredLabel>Street Address</RequiredLabel>
             <input
               type="text"
               name="businessAddress"
@@ -235,7 +342,7 @@ function BusinessInfo() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <RequiredLabel>City</RequiredLabel>
             <input
               type="text"
               name="businessCity"
@@ -248,7 +355,7 @@ function BusinessInfo() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+            <RequiredLabel>State</RequiredLabel>
             <input
               type="text"
               name="businessState"
@@ -261,7 +368,7 @@ function BusinessInfo() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+            <OptionalLabel>Pincode</OptionalLabel>
             <input
               type="text"
               name="businessPincode"
@@ -289,7 +396,9 @@ function BusinessInfo() {
 
       {/* Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-        <h4 className="font-semibold text-blue-800 mb-2">📋 Why is this important?</h4>
+        <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+          <FiInfo className="text-blue-500" /> Why is this important?
+        </h4>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• Legal compliance for business operations</li>
           <li>• Required for processing payouts above ₹50,000</li>

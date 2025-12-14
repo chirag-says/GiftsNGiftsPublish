@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { LuStar, LuSearch, LuThumbsUp, LuMessageCircle, LuImage, LuDownload } from "react-icons/lu";
 import { exportToExcel, REVIEW_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
 function MyReviews() {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({
     totalReviews: 0,
@@ -47,7 +49,7 @@ function MyReviews() {
 
   const totalRatings = Object.values(stats.ratingBreakdown).reduce((a, b) => a + b, 0);
 
-  const filteredReviews = reviews.filter(r => 
+  const filteredReviews = reviews.filter(r =>
     r.productName?.toLowerCase().includes(search.toLowerCase()) ||
     r.customerName?.toLowerCase().includes(search.toLowerCase()) ||
     r.comment?.toLowerCase().includes(search.toLowerCase())
@@ -61,7 +63,7 @@ function MyReviews() {
           <h1 className="text-2xl font-semibold text-gray-900">My Reviews</h1>
           <p className="text-sm text-gray-500 mt-1">View and manage all customer reviews</p>
         </div>
-        <button 
+        <button
           onClick={() => exportToExcel(reviews, `reviews_${filter}`, REVIEW_EXPORT_COLUMNS)}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-all"
         >
@@ -100,10 +102,9 @@ function MyReviews() {
                     <div key={star} className="flex items-center gap-3">
                       <span className="w-12 text-sm text-gray-600 flex items-center gap-1">{star} <LuStar className="w-3 h-3 fill-amber-400 text-amber-400" /></span>
                       <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all ${
-                            star >= 4 ? 'bg-emerald-500' : star === 3 ? 'bg-amber-500' : 'bg-red-500'
-                          }`}
+                        <div
+                          className={`h-full rounded-full transition-all ${star >= 4 ? 'bg-emerald-500' : star === 3 ? 'bg-amber-500' : 'bg-red-500'
+                            }`}
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
@@ -132,11 +133,10 @@ function MyReviews() {
                 <button
                   key={rating}
                   onClick={() => setFilter(rating)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filter === rating 
-                      ? "bg-indigo-600 text-white shadow-sm" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === rating
+                      ? "bg-indigo-600 text-white shadow-sm"
                       : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {rating === "all" ? "All" : `${rating}★`}
                 </button>
@@ -191,17 +191,17 @@ function MyReviews() {
                       {review.title && (
                         <h5 className="font-medium text-gray-900 mt-3">{review.title}</h5>
                       )}
-                      
+
                       <p className="text-gray-600 text-sm mt-2 leading-relaxed">{review.comment}</p>
 
                       {/* Review Images */}
                       {review.images?.length > 0 && (
                         <div className="flex gap-2 mt-3">
                           {review.images.map((img, j) => (
-                            <img 
-                              key={j} 
-                              src={img} 
-                              alt="" 
+                            <img
+                              key={j}
+                              src={img}
+                              alt=""
                               className="w-14 h-14 rounded-lg object-cover cursor-pointer hover:opacity-80 border border-gray-100"
                             />
                           ))}
@@ -213,12 +213,12 @@ function MyReviews() {
                         <button className="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-1.5 transition-colors">
                           <LuThumbsUp className="w-4 h-4" /> Helpful ({review.helpfulCount || 0})
                         </button>
-                        <a 
-                          href={`/seller/reviews/respond/${review._id}`}
+                        <button
+                          onClick={() => navigate('/reviews/respond')}
                           className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 font-medium transition-colors"
                         >
                           <LuMessageCircle className="w-4 h-4" /> {review.response ? 'View Response' : 'Respond'}
-                        </a>
+                        </button>
                       </div>
 
                       {/* Seller Response */}

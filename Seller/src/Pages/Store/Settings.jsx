@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { LuStore, LuSave, LuCamera, LuSettings, LuInfo } from "react-icons/lu";
 import { MdBusiness, MdVerified, MdBeachAccess, MdCheckCircle, MdPending, MdError, MdUpload, MdSchedule } from "react-icons/md";
-import { FiFileText, FiCreditCard, FiMapPin, FiShield, FiCamera, FiCalendar, FiAlertCircle, FiBell } from "react-icons/fi";
+import { FiFileText, FiCreditCard, FiMapPin, FiShield, FiCamera, FiCalendar, FiAlertCircle, FiBell, FiUser } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 function Settings() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(null);
   const stoken = localStorage.getItem("stoken");
+
+  // Check if we came from GST page with a specific tab request
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   // General Tab State
   const [generalSettings, setGeneralSettings] = useState({
@@ -19,33 +29,40 @@ function Settings() {
     storeDescription: "",
     storeEmail: "",
     storePhone: "",
-    storeAlternatePhone: "", // --- Added to state ---
+    storeAlternatePhone: "",
     storeAddress: ""
   });
 
-  // Business Tab State
+  // Business Tab State - Updated with all required fields
   const [businessInfo, setBusinessInfo] = useState({
+    ownerName: "",
     businessName: "",
     businessType: "Individual",
     registrationNumber: "",
-    gstNumber: "",
-    panNumber: "",
+    // Address fields (Required)
     businessAddress: "",
     businessCity: "",
     businessState: "",
     businessPincode: "",
-    businessCountry: "India"
+    businessCountry: "India",
+    // PAN Details
+    panNumber: "", // Required
+    personalPanNumber: "", // Optional
+    businessPanNumber: "", // Optional
+    // GST (Optional)
+    gstNumber: ""
   });
 
-  // Verification State
+  // Verification State - Updated document list
   const [verification, setVerification] = useState({
     status: "Pending",
     requirements: [
-      { name: "Identity Proof", key: "identity", status: "pending", required: true },
-      { name: "Business Registration", key: "business", status: "pending", required: true },
-      { name: "GST Certificate", key: "gst", status: "pending", required: false },
-      { name: "Bank Details", key: "bank", status: "pending", required: true },
-      { name: "Address Proof", key: "address", status: "pending", required: true }
+      { name: "Owner Passport Photo", key: "ownerPhoto", status: "pending", required: true, description: "Your passport size photo" },
+      { name: "Business Logo", key: "businessLogo", status: "pending", required: true, description: "Your store/business logo" },
+      { name: "Identity Proof", key: "identityProof", status: "pending", required: true, description: "Aadhar/PAN/Voter ID" },
+      { name: "Trade License", key: "tradeLicense", status: "pending", required: true, description: "Business registration certificate" },
+      { name: "Address Proof", key: "addressProof", status: "pending", required: true, description: "Utility bill/Bank statement" },
+      { name: "GST Certificate", key: "gstCertificate", status: "pending", required: false, description: "Optional - GST registration" }
     ]
   });
 
@@ -76,10 +93,10 @@ function Settings() {
         ]);
 
         if (settingsRes.data.success && settingsRes.data.data) {
-          setGeneralSettings(settingsRes.data.data);
+          setGeneralSettings(prev => ({ ...prev, ...settingsRes.data.data }));
         }
         if (businessRes.data.success && businessRes.data.data) {
-          setBusinessInfo(businessRes.data.data);
+          setBusinessInfo(prev => ({ ...prev, ...businessRes.data.data }));
         }
         if (verificationRes.data.success && verificationRes.data.data) {
           setVerification(prev => ({ ...prev, ...verificationRes.data.data }));
@@ -111,25 +128,48 @@ function Settings() {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/settings`, generalSettings, {
         headers: { stoken }
       });
-      if (res.data.success) alert("Store settings saved!");
+      if (res.data.success) toast.success("Store settings saved!");
     } catch (err) {
       console.error(err);
-      alert("Failed to save settings");
+      toast.error("Failed to save settings");
     } finally {
       setSaving(false);
     }
   };
 
   const handleSaveBusiness = async () => {
+    // Validation for required fields
+    if (!businessInfo.ownerName?.trim()) {
+      toast.error("Owner Name is required");
+      return;
+    }
+    if (!businessInfo.businessAddress?.trim()) {
+      toast.error("Business Address is required");
+      return;
+    }
+    if (!businessInfo.businessCity?.trim()) {
+      toast.error("City is required");
+      return;
+    }
+    if (!businessInfo.businessState?.trim()) {
+      toast.error("State is required");
+      return;
+    }
+    if (!businessInfo.panNumber?.trim()) {
+      toast.error("PAN Number is required");
+      return;
+    }
+
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`, businessInfo, {
-        headers: { stoken }
-      });
-      if (res.data.success) alert("Business info saved!");
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`,
+        { businessInfo },
+        { headers: { stoken } }
+      );
+      if (res.data.success) toast.success("Business info saved!");
     } catch (err) {
       console.error(err);
-      alert("Failed to save business info");
+      toast.error("Failed to save business info");
     } finally {
       setSaving(false);
     }
@@ -146,10 +186,10 @@ function Settings() {
         autoReplyEnabled: preferences.autoReplyEnabled,
         autoReplyMessage: preferences.autoReplyMessage
       }, { headers: { stoken } });
-      if (res.data.success) alert("Preferences saved!");
+      if (res.data.success) toast.success("Preferences saved!");
     } catch (err) {
       console.error(err);
-      alert("Failed to save preferences");
+      toast.error("Failed to save preferences");
     } finally {
       setSaving(false);
     }
@@ -175,17 +215,17 @@ function Settings() {
           { headers: { stoken, 'Content-Type': 'multipart/form-data' } }
         );
         if (res.data.success) {
-          alert("Document uploaded successfully!");
+          toast.success("Document uploaded successfully!");
           setVerification(prev => ({
             ...prev,
-            requirements: prev.requirements.map(r => 
+            requirements: prev.requirements.map(r =>
               r.key === docType ? { ...r, status: 'pending_review' } : r
             )
           }));
         }
       } catch (err) {
         console.error(err);
-        alert("Failed to upload document");
+        toast.error("Failed to upload document");
       } finally {
         setUploading(null);
       }
@@ -200,7 +240,7 @@ function Settings() {
   ];
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return "text-green-600 bg-green-100";
       case "pending_review": return "text-yellow-600 bg-yellow-100";
       case "rejected": return "text-red-600 bg-red-100";
@@ -209,7 +249,7 @@ function Settings() {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return <MdCheckCircle className="text-green-500" />;
       case "pending_review": return <MdPending className="text-yellow-500" />;
       case "rejected": return <MdError className="text-red-500" />;
@@ -218,13 +258,26 @@ function Settings() {
   };
 
   const getStatusText = (status) => {
-    switch(status) {
+    switch (status) {
       case "verified": return "Verified";
       case "pending_review": return "Under Review";
       case "rejected": return "Rejected";
       default: return "Not Submitted";
     }
   };
+
+  // Helper for required field label
+  const RequiredLabel = ({ children, required = true }) => (
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {children} {required && <span className="text-red-500">*</span>}
+    </label>
+  );
+
+  const OptionalLabel = ({ children }) => (
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {children} <span className="text-gray-400 text-xs">(Optional)</span>
+    </label>
+  );
 
   if (loading) {
     return (
@@ -251,11 +304,10 @@ function Settings() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? "border-indigo-500 text-indigo-600 bg-indigo-50/50"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                ? "border-indigo-500 text-indigo-600 bg-indigo-50/50"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <tab.icon className="text-lg" />
               {tab.label}
@@ -269,7 +321,7 @@ function Settings() {
             <div className="space-y-6">
               {/* Store Banner & Logo Preview */}
               <div className="rounded-xl overflow-hidden border border-gray-200">
-                <div 
+                <div
                   className="h-40 bg-gradient-to-br from-indigo-600 to-purple-700 relative"
                   style={generalSettings.storeBanner ? { backgroundImage: `url(${generalSettings.storeBanner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
                 >
@@ -346,8 +398,8 @@ function Settings() {
                       placeholder="store@example.com"
                     />
                   </div>
-                  
-                  {/* --- Phone & Alternate Phone --- */}
+
+                  {/* Phone & Alternate Phone */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
@@ -412,10 +464,29 @@ function Settings() {
                       {verification.status === 'Verified' ? 'Your Business is Verified!' : 'Verification Required'}
                     </h4>
                     <p className={`text-sm ${verification.status === 'Verified' ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {verification.status === 'Verified' 
+                      {verification.status === 'Verified'
                         ? 'You have access to all seller features'
-                        : 'Complete verification to unlock all features'}
+                        : 'Complete verification to unlock all features. Fields marked with * are required.'}
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner Details Section */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                  <FiUser className="text-blue-500" /> Owner Details
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <RequiredLabel>Owner Name</RequiredLabel>
+                    <input
+                      type="text"
+                      value={businessInfo.ownerName}
+                      onChange={(e) => setBusinessInfo(prev => ({ ...prev, ownerName: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none"
+                      placeholder="Full name of business owner"
+                    />
                   </div>
                 </div>
               </div>
@@ -427,7 +498,7 @@ function Settings() {
                     <MdBusiness className="text-blue-500" /> Business Profile
                   </h3>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Legal Business Name</label>
+                    <OptionalLabel>Legal Business Name</OptionalLabel>
                     <input
                       type="text"
                       value={businessInfo.businessName}
@@ -437,7 +508,7 @@ function Settings() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                    <RequiredLabel>Business Type</RequiredLabel>
                     <select
                       value={businessInfo.businessType}
                       onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessType: e.target.value }))}
@@ -450,7 +521,7 @@ function Settings() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+                    <OptionalLabel>Registration Number</OptionalLabel>
                     <input
                       type="text"
                       value={businessInfo.registrationNumber}
@@ -466,36 +537,64 @@ function Settings() {
                     <FiFileText className="text-green-500" /> Tax Information
                   </h3>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">GST Number</label>
-                    <input
-                      type="text"
-                      value={businessInfo.gstNumber}
-                      onChange={(e) => setBusinessInfo(prev => ({ ...prev, gstNumber: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none"
-                      placeholder="22AAAAA0000A1Z5"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">PAN Number</label>
+                    <RequiredLabel>PAN Number</RequiredLabel>
                     <input
                       type="text"
                       value={businessInfo.panNumber}
-                      onChange={(e) => setBusinessInfo(prev => ({ ...prev, panNumber: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none"
+                      onChange={(e) => setBusinessInfo(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none uppercase"
                       placeholder="AAAAA0000A"
+                      maxLength={10}
                     />
+                    <p className="text-xs text-gray-500 mt-1">10-character PAN card number</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <OptionalLabel>Personal PAN</OptionalLabel>
+                      <input
+                        type="text"
+                        value={businessInfo.personalPanNumber}
+                        onChange={(e) => setBusinessInfo(prev => ({ ...prev, personalPanNumber: e.target.value.toUpperCase() }))}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none uppercase"
+                        placeholder="AAAAA0000A"
+                        maxLength={10}
+                      />
+                    </div>
+                    <div>
+                      <OptionalLabel>Business PAN</OptionalLabel>
+                      <input
+                        type="text"
+                        value={businessInfo.businessPanNumber}
+                        onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessPanNumber: e.target.value.toUpperCase() }))}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none uppercase"
+                        placeholder="AAAAA0000A"
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <OptionalLabel>GST Number</OptionalLabel>
+                    <input
+                      type="text"
+                      value={businessInfo.gstNumber}
+                      onChange={(e) => setBusinessInfo(prev => ({ ...prev, gstNumber: e.target.value.toUpperCase() }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none uppercase"
+                      placeholder="22AAAAA0000A1Z5"
+                      maxLength={15}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">15-character GST identification number (if applicable)</p>
                   </div>
                 </div>
               </div>
 
-              {/* Business Address */}
+              {/* Business Address - All Required */}
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                  <FiMapPin className="text-red-500" /> Business Address
+                  <FiMapPin className="text-red-500" /> Business Address <span className="text-red-500 text-sm">(Required)</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                    <RequiredLabel>Street Address</RequiredLabel>
                     <input
                       type="text"
                       value={businessInfo.businessAddress}
@@ -505,7 +604,7 @@ function Settings() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <RequiredLabel>City</RequiredLabel>
                     <input
                       type="text"
                       value={businessInfo.businessCity}
@@ -514,7 +613,7 @@ function Settings() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                    <RequiredLabel>State</RequiredLabel>
                     <input
                       type="text"
                       value={businessInfo.businessState}
@@ -523,7 +622,7 @@ function Settings() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                    <OptionalLabel>Pincode</OptionalLabel>
                     <input
                       type="text"
                       value={businessInfo.businessPincode}
@@ -534,18 +633,22 @@ function Settings() {
                 </div>
               </div>
 
-              {/* Document Verification */}
+              {/* Document Verification - Updated */}
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-800 flex items-center gap-2">
                   <MdVerified className="text-indigo-500" /> Document Verification
                 </h3>
+                <p className="text-sm text-gray-500">Documents marked with <span className="text-red-500">*</span> are mandatory. GST is optional.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {verification.requirements.map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50">
                       <div className="flex items-center gap-3">
                         {getStatusIcon(doc.status)}
                         <div>
-                          <p className="font-medium text-gray-800 text-sm">{doc.name}</p>
+                          <p className="font-medium text-gray-800 text-sm">
+                            {doc.name} {doc.required && <span className="text-red-500">*</span>}
+                          </p>
+                          <p className="text-xs text-gray-500">{doc.description}</p>
                           <p className={`text-xs ${getStatusColor(doc.status).split(' ')[0]}`}>{getStatusText(doc.status)}</p>
                         </div>
                       </div>

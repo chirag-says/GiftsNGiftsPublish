@@ -38,7 +38,9 @@ import {
     createFlashSale,
     createBanner,
     deleteBanner,
-    updateAffiliateSettings
+    updateAffiliateSettings,
+    
+    checkInactiveVendors
 } from '../controller/admincontroller.js';
 
 const router = express.Router();
@@ -92,4 +94,6 @@ router.post("/marketing/affiliate", updateAffiliateSettings);
 router.get('/analytics/export', exportSalesReport);
 // Analytics
 router.get("/analytics/advanced", getAdvancedAnalytics);
+router.get("/sellers/check-inactive",checkInactiveVendors);
+
 export default router;

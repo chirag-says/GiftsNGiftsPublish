@@ -161,7 +161,7 @@ function Payouts() {
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <p className="text-sm text-gray-500 font-semibold uppercase">Creadited</p>
+              <p className="text-sm text-gray-500 font-semibold uppercase">Requestd Payout</p>
               <h2 className="text-3xl font-bold text-gray-800 mt-2">{pendingRequests}</h2>
               <p className="text-xs text-gray-400 mt-1">Awaiting processing</p>
             </div>

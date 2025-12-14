@@ -10,7 +10,7 @@ import ExcelJS from 'exceljs';
 // Adjust path to your Order model
 import PayoutModel from "../model/payout.js"; // Adjust path to your Payout model
 import { Coupon, Banner, Campaign, FlashSale, AffiliateSettings } from '../model/marketingModel.js';
-
+import { sendEmail } from "../config/mail.js";
 // ... (Authentication functions remain the same) ...
 
 export const registerAdmin = async (req, res) => {
@@ -401,56 +401,114 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// --- FIX IS HERE IN getAllSellers ---
+
+
+// ... (keep other imports)
+
+// 1. Get All Sellers (Updated with ID Search & Region Filter)
 export const getAllSellers = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, region } = req.query; 
 
-    // 1. Construct Search Query
     const query = {};
+    
+    // 3. Region Filter
+    if(region && region !== 'all') {
+        // Case-insensitive regex match for region
+        query.region = { $regex: region, $options: "i" };
+    }
+
+    // 1. & 2. Search by Name OR Unique ID OR Email
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { nickName: { $regex: search, $options: "i" } }
+        { uniqueId: { $regex: search, $options: "i" } }, // 5. Search by Unique ID
+        { email: { $regex: search, $options: "i" } }
       ];
-
-      // FIX: Only search 'phone' if the input is a number
-      // Regex on Number type throws CastError in Mongoose
-      if (!isNaN(search)) {
-        // Note: This matches strictly. E.g. search "98" matches phone 98 exactly. 
-        // It will NOT match 981234. To enable that, you MUST change Schema to String.
-        query.$or.push({ phone: Number(search) });
+      // Search by Phone if numeric
+      if(!isNaN(search)){
+         query.$or.push({ phone: Number(search) });
       }
     }
 
-    // 2. Fetch filtered sellers
-    const sellers = await sellermodel.find(query).select("-password").sort({ createdAt: -1 });
+    // Sort by region if selected, otherwise by creation date
+    const sortLogic = region ? { region: 1 } : { createdAt: -1 };
 
-    // 3. Calculate stats
-    const sellersWithStats = await Promise.all(sellers.map(async (seller) => {
-      const products = await addproductmodel.countDocuments({ sellerId: seller._id });
-      const salesData = await orderModel.aggregate([
-        { $unwind: "$items" },
-        { $match: { "items.sellerId": seller._id } },
-        { $group: { _id: null, total: { $sum: "$items.price" }, count: { $sum: 1 } } }
-      ]);
+    const sellers = await sellermodel.find(query).select("-password").sort(sortLogic);
+    
+    // ... (Keep your existing code for calculating stats/orders if you had it here)
 
-      return {
-        ...seller.toObject(),
-        totalProducts: products,
-        totalSales: salesData[0]?.total || 0,
-        totalOrders: salesData[0]?.count || 0
-      };
-    }));
-
-    res.json({ success: true, sellers: sellersWithStats });
+    res.json({ success: true, sellers }); 
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
+// 4. NEW FUNCTION: Check Inactive Vendors and Mail Admin
+export const checkInactiveVendors = async (req, res) => {
+    try {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+        // Find active sellers who haven't logged in for > 30 days
+        const inactiveSellers = await sellermodel.find({
+            lastLogin: { $lt: oneMonthAgo },
+            status: 'Active' 
+        });
+
+        if (inactiveSellers.length === 0) {
+            return res.json({ success: true, message: "No inactive vendors found." });
+        }
+
+        // Create HTML Table for Email
+        let tableRows = inactiveSellers.map(seller => `
+            <tr>
+                <td>${seller.uniqueId || 'N/A'}</td>
+                <td>${seller.name}</td>
+                <td>${seller.region || 'N/A'}</td>
+                <td>${seller.phone}</td>
+                <td>${seller.lastLogin ? new Date(seller.lastLogin).toLocaleDateString() : 'Never'}</td>
+            </tr>
+        `).join('');
+
+        const emailContent = `
+            <h2>Inactive Vendor Alert</h2>
+            <p>The following vendors have been inactive (no login) for more than 30 days:</p>
+            <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f3f3f3;">
+                    <tr>
+                        <th>Unique ID</th>
+                        <th>Name</th>
+                        <th>Region</th>
+                        <th>Phone</th>
+                        <th>Last Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        `;
+
+        // Send Email to Admin
+        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
+        await sendEmail(ADMIN_EMAIL, "Alert: Monthly Inactive Vendors Report", emailContent);
+
+        res.json({ 
+            success: true, 
+            message: `Report sent for ${inactiveSellers.length} inactive sellers.`,
+            count: inactiveSellers.length 
+        });
+
+    } catch (error) {
+        console.error("Inactive Vendor Check Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ... (Keep other exports like registerAdmin, loginAdmin, getAllOrders etc.)
+// ... export other existing functions (getDashboardStats, etc.)
 export const toggleSellerApproval = async (req, res) => {
   try {
     const { id } = req.params;

@@ -3,197 +3,297 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Store, ShieldCheck } from 'lucide-react';
 
 function Login() {
-  const [isRegister, setIsRegister] = useState(false);
-  const [isOtpScreen, setIsOtpScreen] = useState(false);
+    const [isRegister, setIsRegister] = useState(false);
+    const [isOtpScreen, setIsOtpScreen] = useState(false);
 
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState('');
+    const [otp, setOtp] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [nickName, setNickName] = useState('');
-const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [nickName, setNickName] = useState('');
+    const [phone, setPhone] = useState('');
+    
+    const [street, setStreet] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [pincode, setPincode] = useState('');
 
-  const { backendurl, setatoken } = useContext(Admincontext);
-  const navigate = useNavigate();
+    const { backendurl, setatoken } = useContext(Admincontext);
+    const navigate = useNavigate();
 
-  const registerSubmit = async (e) => {
-    e.preventDefault();
-    const { data } = await axios.post(backendurl + "/api/seller/register", {
-      name, email, password, nickName,phone
-    });
+    // --- (Submit functions remain unchanged) ---
+    const registerSubmit = async (e) => {
+        e.preventDefault();
+        const { data } = await axios.post(backendurl + "/api/seller/register", {
+            name, email, password, nickName, phone, street, city, state, pincode
+        });
+        if (data.success) {
+            toast.success(data.message);
+            setIsOtpScreen(true);
+        } else {
+            toast.error(data.message);
+        }
+    };
+    
+    const verifyOtp = async (e) => {
+        e.preventDefault();
+        const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
+            email, otp
+        });
+        if (data.success) {
+            localStorage.setItem("stoken", data.token);
+            setatoken(data.token);
+            navigate("/seller-profile"); 
+            toast.success("OTP verified, login success");
+        } else {
+            toast.error(data.message);
+        }
+    };
 
-    if (data.success) {
-      toast.success(data.message);
-      setIsOtpScreen(true);
-    } else {
-      toast.error(data.message);
-    }
-  };
+    const loginSubmit = async (e) => {
+        e.preventDefault();
+        const { data } = await axios.post(backendurl + "/api/seller/login", {
+            email, password
+        });
+        if (data.success) {
+            localStorage.setItem("stoken", data.token);
+            setatoken(data.token);
+            navigate("/");
+            toast.success("Login successful");
+        } else {
+            toast.error(data.message);
+        }
+    };
+    // ------------------------------------------
 
-  const verifyOtp = async (e) => {
-    e.preventDefault();
-    const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
-      email, otp
-    });
+    // Helper function for input classes (Padding reduced from p-3 to p-2.5 for smaller height)
+    const inputClass = "w-full p-2 bg-white border border-gray-300 text-gray-900 rounded-lg shadow-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 outline-none transition duration-150 placeholder:text-gray-500";
+    const buttonClass = "w-full bg-indigo-600 hover:bg-indigo-700 transition duration-300 text-white py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transform hover:scale-[1.01]";
+    
+    return (
+        <form className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <div className="w-full max-w-xl bg-white p-8 md:p-10 shadow-2xl rounded-2xl border-t-4 border-indigo-600">
+                
+                {/* Header Section */}
+                <div className="text-center mb-8">
+                    {isOtpScreen ? (
+                        <ShieldCheck className="mx-auto h-12 w-12 text-blue-500 mb-2" />
+                    ) : (
+                        <Store className="mx-auto h-12 w-12 text-indigo-600 mb-2" />
+                    )}
+                    <h2 className="text-3xl font-extrabold text-gray-900 mt-2">
+                        {isOtpScreen ? "Verify Your Account" : (isRegister ? "Become a Partner Seller" : "Seller Portal Login")}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        {isOtpScreen ? "Enter the 6-digit OTP sent to your email." : (isRegister ? "Enter your details to create your selling profile." : "Access your dashboard.")}
+                    </p>
+                </div>
 
-    if (data.success) {
-      localStorage.setItem("stoken", data.token);
-      setatoken(data.token);
-      navigate("/seller-profile"); 
-      toast.success("OTP verified, login success");
-    } else {
-      toast.error(data.message);
-    }
-  };
+                {/* --- MAIN FORM CONTENT --- */}
 
-  const loginSubmit = async (e) => {
-    e.preventDefault();
-    const { data } = await axios.post(backendurl + "/api/seller/login", {
-      email, password
-    });
+                {/* OTP SCREEN */}
+                {isOtpScreen ? (
+                    <>
+                        <label htmlFor="otp-input" className="sr-only">One-Time Password (OTP)</label>
+                        <input
+                            id="otp-input"
+                            className={`${inputClass} mb-6 text-center text-xl tracking-widest`}
+                            placeholder="6-Digit OTP"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            maxLength={6}
+                        />
 
-    if (data.success) {
-      localStorage.setItem("stoken", data.token);
-      setatoken(data.token);
-      navigate("/");
-      toast.success("Login successful");
-    } else {
-      toast.error(data.message);
-    }
-  };
+                        <button
+                            className={buttonClass}
+                            onClick={verifyOtp}
+                            type="submit"
+                        >
+                            Confirm Verification
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {isRegister && (
+                            <div className="space-y-6 ">
+                                {/* Owner & Brand Fieldset */}
+                                <fieldset className="p-0 m-0 border-none space-y-4">
+                                    <legend className="text-sm font-semibold text-gray-700 mb-2">Owner & Brand Information</legend>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="full-name" className="sr-only">Full Name (Owner)</label>
+                                            <input
+                                                id="full-name"
+                                                className={inputClass}
+                                                placeholder="Full Name (Owner)"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="brand-name" className="sr-only">Brand Name</label>
+                                            <input
+                                                id="brand-name"
+                                                className={inputClass}
+                                                placeholder="Brand Name"
+                                                value={nickName}
+                                                onChange={(e) => setNickName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
 
-  return (
-  <form className="min-h-screen flex items-center justify-center bg-gray-100">
+                                    <div>
+                                        <label htmlFor="phone" className="sr-only">Phone Number</label>
+                                        <input
+                                            id="phone"
+                                            type="tel"
+                                            className={inputClass}
+                                            placeholder="Phone Number"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </fieldset>
 
-    <div className="w-full max-w-lg bg-white p-10 shadow-xl rounded-xl border border-gray-200">
+                                {/* Address Fieldset */}
+                                <fieldset className="border-t border-gray-100 space-y-4">
+                                    <legend className="text-sm font-semibold text-gray-700 ">Primary Business Address</legend>
+                                    
+                                    <div>
+                                        <label htmlFor="street" className="sr-only">Street Address</label>
+                                        <input
+                                            id="street"
+                                            className={inputClass}
+                                            placeholder="Street Address / Locality"
+                                            value={street}
+                                            onChange={(e) => setStreet(e.target.value)}
+                                            required
+                                        />
+                                    </div>
 
-      {/* OTP SCREEN */}
-      {isOtpScreen ? (
-        <>
-          <h2 className="text-3xl font-bold mb-6 text-gray-900 text-center">
-            Enter OTP
-          </h2>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label htmlFor="city" className="sr-only">City</label>
+                                            <input
+                                                id="city"
+                                                className={inputClass}
+                                                placeholder="City"
+                                                value={city}
+                                                onChange={(e) => setCity(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="state" className="sr-only">State</label>
+                                            <input
+                                                id="state"
+                                                className={inputClass}
+                                                placeholder="State"
+                                                value={state}
+                                                onChange={(e) => setState(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="pincode" className="sr-only">Pincode</label>
+                                            <input
+                                                id="pincode"
+                                                type="number"
+                                                className={inputClass}
+                                                placeholder="Pincode"
+                                                value={pincode}
+                                                onChange={(e) => setPincode(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        )}
 
-          <input
-            className="w-full p-3 mb-4 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                       focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
+                        {/* Login/Registration Common Fields */}
+                        <div className={`space-y-4 ${isRegister ? 'mt-6' : ''}`}>
+                            <div>
+                                <label htmlFor="email" className="sr-only">Email Address</label>
+                                <input
+                                    id="email"
+                                    className={inputClass}
+                                    placeholder="Business Email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
 
-          <button
-            className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 rounded-lg font-semibold"
-            onClick={verifyOtp}
-          >
-            Verify OTP
-          </button>
-        </>
-      ) : (
-        <>
-          <h2 className="text-3xl font-bold mb-6 text-gray-900 text-center">
-            {isRegister ? "Create Seller Account" : "Seller Login"}
-          </h2>
+                            {/* PASSWORD */}
+                            <div className="relative">
+                                <label htmlFor="password" className="sr-only">Password</label>
+                                <input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    className={inputClass}
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
 
-          {isRegister && (
-            <>
-              <input
-                className="w-full p-3 mb-4 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                           focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+                                <span
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-indigo-600 transition"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {/* Adjusted vertical alignment for smaller input height */}
+                                    {showPassword ? (
+                                        <EyeOff size={20} />
+                                    ) : (
+                                        <Eye size={20} />
+                                    )}
+                                </span>
+                            </div>
+                        </div>
 
-              <input
-                className="w-full p-3 mb-4 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                           focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Brand Name"
-                value={nickName}
-                onChange={(e) => setNickName(e.target.value)}
-              />
 
-              <input
-                className="w-full p-3 mb-4 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                           focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </>
-          )}
+                        <button
+                            className={`${buttonClass} mt-6`}
+                            onClick={isRegister ? registerSubmit : loginSubmit}
+                            type="submit"
+                        >
+                            {isRegister ? "Register & Verify Email" : "Sign In Securely"}
+                        </button>
 
-          <input
-            className="w-full p-3 mb-4 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                       focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          {/* PASSWORD */}
-          <div className="relative mb-6">
-            <input
-              type={showPassword ? "text" : "password"}
-              className="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
-                         focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-
-            <span
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer
-                         hover:text-gray-700 transition"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24" strokeWidth={1.5}
-                  stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M3.98 8.223A10.477 10.477 0 001.5 12c2.28 4.08 6.37 7 10.5 7 2.042 0 4.087-.53 6.02-1.777M3.98 8.223L1.493 5.736m2.487 2.487L12 15m0 0l8.02 8.02m-8.02-8.02l2.487-2.487m-2.487 2.487L5.736 3.98" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24" strokeWidth={1.5}
-                  stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.307 4.5 12 4.5c4.694 0 8.578 3.01 9.964 7.183.07.207.07.431 0 .639C20.578 16.49 16.694 19.5 12 19.5c-4.693 0-8.577-3.01-9.964-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </span>
-          </div>
-
-          <button
-            className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 rounded-lg font-semibold"
-            onClick={isRegister ? registerSubmit : loginSubmit}
-          >
-            {isRegister ? "Create Account" : "Login"}
-          </button>
-
-          <p className="mt-4 text-center text-gray-600">
-            {isRegister ? "Already have an account?" : "New seller?"}{" "}
-            <span
-              className="text-blue-600 font-medium cursor-pointer hover:underline"
-              onClick={() => setIsRegister(!isRegister)}
-            >
-              {isRegister ? "Login" : "Register"}
-            </span>
-          </p>
-        </>
-      )}
-
-    </div>
-  </form>
-);
-
+                        {/* Switch Link */}
+                        <p className="mt-6 text-center text-gray-500 text-sm">
+                            {isRegister ? "Already a verified partner?" : "Ready to join as a seller?"}{" "}
+                            <span
+                                className="text-indigo-600 font-bold cursor-pointer hover:text-indigo-800 hover:underline transition duration-200"
+                                onClick={() => {
+                                    setIsRegister(!isRegister);
+                                    // Optional: Clear fields when switching forms for a clean start
+                                    setPassword(''); 
+                                    setStreet(''); 
+                                    setCity(''); 
+                                    setState(''); 
+                                    setPincode(''); 
+                                }}
+                            >
+                                {isRegister ? "Log In" : "Register Now"}
+                            </span>
+                        </p>
+                    </>
+                )}
+            </div>
+        </form>
+    );
 }
 
 export default Login;

@@ -1,70 +1,70 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { FaAngleDown, FaAngleUp, FaPhoneAlt, FaEnvelope, FaEdit, FaCheck } from "react-icons/fa";
-import { LuStore, LuPackageOpen, LuSearch, LuClipboardList, LuWallet } from "react-icons/lu"; 
+import { LuStore, LuPackageOpen, LuSearch, LuClipboardList, LuWallet, LuMapPin } from "react-icons/lu"; 
 import { HiOutlineCheck, HiOutlineX } from "react-icons/hi";
 import axios from "axios";
 import { Button, CircularProgress, Tooltip } from "@mui/material";
-import SearchBox from "../../Components/SearchBox/SearchBox.jsx"; // Ensure this path is correct
+import SearchBox from "../../Components/SearchBox/SearchBox.jsx";
 import { toast } from "react-toastify"; 
-import { useSearchParams } from "react-router-dom"; // Added for Sidebar integration
+import { useSearchParams } from "react-router-dom";
 
 // Helper for random avatar colors
 const getAvatarColor = (name) => {
   const colors = [
     "bg-blue-100 text-blue-700", "bg-indigo-100 text-indigo-700",
     "bg-cyan-100 text-cyan-700", "bg-sky-100 text-sky-700",
-    "bg-violet-100 text-violet-700", "bg-teal-100 text-teal-700",
   ];
   return colors[name ? name.length % colors.length : 0];
 };
 
 function SellersList() {
-  // --- URL Param Logic for Sidebar ---
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Main Data State
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // UI States
   const [openSellerIndex, setOpenSellerIndex] = useState(null);
   const [sellerProducts, setSellerProducts] = useState({});
   const [activeTab, setActiveTab] = useState("all"); 
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // 3. New State for Region Filter
+  const [regionFilter, setRegionFilter] = useState(""); 
+  const [uniqueRegions, setUniqueRegions] = useState([]);
 
   // Commission Edit State
   const [editingCommissionId, setEditingCommissionId] = useState(null);
   const [tempCommission, setTempCommission] = useState(0);
 
-  // --- 1. Sync Tab with URL ---
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam === "1") setActiveTab("pending");
     else if (tabParam === "2") setActiveTab("active");
-    else if (tabParam === "3") setActiveTab("suspended"); // Assuming suspended is also unapproved or specific logic
     else setActiveTab("all");
   }, [searchParams]);
 
-  // Helper to change tab and update URL
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     let tabIndex = "0";
     if (newTab === "pending") tabIndex = "1";
     if (newTab === "active") tabIndex = "2";
-    if (newTab === "suspended") tabIndex = "3";
     setSearchParams({ tab: tabIndex });
   };
 
-  // --- 2. Fetch Sellers (Dynamic Search) ---
-  const fetchSellers = async (query = "") => {
+  // --- 1. & 3. FETCH SELLERS (Updated for Search & Region) ---
+  const fetchSellers = async (query = "", region = "") => {
     try {
       setLoading(true);
       const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/sellers`,
-        { params: { search: query } } 
+        { params: { search: query, region: region } } 
       );
       if (data.success) {
         setSellers(data.sellers);
+        
+        // Populate unique regions dropdown if not set
+        if(uniqueRegions.length === 0 && data.sellers.length > 0) {
+             const regions = [...new Set(data.sellers.map(s => s.region).filter(Boolean))];
+             setUniqueRegions(regions);
+        }
       }
     } catch (error) {
       console.error("Error fetching sellers:", error);
@@ -74,7 +74,15 @@ function SellersList() {
     }
   };
 
-  // --- 3. Fetch Seller Products ---
+  // Debounce Search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchSellers(searchTerm, regionFilter);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, regionFilter]);
+
+  // --- 8. Existing Product Fetch Logic Preserved ---
   const fetchSellerProducts = async (sellerId) => {
     try {
       const { data } = await axios.get(
@@ -99,8 +107,6 @@ function SellersList() {
     }
   };
 
-  // --- ACTIONS (Approve, Commission, etc) --- 
-  
   const handleToggleApproveSeller = async (sellerId) => {
     try {
       const { data } = await axios.put(
@@ -110,11 +116,9 @@ function SellersList() {
         setSellers((prev) =>
           prev.map((s) => (s._id === sellerId ? { ...s, approved: data.seller.approved } : s))
         );
-        // If we are on pending/active tabs, this might remove the item from view
         toast.success(data.message);
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("Action failed");
     }
   };
@@ -130,10 +134,9 @@ function SellersList() {
           prev.map((s) => (s._id === sellerId ? { ...s, commissionRate: tempCommission } : s))
         );
         setEditingCommissionId(null);
-        toast.success("Commission updated successfully");
+        toast.success("Commission updated");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("Failed to update commission");
     }
   };
@@ -153,34 +156,14 @@ function SellersList() {
         toast.success("Product status updated");
       }
     } catch (error) {
-      console.error("Error:", error);
       toast.error("Failed to update product");
     }
   };
 
-  // --- DYNAMIC SEARCH LOGIC ---
-
-  const handleSearch = (e) => {
-    const value = e.target ? e.target.value : e;
-    setSearchTerm(value);
-  };
-
-  // Debounce Effect: Calls API 500ms after user stops typing
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchSellers(searchTerm);
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
-
   // --- FILTERING LOGIC ---
   const filteredSellers = useMemo(() => {
     if (activeTab === 'active') return sellers.filter(s => s.approved);
-    // Group Pending and Suspended together if boolean is the only flag, 
-    // or add specific logic if your DB has a 'suspended' status string.
     if (activeTab === 'pending') return sellers.filter(s => !s.approved);
-    if (activeTab === 'suspended') return sellers.filter(s => !s.approved); 
     return sellers;
   }, [sellers, activeTab]);
 
@@ -201,13 +184,23 @@ function SellersList() {
             </div>
           </div>
           
-          {/* SEARCH BOX */}
-          <div className="w-full md:w-1/3">
-             <div className="bg-white rounded-xl overflow-hidden shadow-lg">
+          <div className="flex gap-4 w-full md:w-1/2">
+             {/* 3. REGION FILTER DROPDOWN */}
+             <select 
+                className="bg-white text-gray-700 rounded-xl px-4 py-2 focus:outline-none w-1/3 text-sm font-medium"
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+             >
+                <option value="">All Regions</option>
+                {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
+             </select>
+
+             {/* 2. SEARCH BOX (Updated) */}
+             <div className="w-2/3 bg-white rounded-xl overflow-hidden shadow-lg">
                 <SearchBox
                     value={searchTerm}
-                    onChange={handleSearch} 
-                    placeholder="Search name, email, phone..."
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                    placeholder="Search by ID, Name, Email..."
                 />
              </div>
           </div>
@@ -219,17 +212,11 @@ function SellersList() {
               { id: 'all', label: 'All Vendors' },
               { id: 'active', label: 'Active Vendors' },
               { id: 'pending', label: 'Pending Approvals' },
-              // { id: 'suspended', label: 'Suspended' } // Optional based on requirements
             ].map((tab) => (
                 <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`
-                        px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all whitespace-nowrap
-                        ${activeTab === tab.id
-                            ? 'bg-white text-blue-700 shadow-lg scale-105' 
-                            : 'bg-white/10 text-blue-100 hover:bg-white/20'}
-                    `}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-blue-700 shadow-lg scale-105' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
                 >
                     {tab.label}
                 </button>
@@ -247,8 +234,9 @@ function SellersList() {
             <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
               <tr>
                 <th className="px-6 py-4 w-[50px]">View</th>
+                <th className="px-6 py-4">ID & Region</th> {/* 5. Unique ID Column */}
                 <th className="px-6 py-4">Seller Details</th>
-                <th className="px-6 py-4">Performance</th>
+                <th className="px-6 py-4">Last Active</th> {/* 4. Inactivity Track */}
                 <th className="px-6 py-4">Commission (%)</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Action</th>
@@ -272,17 +260,25 @@ function SellersList() {
                           </button>
                         </td>
 
+                        {/* 5. & 3. DISPLAY UNIQUE ID & REGION */}
+                        <td className="px-6 py-4">
+                           <div className="flex flex-col">
+                             <span className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded w-fit text-xs border border-blue-100">
+                                {seller.uniqueId || 'NO-ID'}
+                             </span>
+                             <span className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                <LuMapPin size={12}/> {seller.region || seller.address?.city || 'No Region'}
+                             </span>
+                           </div>
+                        </td>
+
                         {/* Seller Identity */}
                         <td className="px-6 py-4">
-                            <div className="flex items-center gap-4">
-                                {seller.image ? (
-                                    <img src={seller.image} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm"/>
-                                ) : (
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shadow-sm ${avatarClass}`}>
-                                        {seller.name?.[0]?.toUpperCase()}
-                                    </div>
-                                )}
-                                <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ${avatarClass}`}>
+                                     {seller.name?.[0]?.toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
                                     <span className="text-sm font-bold text-slate-800">{seller.name}</span>
                                     <div className="flex items-center gap-2 text-xs text-slate-500">
                                         <FaEnvelope className="text-slate-400"/> {seller.email}
@@ -294,16 +290,14 @@ function SellersList() {
                             </div>
                         </td>
 
-                        {/* Performance Stats */}
+                        {/* 4. LAST ACTIVE / JOINING DATE */}
                         <td className="px-6 py-4">
-                            <div className="flex flex-col gap-1.5">
-                                <span className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-md w-fit">
-                                    <LuClipboardList className="text-blue-500"/> {seller.totalOrders || 0} Orders
-                                </span>
-                                <span className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-md w-fit">
-                                    <LuWallet className="text-emerald-500"/> ₹{(seller.totalSales || 0).toLocaleString()} Revenue
-                                </span>
-                            </div>
+                           <div className="text-sm text-slate-700 font-medium">
+                               {seller.lastLogin ? new Date(seller.lastLogin).toLocaleDateString() : 'Never'}
+                           </div>
+                           <span className="text-[10px] text-slate-400">
+                               Joined: {new Date(seller.date).toLocaleDateString()}
+                           </span>
                         </td>
 
                         {/* Commission */}
@@ -316,12 +310,8 @@ function SellersList() {
                                         onChange={(e) => setTempCommission(e.target.value)}
                                         className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
-                                    <button onClick={() => handleUpdateCommission(seller._id)} className="p-1 text-emerald-600 bg-emerald-50 rounded hover:bg-emerald-100">
-                                        <FaCheck size={14}/>
-                                    </button>
-                                    <button onClick={() => setEditingCommissionId(null)} className="p-1 text-rose-600 bg-rose-50 rounded hover:bg-rose-100">
-                                        <HiOutlineX size={14}/>
-                                    </button>
+                                    <button onClick={() => handleUpdateCommission(seller._id)} className="p-1 text-emerald-600 bg-emerald-50 rounded hover:bg-emerald-100"><FaCheck size={14}/></button>
+                                    <button onClick={() => setEditingCommissionId(null)} className="p-1 text-rose-600 bg-rose-50 rounded hover:bg-rose-100"><HiOutlineX size={14}/></button>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
@@ -337,7 +327,6 @@ function SellersList() {
                         {/* Status */}
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold border ${seller.approved ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}>
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 ${seller.approved ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                             {seller.approved ? "Active" : "Pending"}
                           </span>
                         </td>
@@ -362,10 +351,10 @@ function SellersList() {
                         </td>
                       </tr>
 
-                      {/* --- Expanded Products View --- */}
+                      {/* --- Expanded Products View (Preserved) --- */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan="6" className="p-0">
+                          <td colSpan="7" className="p-0">
                             <div className="bg-slate-50/80 p-6 shadow-inner border-y border-slate-100">
                               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm max-w-5xl mx-auto">
                                 <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
@@ -433,7 +422,7 @@ function SellersList() {
           {!filteredSellers.length && !loading && (
              <div className="flex flex-col items-center justify-center py-16 text-slate-500">
                 <LuSearch className="text-4xl text-slate-200 mb-3"/>
-                <p>No sellers found matching "{searchTerm}" or selected tab.</p>
+                <p>No sellers found matching "{searchTerm}" or selected tab/region.</p>
              </div>
           )}
         </div>

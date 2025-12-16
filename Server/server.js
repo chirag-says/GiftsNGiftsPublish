@@ -47,20 +47,54 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+const parseEnvList = (value = '') =>
+  value
+    .split(',')
+    .map((entry) => entry.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(Boolean);
+
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://giftngifts.in',
+  'https://giftngifts.in'
+];
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? parseEnvList(process.env.ALLOWED_ORIGINS)
+  : defaultAllowedOrigins;
+
+const wildcardHosts = process.env.ALLOWED_HOST_SUFFIXES
+  ? parseEnvList(process.env.ALLOWED_HOST_SUFFIXES)
+  : ['ishisofttech.com'];
+
+const isWildcardMatch = (hostname) =>
+  wildcardHosts.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
+
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin(origin, callback) {
     if (!origin) return callback(null, true);
-    const allowed = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://giftngifts.in'];
-    //  const allowed = ['*', 'http://srv814093.hstgr.cloud'];
-    const hostname = new URL(origin).hostname;
-    if (allowed.includes(origin) || hostname.endsWith('.ishisofttech.com')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+
+    try {
+      const hostname = new URL(origin).hostname;
+      if (allowedOrigins.includes(origin) || isWildcardMatch(hostname)) {
+        return callback(null, true);
+      }
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    } catch (error) {
+      console.warn(`CORS origin parse failed for ${origin}:`, error.message);
+      return callback(new Error('Invalid origin'));
     }
   },
   credentials: true,
+  optionsSuccessStatus: 200,
 };
+
+console.log('CORS allowed origins:', allowedOrigins);
+console.log('CORS wildcard hosts:', wildcardHosts);
 
 app.use(cors(corsOptions));
 

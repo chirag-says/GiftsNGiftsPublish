@@ -18,6 +18,12 @@ export const loginRequestOtp = async (req, res) => {
         .json({ success: false, message: "Invalid credentials" });
     }
 
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Your account is blocked. Contact support." });
+    }
+
     // Simple numeric OTP generation if otp-generator is not installed/imported
     const otp = String(Math.floor(100000 + Math.random() * 900000));
 
@@ -46,6 +52,10 @@ export const verifyLoginOtp = async (req, res) => {
     const user = await usermodel.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, message: "Your account is blocked. Contact support." });
     }
     if (user.verifyotp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
@@ -179,6 +189,13 @@ export const login = async (req, res) => {
       return res.json({
         success: false,
         message: "invalid password",
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is blocked. Contact support.",
       });
     }
 

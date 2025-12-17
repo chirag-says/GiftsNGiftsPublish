@@ -33,6 +33,7 @@ const getStatusColor = (status) => {
     case 'delivered':
     case 'approved':
     case 'credit':
+    case 'credited':
       return 'success';
     case 'pending':
     case 'processing':

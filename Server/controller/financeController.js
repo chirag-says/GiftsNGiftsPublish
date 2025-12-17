@@ -68,7 +68,7 @@ export const getEarningsOverview = async (req, res) => {
     // Subtract processed payouts from withdrawable balance
     const payouts = await PayoutModel.find({
       sellerId,
-      status: { $in: ["Completed", "Processing", "Pending"] }
+      status: { $in: ["Completed", "Credited", "Processing", "Pending"] }
     });
     const totalPayouts = payouts.reduce((acc, p) => acc + p.amount, 0);
     withdrawableBalance = Math.max(0, withdrawableBalance - totalPayouts);
@@ -105,7 +105,9 @@ export const getEarningsOverview = async (req, res) => {
         totalEarnings,
         pendingEarnings,
         withdrawableBalance,
-        totalPayouts: payouts.filter(p => p.status === "Completed").reduce((acc, p) => acc + p.amount, 0),
+        totalPayouts: payouts
+          .filter(p => ["Completed", "Credited"].includes(p.status))
+          .reduce((acc, p) => acc + p.amount, 0),
         monthlyEarnings,
         recentTransactions
       }
@@ -476,7 +478,7 @@ export const getPayoutRequests = async (req, res) => {
 
     // Subtract already processed/pending payouts
     const processedPayouts = payouts
-      .filter(p => ["Completed", "Processing", "Pending"].includes(p.status))
+      .filter(p => ["Completed", "Credited", "Processing", "Pending"].includes(p.status))
       .reduce((acc, p) => acc + p.amount, 0);
 
     availableBalance = Math.max(0, availableBalance - processedPayouts);
@@ -486,7 +488,9 @@ export const getPayoutRequests = async (req, res) => {
       data: {
         payouts,
         availableBalance,
-        totalWithdrawn: payouts.filter(p => p.status === "Completed").reduce((acc, p) => acc + p.amount, 0)
+        totalWithdrawn: payouts
+          .filter(p => ["Completed", "Credited"].includes(p.status))
+          .reduce((acc, p) => acc + p.amount, 0)
       }
     });
   } catch (error) {
@@ -519,7 +523,7 @@ export const requestPayout = async (req, res) => {
 
     const existingPayouts = await PayoutModel.find({
       sellerId,
-      status: { $in: ["Completed", "Processing", "Pending"] }
+      status: { $in: ["Completed", "Credited", "Processing", "Pending"] }
     });
     const processedAmount = existingPayouts.reduce((acc, p) => acc + p.amount, 0);
     availableBalance = Math.max(0, availableBalance - processedAmount);

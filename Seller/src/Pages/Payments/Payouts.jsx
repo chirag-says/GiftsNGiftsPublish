@@ -83,6 +83,7 @@ function Payouts() {
   const getStatusIcon = (status) => {
     switch(status) {
       case "Completed": return <MdCheck className="text-green-500" />;
+      case "Credited": return <MdAccountBalance className="text-emerald-500" />;
       case "Processing": return <FiClock className="text-blue-500" />;
       case "Pending": return <MdAccessTime className="text-yellow-500" />;
       case "Failed": case "Cancelled": return <MdClose className="text-red-500" />;
@@ -93,6 +94,7 @@ function Payouts() {
   const getStatusColor = (status) => {
     switch(status) {
       case "Completed": return "bg-green-100 text-green-700";
+      case "Credited": return "bg-emerald-100 text-emerald-700";
       case "Processing": return "bg-blue-100 text-blue-700";
       case "Pending": return "bg-yellow-100 text-yellow-700";
       case "Failed": case "Cancelled": return "bg-red-100 text-red-700";

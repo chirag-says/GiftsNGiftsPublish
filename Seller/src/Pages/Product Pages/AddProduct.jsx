@@ -182,18 +182,56 @@ function AddProduct() {
     const basePrice = parseFloat(Product.oldprice);
     const discountValue = parseFloat(Product.discount);
 
-    if (isNaN(basePrice) || isNaN(discountValue)) {
+    if (!Number.isFinite(basePrice) || basePrice <= 0) {
       return "";
     }
 
-    const discounted = basePrice - (basePrice * discountValue / 100);
+    if (!Number.isFinite(discountValue)) {
+      return "";
+    }
+
+    const boundedDiscount = Math.min(Math.max(discountValue, 0), 100);
+    const discounted = basePrice - (basePrice * boundedDiscount / 100);
+
     if (!isFinite(discounted)) {
       return "";
     }
 
-    const normalized = discounted <= 0 ? 0 : discounted;
+    const normalized = discounted < 0 ? 0 : discounted;
     return normalized.toFixed(2);
   }, [Product.oldprice, Product.discount]);
+
+  const handleFinalPriceInput = (event) => {
+    const { value } = event.target;
+    setFormError("");
+    setSubmitMessage("");
+
+    if (value === "") {
+      setProduct((prev) => ({ ...prev, discount: "" }));
+      return;
+    }
+
+    const mrp = parseFloat(Product.oldprice);
+
+    if (!Number.isFinite(mrp) || mrp <= 0) {
+      setFormError("Enter the MRP before setting the GnG price.");
+      return;
+    }
+
+    const numericValue = parseFloat(value);
+
+    if (!Number.isFinite(numericValue) || numericValue < 0) {
+      return;
+    }
+
+    if (numericValue > mrp) {
+      setFormError("Final GnG price cannot exceed the MRP.");
+      return;
+    }
+
+    const computedDiscount = ((mrp - numericValue) / mrp) * 100;
+    setProduct((prev) => ({ ...prev, discount: computedDiscount.toFixed(2) }));
+  };
 
   const imagePreviews = useMemo(
     () => images.map((file) => ({ file, url: URL.createObjectURL(file) })),
@@ -220,7 +258,7 @@ function AddProduct() {
     }
 
     if (!finalPrice) {
-      setFormError("Provide seller price and discount to calculate the final price.");
+      setFormError("Provide MRP along with either a discount or GnG price to calculate the final price.");
       return;
     }
 
@@ -474,7 +512,7 @@ function AddProduct() {
                     <div className="space-y-5">
                         <div className="grid grid-cols-2 gap-4">
                             <TextField 
-                                label={<span>Seller Price <Req/></span>} 
+                              label={<span>MRP <Req/></span>} 
                                 type="number" 
                                 name="oldprice" 
                                 value={Product.oldprice} 
@@ -490,11 +528,18 @@ function AddProduct() {
                             />
                         </div>
 
-                        <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 text-center">
-                            <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Final GnG Price</p>
-                            <p className="text-2xl font-bold text-emerald-700">
-                              ₹ {finalPrice || "0.00"}
-                            </p>
+                        <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                            <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wider mb-2">Final GnG Price</p>
+                            <TextField
+                              type="number"
+                              value={finalPrice}
+                              onChange={handleFinalPriceInput}
+                              placeholder={Product.oldprice ? "Enter GnG price" : "Enter MRP first"}
+                              fullWidth
+                              disabled={!Product.oldprice}
+                              InputProps={{ startAdornment: <span className="mr-1 text-gray-500">₹</span> }}
+                            />
+                            <p className="text-[11px] text-emerald-600 mt-2">Adjust the GnG price or discount to auto-update the other value.</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

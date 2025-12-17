@@ -13,7 +13,7 @@ function Header() {
   const open = Boolean(anchorEl);
   const { atoken, setatoken } = useContext(Admincontext);
   const navigate = useNavigate();
-  const name = localStorage.getItem("name") || "Admin";
+  const name = localStorage.getItem("adminName") || "Admin";
 
   const handleClick = (event) => {
     if (atoken) setAnchorEl(event.currentTarget);
@@ -25,6 +25,7 @@ function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("atoken");
+    localStorage.removeItem("adminName");
     localStorage.removeItem("name");
     setatoken("");
     navigate("/login");
@@ -122,7 +123,12 @@ function Header() {
             <p className="text-sm font-bold text-gray-800 truncate">{name}</p>
           </div>
 
-          <MenuItem onClick={handleClose} className="!py-2.5 !px-6 !text-gray-600 hover:!bg-indigo-50 hover:!text-indigo-600 !mx-2 !rounded-lg !transition-all">
+          <MenuItem
+            component={Link}
+            to="/account-settings"
+            onClick={handleClose}
+            className="!py-2.5 !px-6 !text-gray-600 hover:!bg-indigo-50 hover:!text-indigo-600 !mx-2 !rounded-lg !transition-all"
+          >
             <span className="text-sm font-medium">Account Settings</span>
           </MenuItem>
 

@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from './config/mongobd.js';
 import connectcloudinary from "./config/cloudinary.js";
+import { scheduleSellerInactivitySweep } from "./services/sellerInactivityService.js";
 import authRoutes from './routes/auth_routes.js';
 import userRoutes from "./routes/user_routes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -42,6 +43,7 @@ const port = process.env.PORT || 7000;
 
 connectDB();
 connectcloudinary();
+scheduleSellerInactivitySweep();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

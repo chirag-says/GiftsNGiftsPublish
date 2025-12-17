@@ -13,7 +13,9 @@ import {
   userlist,
   getSellerEarnings,   // Import
   getSellerCustomers,   // Import
-  verifyOtp
+  verifyOtp,
+  getSellerNotifications,
+  markSellerNotificationRead
 } from "../controller/sellercontroller.js";
 import upload from "../middleware/multer.js";
 
@@ -43,5 +45,7 @@ sellerrouter.put("/orders/:orderId", authseller, updateSellerOrderStatus);
 // --- NEW ROUTES ---
 sellerrouter.get("/finance/earnings", authseller, getSellerEarnings);
 sellerrouter.get("/customers/my-customers", authseller, getSellerCustomers);
+sellerrouter.get("/notifications", authseller, getSellerNotifications);
+sellerrouter.put("/notifications/:id/read", authseller, markSellerNotificationRead);
 
 export default sellerrouter;

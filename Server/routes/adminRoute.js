@@ -40,7 +40,10 @@ import {
     deleteBanner,
     updateAffiliateSettings,
     
-    checkInactiveVendors
+    checkInactiveVendors,
+    getSellerInactivityReport,
+    getAdminProfile,
+    updateAdminProfile
 } from '../controller/admincontroller.js';
 
 const router = express.Router();
@@ -48,6 +51,8 @@ const router = express.Router();
 // --- Authentication ---
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
+router.get('/account/profile', getAdminProfile);
+router.put('/account/profile', updateAdminProfile);
 
 // --- Dashboard Data ---
 router.get("/stats", getDashboardStats);
@@ -95,5 +100,6 @@ router.get('/analytics/export', exportSalesReport);
 // Analytics
 router.get("/analytics/advanced", getAdvancedAnalytics);
 router.get("/sellers/check-inactive",checkInactiveVendors);
+router.get("/sellers/inactivity", getSellerInactivityReport);
 
 export default router;

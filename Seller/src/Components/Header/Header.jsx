@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FiUser, FiLogOut, FiBell, FiSearch } from "react-icons/fi";
 import { LuGift } from "react-icons/lu";
 import Menu from "@mui/material/Menu";
@@ -6,18 +6,48 @@ import MenuItem from "@mui/material/MenuItem";
 import { Divider } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { Admincontext } from "../context/admincontext";
+import axios from "axios";
 
 function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const { atoken, setatoken } = useContext(Admincontext);
+  const { backendurl, atoken, setatoken } = useContext(Admincontext);
   const navigate = useNavigate();
-  const name = localStorage.getItem("name") || "";
-  const nickName = localStorage.getItem("nick name") || "";
-  const displayName = nickName || name;
+  const [sellerProfile, setSellerProfile] = useState({ name: "", nickName: "" });
+  const authToken = atoken || localStorage.getItem("stoken") || "";
+  const displayName = sellerProfile.nickName || sellerProfile.name || "Seller";
+
+  useEffect(() => {
+    if (!authToken) {
+      setSellerProfile({ name: "", nickName: "" });
+      return;
+    }
+
+    let ignore = false;
+    const fetchProfile = async () => {
+      try {
+        const { data } = await axios.get(`${backendurl}/api/seller/profile`, {
+          headers: { stoken: authToken }
+        });
+        if (!ignore && data.success) {
+          setSellerProfile({
+            name: data.seller?.name || "",
+            nickName: data.seller?.nickName || ""
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load seller profile", error);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      ignore = true;
+    };
+  }, [authToken, backendurl]);
 
   const handleClick = (event) => {
-    if (atoken) setAnchorEl(event.currentTarget);
+    if (authToken) setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
@@ -25,9 +55,7 @@ function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("atoken");
-    localStorage.removeItem("name");
-    localStorage.removeItem("nick name");
+    localStorage.removeItem("stoken");
     setatoken("");
     navigate("/login");
   };
@@ -73,7 +101,7 @@ function Header() {
             </button>
 
             {/* Profile Dropdown */}
-            {atoken && (
+            {authToken && (
               <button
                 onClick={handleClick}
                 className="flex items-center gap-3 p-1.5 pr-4 rounded-full 

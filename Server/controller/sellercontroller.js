@@ -7,6 +7,7 @@ import { v2 as cloudinary } from "cloudinary";
 import orderModel from "../model/order.js";
 import usermodel from "../model/mongobd_usermodel.js";
 import { sendEmail } from "../config/mail.js";
+import SellerNotification from "../model/sellerNotification.js";
 
 
 // ========================= REGISTER SELLER =========================
@@ -278,6 +279,15 @@ export const addproducts = async (req, res) => {
     });
 
     await newProduct.save();
+
+    await sellermodel.findByIdAndUpdate(
+      sellerId,
+      {
+        lastProductPostedAt: new Date(),
+        inactiveSince: null,
+        inactiveNotificationSentAt: null
+      }
+    );
 
     return res.status(201).json({ success: true, message: "Product added successfully" });
 
@@ -565,6 +575,57 @@ export const getSellerCustomers = async (req, res) => {
     res.status(200).json({ success: true, customers: Object.values(uniqueCustomers) });
   } catch (error) {
     console.error("Customer Fetch Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const getSellerNotifications = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { status = "all" } = req.query;
+
+    const filter = { sellerId };
+    if (status === "unread") filter.isRead = false;
+    if (status === "read") filter.isRead = true;
+
+    const notifications = await SellerNotification.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const unreadCount = notifications.filter((item) => !item.isRead).length;
+
+    res.status(200).json({
+      success: true,
+      notifications,
+      stats: {
+        total: notifications.length,
+        unread: unreadCount
+      }
+    });
+  } catch (error) {
+    console.error("Seller Notifications Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const markSellerNotificationRead = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { id } = req.params;
+
+    const notification = await SellerNotification.findOneAndUpdate(
+      { _id: id, sellerId },
+      { isRead: true, readAt: new Date() },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
+
+    res.status(200).json({ success: true, notification });
+  } catch (error) {
+    console.error("Seller Notification Update Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

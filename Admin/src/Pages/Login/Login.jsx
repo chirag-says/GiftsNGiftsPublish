@@ -1,190 +1,174 @@
 import React, { useContext, useState } from 'react';
-// Assuming you store backendurl in a context, otherwise replace with direct string
-import { Admincontext } from '../../Components/context/admincontext'; 
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { toast } from 'react-toastify'; // Optional: for better alerts
+import { toast } from 'react-toastify';
+import { Admincontext } from '../../Components/context/admincontext';
+import { FiEye, FiEyeOff, FiLock, FiMail, FiShield } from 'react-icons/fi';
 
 function Login() {
-  // State for toggling views: 'Login', 'Register', 'OTP'
-  const [currentState, setCurrentState] = useState('Login'); 
-  const [showPassword, setShowPassword] = useState(false);
   const { backendurl, setatoken } = useContext(Admincontext);
   const navigate = useNavigate();
 
-  // Unified State for Form Data
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    nickName: '',
-    phone: '',
-    street: '',
-    city: '',
-    state: '',
-    pincode: '',
-    region: '',
-    otp: ''
-  });
+  const [formValues, setFormValues] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setFormValues((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading) return;
 
     try {
-      if (currentState === 'Register') {
-        // --- REGISTER FLOW ---
-        const { data } = await axios.post(`${backendurl}/api/seller/register`, {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            nickName: formData.nickName,
-            phone: formData.phone,
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            pincode: formData.pincode,
-            region: formData.region
-        });
+      setLoading(true);
+      setError('');
 
-        if (data.success) {
-          alert('Registration Successful. Please check email for OTP.');
-          setCurrentState('OTP'); // Move to OTP screen
-        } else {
-          alert(data.message);
-        }
+      const { data } = await axios.post(`${backendurl}/api/admin/login`, {
+        email: formValues.email,
+        password: formValues.password
+      });
 
-      } else if (currentState === 'OTP') {
-        // --- OTP VERIFICATION FLOW ---
-        const { data } = await axios.post(`${backendurl}/api/seller/verify-otp`, {
-          email: formData.email,
-          otp: formData.otp
-        });
-
-        if (data.success) {
-          alert('Email Verified! Logging you in...');
-          localStorage.setItem('stoken', data.token); // Store Seller Token
-          setatoken(data.token);
-          navigate('/seller-dashboard');
-        } else {
-          alert(data.message);
-        }
-
-      } else {
-        // --- LOGIN FLOW ---
-        const { data } = await axios.post(`${backendurl}/api/seller/login`, {
-          email: formData.email,
-          password: formData.password
-        });
-
-        if (data.success) {
-            localStorage.setItem('stoken', data.token);
-            setatoken(data.token);
-            // Check if backend sent a specific prompt (inactive user)
-            if(data.message !== "Login successful") {
-                alert(data.message); 
-            }
-            navigate('/seller-dashboard');
-        } else {
-          alert(data.message);
-        }
+      if (!data.success) {
+        setError(data.message || 'Unable to login');
+        toast.error(data.message || 'Unable to login');
+        return;
       }
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || 'Server Error');
+
+      localStorage.setItem('atoken', data.token);
+      if (data.user?.name) {
+        localStorage.setItem('adminName', data.user.name);
+      } else {
+        localStorage.removeItem('adminName');
+      }
+      setatoken(data.token);
+      toast.success('Welcome back, Admin');
+      navigate('/');
+    } catch (err) {
+      const message = err.response?.data?.message || 'Server error. Please retry.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
-      <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg">
-        <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          {currentState === 'Login' && 'Seller Login'}
-          {currentState === 'Register' && 'Join as Seller'}
-          {currentState === 'OTP' && 'Verify OTP'}
-        </h2>
-        <p className="text-center text-gray-600 mb-6">
-          {currentState === 'Login' ? 'Manage your store & orders' : 
-           currentState === 'Register' ? 'Fill in your business details' : 
-           'Enter the code sent to your email'}
-        </p>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl grid lg:grid-cols-2 rounded-3xl overflow-hidden bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* --- REGISTER FIELDS --- */}
-          {currentState === 'Register' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <input name="name" onChange={handleChange} value={formData.name} type="text" placeholder="Full Name" className="w-full px-3 py-2 border rounded-lg" required />
-                <input name="nickName" onChange={handleChange} value={formData.nickName} type="text" placeholder="Shop/Nick Name" className="w-full px-3 py-2 border rounded-lg" required />
-              </div>
-              <input name="phone" onChange={handleChange} value={formData.phone} type="text" placeholder="Phone Number" className="w-full px-3 py-2 border rounded-lg" required />
-              
-              {/* Address Section */}
-              <p className="text-xs font-bold text-gray-400 uppercase">Address Details</p>
-              <input name="street" onChange={handleChange} value={formData.street} type="text" placeholder="Street Address" className="w-full px-3 py-2 border rounded-lg" required />
-              <div className="grid grid-cols-2 gap-2">
-                <input name="city" onChange={handleChange} value={formData.city} type="text" placeholder="City" className="w-full px-3 py-2 border rounded-lg" required />
-                <input name="state" onChange={handleChange} value={formData.state} type="text" placeholder="State" className="w-full px-3 py-2 border rounded-lg" required />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input name="pincode" onChange={handleChange} value={formData.pincode} type="number" placeholder="Pincode" className="w-full px-3 py-2 border rounded-lg" required />
-                <input name="region" onChange={handleChange} value={formData.region} type="text" placeholder="Region (e.g. North)" className="w-full px-3 py-2 border rounded-lg" required />
-              </div>
+        {/* LEFT BRAND PANEL */}
+        <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-indigo-600 to-violet-600 text-white">
+          <div>
+            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.45em] text-white/80">
+              <FiShield /> Secure Admin Access
+            </span>
+
+            <h1 className="text-4xl font-black leading-tight mt-8">
+              GNG  
+              <br />Admin Console
+            </h1>
+
+            <p className="text-sm text-white/90 mt-6 max-w-sm">
+              Centralized control panel to manage listings, users, analytics, and system health.
+            </p>
+          </div>
+
+          <div className="space-y-3 text-sm text-white/90">
+            <p>• Real-time platform insights</p>
+            <p>• Role-based administration</p>
+            <p>• Secure access logging</p>
+          </div>
+        </div>
+
+        {/* RIGHT LOGIN PANEL */}
+        <div className="p-10 sm:p-12">
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-[0.5em] text-slate-400">
+              Admin Login
+            </p>
+            <h2 className="text-3xl font-black text-slate-900 mt-3">
+              Sign in to your account
+            </h2>
+            <p className="text-sm text-slate-500 mt-3 max-w-md">
+              Enter your credentials to access the admin dashboard.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* EMAIL */}
+            <div>
+              <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <FiMail className="text-slate-400" /> Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formValues.email}
+                onChange={handleChange}
+                placeholder="admin@gnghq.com"
+                required
+                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900
+                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition"
+              />
             </div>
-          )}
 
-          {/* --- COMMON FIELDS (Email/Pass) --- */}
-          {currentState !== 'OTP' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input name="email" onChange={handleChange} value={formData.email} type="email" placeholder="seller@example.com" className="w-full mt-1 px-3 py-2 border rounded-lg" required />
-              </div>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input name="password" onChange={handleChange} value={formData.password} type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="w-full mt-1 px-3 py-2 border rounded-lg" required />
-                <button type="button" className="absolute top-9 right-3 text-gray-500" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+            {/* PASSWORD */}
+            <div>
+              <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <FiLock className="text-slate-400" /> Password
+              </label>
+
+              <div className="relative mt-2">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formValues.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900
+                             focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-700 transition"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
-            </>
-          )}
 
-          {/* --- OTP FIELD --- */}
-          {currentState === 'OTP' && (
-            <div>
-               <label className="block text-sm font-medium text-gray-700">One Time Password (OTP)</label>
-               <input name="otp" onChange={handleChange} value={formData.otp} type="text" placeholder="Enter 6-digit OTP" className="w-full mt-1 px-3 py-2 border rounded-lg text-center tracking-widest text-xl" required />
+              <p className="text-xs text-slate-400 mt-2">
+                Login activity is monitored for security purposes.
+              </p>
             </div>
-          )}
 
-          {/* --- SUBMIT BUTTON --- */}
-          <button type="submit" className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition duration-300">
-            {currentState === 'Login' ? 'Sign In' : currentState === 'Register' ? 'Register & Verify' : 'Verify Email'}
-          </button>
-        </form>
+            {/* ERROR */}
+            {error && (
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+                {error}
+              </div>
+            )}
 
-        {/* --- TOGGLE LINKS --- */}
-        <p className="mt-4 text-center text-gray-600 text-sm">
-          {currentState === 'Login' ? (
-            <>
-              Don't have a seller account?{' '}
-              <span className="text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => setCurrentState('Register')}>Register here</span>
-            </>
-          ) : currentState === 'Register' ? (
-            <>
-              Already have an account?{' '}
-              <span className="text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => setCurrentState('Login')}>Login here</span>
-            </>
-          ) : (
-            <span className="text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => setCurrentState('Register')}>Back to Register</span>
-          )}
-        </p>
+            {/* BUTTON */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-indigo-600 py-3 text-lg font-semibold text-white
+                         shadow-md hover:bg-indigo-700 transition disabled:opacity-60"
+            >
+              {loading ? 'Verifying…' : 'Login to Dashboard'}
+            </button>
+          </form>
+
+          <p className="text-xs text-slate-400 mt-8 text-center">
+            Trouble signing in? Contact the system administrator.
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,22 @@ import { Coupon, Banner, Campaign, FlashSale, AffiliateSettings } from '../model
 import { sendEmail } from "../config/mail.js";
 // ... (Authentication functions remain the same) ...
 
+const getAdminIdFromRequest = (req) => {
+  let token = req.headers?.token;
+  if (!token && req.headers?.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    const error = new Error('Unauthorized');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  return decoded.id;
+};
+
 export const registerAdmin = async (req, res) => {
   // ... existing code ...
   try {
@@ -71,6 +87,74 @@ export const loginAdmin = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getAdminProfile = async (req, res) => {
+  try {
+    const adminId = getAdminIdFromRequest(req);
+    const admin = await Admin.findById(adminId).select('name email createdAt updatedAt');
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    res.status(200).json({ success: true, admin });
+  } catch (error) {
+    const status = error.statusCode || 500;
+    res.status(status).json({ success: false, message: error.message });
+  }
+};
+
+export const updateAdminProfile = async (req, res) => {
+  try {
+    const adminId = getAdminIdFromRequest(req);
+    const admin = await Admin.findById(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    const { name, email, currentPassword, newPassword } = req.body;
+
+    if (email && email !== admin.email) {
+      const existing = await Admin.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Email already in use' });
+      }
+      admin.email = email;
+    }
+
+    if (name) {
+      admin.name = name;
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, message: 'Current password is required' });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, admin.password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+      }
+
+      admin.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated',
+      admin: { name: admin.name, email: admin.email }
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+    const status = error.statusCode || 500;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
@@ -505,6 +589,48 @@ export const checkInactiveVendors = async (req, res) => {
         console.error("Inactive Vendor Check Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
+};
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export const getSellerInactivityReport = async (req, res) => {
+  try {
+    const minDays = Math.max(1, Number(req.query.minDays) || 30);
+    const thresholdDate = new Date(Date.now() - minDays * DAY_IN_MS);
+
+    const candidates = await sellermodel.find({
+      $or: [
+        { lastProductPostedAt: { $exists: false } },
+        { lastProductPostedAt: { $lt: thresholdDate } }
+      ]
+    }).select("name email phone region uniqueId lastProductPostedAt inactiveSince date inactiveNotificationSentAt");
+
+    const report = candidates
+      .map((seller) => {
+        const lastListing = seller.lastProductPostedAt || seller.inactiveSince || seller.date;
+        if (!lastListing) return null;
+        const inactiveDays = Math.floor((Date.now() - new Date(lastListing).getTime()) / DAY_IN_MS);
+
+        return {
+          _id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          region: seller.region,
+          uniqueId: seller.uniqueId,
+          lastListing,
+          inactiveDays,
+          lastNotificationSentAt: seller.inactiveNotificationSentAt
+        };
+      })
+      .filter((entry) => entry && entry.inactiveDays >= minDays)
+      .sort((a, b) => b.inactiveDays - a.inactiveDays);
+
+    res.status(200).json({ success: true, minDays, sellers: report });
+  } catch (error) {
+    console.error("Seller inactivity report error", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
 };
 
 // ... (Keep other exports like registerAdmin, loginAdmin, getAllOrders etc.)

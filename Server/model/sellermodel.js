@@ -23,6 +23,9 @@ const sellerschema = new mongoose.Schema({
   image: String, // This serves as Owner Passport Photo
   date: { type: Date, default: Date.now },
   lastLogin: { type: Date }, // Track last login for activity monitoring
+  lastProductPostedAt: { type: Date }, // Track last product publishing activity
+  inactiveSince: { type: Date }, // Date when inactivity flag was raised
+  inactiveNotificationSentAt: { type: Date }, // Avoid duplicate reminders
   region: { type: String }, // Region for sorting/filtering
   approved: { type: Boolean, default: false },
 

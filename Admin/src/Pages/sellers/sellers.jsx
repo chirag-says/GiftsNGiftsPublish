@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { FaAngleDown, FaAngleUp, FaPhoneAlt, FaEnvelope, FaEdit, FaCheck } from "react-icons/fa";
 import { LuStore, LuPackageOpen, LuSearch, LuClipboardList, LuWallet, LuMapPin } from "react-icons/lu";
 import { HiOutlineCheck, HiOutlineX } from "react-icons/hi";
@@ -33,6 +33,11 @@ function SellersList() {
   // Commission Edit State
   const [editingCommissionId, setEditingCommissionId] = useState(null);
   const [tempCommission, setTempCommission] = useState(0);
+
+  // Inactivity insights
+  const [inactiveSellers, setInactiveSellers] = useState([]);
+  const [inactiveLoading, setInactiveLoading] = useState(false);
+  const [inactiveThreshold, setInactiveThreshold] = useState(30);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -81,6 +86,28 @@ function SellersList() {
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, regionFilter]);
+
+  const fetchInactiveSellers = useCallback(async (minDays = 30) => {
+    try {
+      setInactiveLoading(true);
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/sellers/inactivity`,
+        { params: { minDays } }
+      );
+      if (data.success) {
+        setInactiveSellers(data.sellers || []);
+      }
+    } catch (error) {
+      console.error("Error fetching inactive sellers:", error);
+      toast.error("Failed to fetch inactivity report");
+    } finally {
+      setInactiveLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInactiveSellers(inactiveThreshold);
+  }, [fetchInactiveSellers, inactiveThreshold]);
 
   // --- 8. Existing Product Fetch Logic Preserved ---
   const fetchSellerProducts = async (sellerId) => {
@@ -167,6 +194,10 @@ function SellersList() {
     return sellers;
   }, [sellers, activeTab]);
 
+  const topInactiveSellers = useMemo(() => inactiveSellers.slice(0, 5), [inactiveSellers]);
+  const longestInactive = topInactiveSellers[0]?.inactiveDays || 0;
+  const formatShortDate = (value) => value ? new Date(value).toLocaleDateString() : '—';
+
 
   return (
     <div className="bg-white rounded-xl shadow-2xl shadow-blue-50 border border-blue-50 overflow-hidden my-6">
@@ -223,6 +254,80 @@ function SellersList() {
           ))}
         </div>
       </div>
+
+        <div className="px-8 py-8 border-b border-slate-100 bg-white">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 border border-slate-200 rounded-2xl p-5 shadow-sm bg-gradient-to-br from-white to-slate-50">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">Inactivity watchlist</p>
+                  <h3 className="text-xl font-bold text-slate-800">Sellers without fresh listings</h3>
+                  <p className="text-sm text-slate-500">Monitor who needs a nudge before their storefront gets suspended.</p>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <select
+                    value={inactiveThreshold}
+                    onChange={(e) => setInactiveThreshold(Number(e.target.value))}
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white"
+                  >
+                    {[30, 45, 60, 90].map((days) => (
+                      <option key={days} value={days}>{days}+ days</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => fetchInactiveSellers(inactiveThreshold)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:border-slate-400"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                {inactiveLoading ? (
+                  <div className="space-y-3 animate-pulse">
+                    {[...Array(3)].map((_, idx) => (
+                      <div key={idx} className="h-14 rounded-xl bg-slate-200/60" />
+                    ))}
+                  </div>
+                ) : topInactiveSellers.length ? (
+                  <ul className="divide-y divide-slate-100">
+                    {topInactiveSellers.map((seller) => (
+                      <li key={seller._id} className="py-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{seller.name} <span className="text-xs text-slate-400 font-mono">{seller.uniqueId}</span></p>
+                          <p className="text-xs text-slate-500 flex flex-wrap gap-3">
+                            <span>{seller.email}</span>
+                            <span>{seller.region || 'No region'}</span>
+                            <span>Last listing: {formatShortDate(seller.lastListing)}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-extrabold text-rose-600">{seller.inactiveDays}d</p>
+                          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Inactive</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No sellers exceeded {inactiveThreshold} days of inactivity.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 text-white p-6 shadow-xl flex flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/60">Flagged sellers</p>
+                <h3 className="text-4xl font-black mt-3">{inactiveSellers.length}</h3>
+                <p className="text-sm text-white/70 mt-2">Longer than {inactiveThreshold} days without a new product.</p>
+              </div>
+              <div className="mt-6 space-y-2 text-sm text-white/80">
+                <p><span className="text-white font-semibold text-2xl">{longestInactive}</span> day longest gap</p>
+                <p>Latest warning sent: {inactiveSellers[0]?.lastNotificationSentAt ? formatShortDate(inactiveSellers[0].lastNotificationSentAt) : '—'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {loading ? (
         <div className="flex justify-center items-center py-20">

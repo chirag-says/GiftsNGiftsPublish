@@ -34,6 +34,7 @@ import SiteConfiguration from './Pages/Settings/SiteConfiguration.jsx';
 import PaymentGateway from './Pages/Settings/PaymentGateway.jsx';
 import EmailSettings from './Pages/Settings/EmailSettings.jsx';
 import SmsSettings from './Pages/Settings/SmsSettings.jsx';
+import AccountSettings from './Pages/Settings/AccountSettings.jsx';
 import TaxConfiguration from './Pages/Settings/TaxConfiguration.jsx';
 import ApiManagement from './Pages/Settings/ApiManagement.jsx';
 import UserPermissions from './Pages/Settings/UserPermissions.jsx';
@@ -134,6 +135,7 @@ function App() {
     { path: '/support', element: <ProtectedRoute><Layout><Support /></Layout></ProtectedRoute> },
     { path: '/notifications', element: <ProtectedRoute><Layout><Notifications /></Layout></ProtectedRoute> },
     { path: '/settings', element: <ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute> },
+    { path: '/account-settings', element: <ProtectedRoute><Layout><AccountSettings /></Layout></ProtectedRoute> },
     { path: '/settings/site-configuration', element: <ProtectedRoute><Layout><SiteConfiguration /></Layout></ProtectedRoute> },
     { path: '/settings/payment-gateway', element: <ProtectedRoute><Layout><PaymentGateway /></Layout></ProtectedRoute> },
     { path: '/settings/email-settings', element: <ProtectedRoute><Layout><EmailSettings /></Layout></ProtectedRoute> },

@@ -1,8 +1,8 @@
-.menu{
+.top-strip .menu{
     display:none;
 
 }
-button{
+.top-strip button{
     color:white;
     font-size:15px;
     font-weight:600;
@@ -12,17 +12,17 @@ button{
 }
 
 @media screen and (max-width:767px){
-    .pera{
+    .top-strip .pera{
         font-size:11px;
     }
-    .menu-web{
+    .top-strip .menu-web{
         display:none;
     }
-   .menu{
+   .top-strip .menu{
     display:inline-block;
     text-align:end;
    }
-   .menu-mobile{
+   .top-strip .menu-mobile{
     position:absolute;
     top:1.50rem;
     left:0;
@@ -31,7 +31,7 @@ button{
     width:100%;
     
 }
-   .menu-mobile ul{
+   .top-strip .menu-mobile ul{
     display:flex;
     flex-direction:row;
     align-items:center;

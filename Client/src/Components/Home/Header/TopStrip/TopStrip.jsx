@@ -1,68 +1,51 @@
+// Get up to 50% off now season styles, limited time only ...
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-import { MdOutlineMenu } from "react-icons/md";
-import './TopStrip.css'; // optional if you need it for additional overrides
+import { MdOutlineMenu, MdClose } from "react-icons/md";
 
 function TopStrip() {
-  const [showMenu, setShowmenu] = useState(false);
-  const handleMenu = () => {
-    setShowmenu(!showMenu);
-  };
+  const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <div className='top-strip sm:py-3 py-1 border-t border-b border-gray-300 bg-[#7d0492] text-white'>
-      <div className="container mx-auto flex justify-between items-center px-4">
-        
-        {/* Left - Message */}
-        <div className="text-[12px] sm:text-[12px] md:text-[13px] font-medium max-w-[70%]">
-          Get up to 50% off now season styles, limited time only ...
+    <nav className="relative bg-gray-100 text-[#7d0492] shadow-lg z-50">
+      <div className="container mx-auto px-4  flex justify-between items-center">
+        {/* Left - Animated Announcement */}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <p className='pt-2'>
+            ✨ Get up to 50% off now season styles, limited time only ...
+          </p>
         </div>
 
-        {/* Right - Menu (Desktop) */}
-        <ul className="hidden sm:flex gap-5 text-[11px] sm:text-[12px] md:text-[13px] font-medium">
-          <li>
-            <Link to="/help-center" className="hover:underline">Help Center</Link>
-          </li>
-          <li>
-            <Link to="/order-tracking" className="hover:underline">Order Tracking</Link>
-          </li>
-          <li>
-            <Link to="/contact-us" className="hover:underline">Contact Us</Link>
-          </li>
-        </ul>
-
-        {/* Hamburger Icon (Mobile) */}
-        <div className="sm:hidden flex items-center justify-end w-fit ml-2">
-          <button onClick={handleMenu}>
-            <MdOutlineMenu size={20} />
-          </button>
+        {/* Right - Desktop Links */}
+        <div className="hidden sm:flex items-center gap-6">
+          {["Help Center", "Order Tracking", "Contact Us"].map((item) => (
+            <Link 
+              key={item}
+              to={`/${item.toLowerCase().replace(" ", "-")}`} 
+              className="text-xs font-medium opacity-90 hover:opacity-100 transition-opacity relative group"
+            >
+              {item}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+            </Link>
+          ))}
         </div>
+
+        {/* Mobile Toggle */}
+        <button className="sm:hidden p-1" onClick={() => setShowMenu(!showMenu)}>
+          {showMenu ? <MdClose size={24} /> : <MdOutlineMenu size={24} />}
+        </button>
       </div>
 
-      {/* Mobile Menu */}
-      {showMenu && (
-        <div className="sm:hidden bg-[#7d0492] px-4 pt-2 pb-3">
-          <ul className="flex justify-between gap-2 text-[12px] font-medium">
-            <li className="flex-1 text-center">
-              <Link to="/help-center" onClick={handleMenu} className="block w-full">
-                Help Center
-              </Link>
-            </li>
-            <li className="flex-1 text-center">
-              <Link to="/order-tracking" onClick={handleMenu} className="block w-full">
-                Order Tracking
-              </Link>
-            </li>
-            <li className="flex-1 text-center">
-              <Link to="/contact-us" onClick={handleMenu} className="block w-full">
-                Contact Us
-              </Link>
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
+      {/* Mobile Drawer */}
+      <div className={`absolute w-full bg-[#6a037d] transition-all duration-300 ease-in-out overflow-hidden ${showMenu ? 'max-h-48 border-b border-purple-400' : 'max-h-0'}`}>
+        <ul className="flex flex-col p-4 gap-3 text-sm font-medium">
+          <li><Link to="/help-center" onClick={() => setShowMenu(false)}>Help Center</Link></li>
+          <li><Link to="/order-tracking" onClick={() => setShowMenu(false)}>Order Tracking</Link></li>
+          <li><Link to="/contact-us" onClick={() => setShowMenu(false)}>Contact Us</Link></li>
+        </ul>
+      </div>
+    </nav>
   );
 }
 
-export default TopStrip;
+export default TopStrip;

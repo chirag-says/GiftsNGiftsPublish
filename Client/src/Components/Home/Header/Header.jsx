@@ -6,7 +6,7 @@ import NavCategry from './Navigations/NavCategry'
 function Header() {
   return (
     <header className='bg-white'>
-      <TopStrip/>
+      {/* <TopStrip/> */}
       <Navigation/>
       <NavCategry/>
     </header>

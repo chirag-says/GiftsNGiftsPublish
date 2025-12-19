@@ -1,117 +1,78 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import Button from "@mui/material/Button";
 import { IoSearchSharp } from "react-icons/io5";
-import { SearchResultlist } from "./SearchResultlist";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Search = () => {
   const [input, setInput] = useState("");
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showResult, setShowResult] = useState(false);
-  const wrapperRef = useRef(null);
   const navigate = useNavigate();
+  const wrapperRef = useRef(null);
 
-  // Fetch product list
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/search`);
         setProducts(res.data.data);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      }
+      } catch (err) { console.error(err); }
     };
     fetchData();
   }, []);
 
-  // Handle click outside dropdown to close results
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setShowResult(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleChange = (e) => {
-    const value = e.target.value;
-    setInput(value);
-
-    if (value.trim() === "") {
-      setFilteredProducts([]);
-      setShowResult(false);
-      return;
-    }
-
-    const searchTerm = value.toLowerCase();
-
-    const filtered = products.filter((product) => {
-      const title = product.title?.toLowerCase() || "";
-      const category = product.categoryname?.name?.toLowerCase() || "";
-      const subcategory = product.subcategory?.name?.toLowerCase() || "";
-
-      return (
-        title.includes(searchTerm) ||
-        category.includes(searchTerm) ||
-        subcategory.includes(searchTerm)
-      );
-    });
+    const val = e.target.value;
+    setInput(val);
+    if (!val.trim()) { setFilteredProducts([]); setShowResult(false); return; }
+    
+    const filtered = products.filter(p => 
+      p.title?.toLowerCase().includes(val.toLowerCase()) || 
+      p.categoryname?.name?.toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 8); // Limit results for speed
 
     setFilteredProducts(filtered);
     setShowResult(true);
   };
 
-  const handleSelect = (product) => {
-    setInput(""); // Clear input
-    setShowResult(false);
-    navigate(`/products/${product._id}`);
-  };
-
-  const handleSearchClick = () => {
-    if (!input.trim()) return;
-
-    const searchTerm = input.toLowerCase().trim();
-    navigate(`/search-results?query=${encodeURIComponent(searchTerm)}`);
-
-    setInput(""); // Clear input after navigating
-    setShowResult(false);
-  };
-
   return (
-    <div
-      className="searchBox !w-full bg-[#e5e5e5] rounded-[5px] relative p-2"
-      ref={wrapperRef}
-    >
-      <input
-        type="text"
-        placeholder="Search by title, category, or subcategory..."
-        className="w-full h-[20px] bg-transparent focus:outline-none p-2 text-[15px]"
-        value={input}
-        onFocus={() => {
-          if (filteredProducts.length > 0) setShowResult(true);
-        }}
-        onChange={handleChange}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleSearchClick();
-          }
-        }}
-      />
+    <div className="w-full relative group" ref={wrapperRef}>
+      <div className="flex items-center bg-gray-100 group-focus-within:bg-white group-focus-within:ring-2 ring-purple-200 transition-all rounded-full px-4 py-2">
+        <IoSearchSharp className="text-gray-400 text-xl" />
+        <input
+          type="text"
+          placeholder="Search for unique gifts..."
+          className="bg-transparent border-none focus:outline-none w-full px-3 py-1 text-sm md:text-base text-gray-700"
+          value={input}
+          onChange={handleChange}
+          onFocus={() => input && setShowResult(true)}
+          onKeyDown={(e) => e.key === "Enter" && navigate(`/search-results?query=${input}`)}
+        />
+      </div>
 
-      <Button
-        onClick={handleSearchClick}
-        className="!absolute top-[4px] right-[5px] z-50 !w-[37px] !min-w-[35px] h-[35px] !rounded-full !text-black"
-      >
-        <IoSearchSharp className="text-[#4e4e4e] text-[20px]" />
-      </Button>
-
+      {/* SEARCH RESULTS DROPDOWN */}
       {showResult && filteredProducts.length > 0 && (
-        <SearchResultlist results={filteredProducts} onSelect={handleSelect} />
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[1001]">
+          {filteredProducts.map((p) => (
+            <div 
+              key={p._id}
+              onClick={() => { navigate(`/products/${p._id}`); setShowResult(false); setInput(""); }}
+              className="flex items-center gap-3 p-3 hover:bg-purple-50 cursor-pointer transition-colors border-b border-gray-50 last:border-none"
+            >
+              <img src={p.images?.[0]?.url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+              <div>
+                <p className="text-sm font-medium text-gray-800 line-clamp-1">{p.title}</p>
+                <p className="text-[10px] text-purple-600 font-bold uppercase">{p.categoryname?.name}</p>
+              </div>
+            </div>
+          ))}
+          <div 
+            onClick={() => navigate(`/search-results?query=${input}`)}
+            className="p-3 text-center text-xs text-[#7d0492] font-bold bg-gray-50 cursor-pointer hover:bg-purple-100"
+          >
+            View All Results
+          </div>
+        </div>
       )}
     </div>
   );

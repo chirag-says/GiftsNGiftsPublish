@@ -3,7 +3,9 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-
+import one from "../../../assets/banner/one.jpg"
+import two from "../../../assets/banner/two.jpg"
+import three from "../../../assets/banner/three.jpg"
 function Banner() {
   return (
     <div className="relative w-full">
@@ -21,20 +23,29 @@ function Banner() {
           1024: { navigation: true, pagination: true },
         }}
       >
+         <SwiperSlide>
+          <img
+            src={two}
+            alt="Banner Image 2"
+            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
+          />
+        </SwiperSlide>
+          <SwiperSlide>
+          <img
+            src={three}
+            alt="Banner Image 2"
+            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
+          />
+        </SwiperSlide>
         <SwiperSlide >
           <img
-            src="https://www.fnp.com/assets/images/custom/new-desk-home/hero-banners/Wedding_Desk-15-01-2025.jpg"
+            src={one}
             alt="Banner Image 1"
-            className="w-full h-35 sm:h-45 md:h-55 lg:h-80"
+            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
           />
         </SwiperSlide>
-        <SwiperSlide>
-          <img
-            src="https://www.fnp.com/assets/images/custom/new-desk-home/hero-banners/Wedding_Desk-15-01-2025.jpg"
-            alt="Banner Image 2"
-            className="w-full h-35 sm:h-45 md:h-55 lg:h-80"
-          />
-        </SwiperSlide>
+       
+      
       </Swiper>
     </div>
   );

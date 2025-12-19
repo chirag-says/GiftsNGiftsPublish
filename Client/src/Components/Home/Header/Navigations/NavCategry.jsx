@@ -28,28 +28,21 @@ function NavCategory() {
 
   useEffect(() => {
     const fetchSubcategories = async () => {
-     try {
-  const response = await axios.get(
-    `${import.meta.env.VITE_BACKEND_URL}/api/getsubcategories`
-  );
-
-  const data = Array.isArray(response.data)
-    ? response.data
-    : response.data.subcategories || [];
-
-  const grouped = data.reduce((acc, item) => {
-    const catId = item.category?._id;
-    if (!catId) return acc;
-    if (!acc[catId]) acc[catId] = [];
-    acc[catId].push(item);
-    return acc;
-  }, {});
-
-  setSubcategoriesByCategory(grouped);
-} catch (error) {
-  console.error("Error fetching subcategories", error);
-}
-
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/getsubcategories`
+        );
+        const grouped = response.data.reduce((acc, item) => {
+          const catId = item.category?._id;
+          if (!catId) return acc;
+          if (!acc[catId]) acc[catId] = [];
+          acc[catId].push(item);
+          return acc;
+        }, {});
+        setSubcategoriesByCategory(grouped);
+      } catch (error) {
+        console.error("Error fetching subcategories", error);
+      }
     };
     fetchSubcategories();
   }, []);
@@ -71,7 +64,7 @@ function NavCategory() {
 
             {/* Hover Submenu */}
             <div className="submenu absolute !mx-10 top-[110%] !-right-28 !left-25 transform -translate-x-1/2 min-w-[800px] bg-white shadow-lg border border-gray-200 opacity-0 invisible transition-all duration-500 ease-in-out group-hover:opacity-100 group-hover:visible z-10">
-              <ul className="grid grid-cols-6  !gap-2 p-4">
+              <ul className="grid grid-cols-4  !gap-2 p-4">
                 {(subcategoriesByCategory[cat._id] || []).map((subcat, index) => (
                   <li
                     key={`${cat._id}-${subcat._id}-${index}`}

@@ -1,21 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-    --breakpoint-xs: 30rem;
-  }
-  html, body {
-    width: 100%;
-    overflow-x:clip;
-    max-width: 100%;
-    background: #f5f0f0;
-    color: #666;
-    font-family:Roboto, Inter, Helvetica, Arial, sans-serif;
-  }
-  p{
-    font-size:14px;
-    line-height:25px;
-    margin-bottom:10px;
-  }
+  --breakpoint-xs: 30rem;
+}
+html,
+body {
+  width: 100%;
+  overflow-x: clip;
+  max-width: 100%;
+  background: #f9fafb;
+  color: #666;
+  font-family: Roboto, Inter, Helvetica, Arial, sans-serif;
+}
+p {
+  font-size: 14px;
+  line-height: 25px;
+  margin-bottom: 10px;
+}
 /* Scrollbar customization */
 ::-webkit-scrollbar {
   width: 10px !important; /* Scrollbar width */
@@ -34,11 +35,11 @@
   background: #ccc; /* Scrollbar thumb (handle) color */
 }
 
-.reviewScroll::-webkit-scrollbar-thumb{
-  background:white !important;
+.reviewScroll::-webkit-scrollbar-thumb {
+  background: white !important;
 }
-.reviewScroll::-webkit-scrollbar{
- width:5px !important;
+.reviewScroll::-webkit-scrollbar {
+  width: 5px !important;
 }
 
 .container {
@@ -46,7 +47,6 @@
   max-width: 1200px; /* Adjust as needed */
   width: 90%;
 }
-
 
 .btn-org {
   background: #7d0492 !important;
@@ -100,12 +100,11 @@ footer form input::placeholder {
 .css-imrjgg-MuiButtonBase-root-MuiCheckbox-root.MuiCheckbox-indeterminate {
   color: #7d0492 !important;
 }
-.css-19opgx6-MuiFormControlLabel-root .MuiFormControlLabel-label{
+.css-19opgx6-MuiFormControlLabel-root .MuiFormControlLabel-label {
   font-size: 13px !important;
   color: rgba(0, 0, 0, 0.8) !important;
 }
 
-
-.zoomProductSliderThumb .swiper-slide{
-  height:auto !important;
+.zoomProductSliderThumb .swiper-slide {
+  height: auto !important;
 }

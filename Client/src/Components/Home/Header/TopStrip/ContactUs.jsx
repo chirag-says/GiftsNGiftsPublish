@@ -1,65 +1,35 @@
+import React from "react";
+import { MdEmail, MdPhone, MdLocationOn, MdChat } from "react-icons/md";
+
 const ContactUs = () => {
+  const contactCards = [
+    { icon: <MdEmail />, title: "Email Us", detail: "sales@giftNgifts.com", desc: "Response within 24 hours" },
+    { icon: <MdPhone />, title: "Call Us", detail: "+91 9999-999-999", desc: "Mon-Sat, 9AM-6PM" },
+    { icon: <MdLocationOn />, title: "Visit Us", detail: "Union Trade Center", desc: "India Support Store" },
+    { icon: <MdChat />, title: "Live Chat", detail: "Active Now", desc: "Chat with an expert" },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Stylized heading with fading horizontal lines */}
-      <div className="flex items-center justify-center mb-6">
-        <div className="flex-grow h-px bg-gradient-to-r from-transparent via-[#7d0492] to-transparent max-w-[120px]" />
-        <h1 className="text-2xl text-[#7d0492] font-bold mx-4 whitespace-nowrap">Contact Us</h1>
-        <div className="flex-grow h-px bg-gradient-to-r from-transparent via-[#7d0492] to-transparent max-w-[120px]" />
+    <div className="max-w-6xl mx-auto p-6 py-12">
+      <div className="text-center max-w-2xl mx-auto mb-16">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Let's start a <span className="text-[#7d0492]">Conversation</span></h1>
+        <p className="text-gray-500">Have a question or feedback? We're here to help you make your gifting experience perfect.</p>
       </div>
 
-      <div className="space-y-6 text-gray-800 text-sm sm:text-base leading-relaxed">
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Get in Touch</h2>
-          <p>
-            Thank you for visiting GiftNGifts. If you have any questions, concerns, or feedback, our team is here to assist you. Please use any of the contact methods below to reach us.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Office Address</h2>
-          <p>
-            GiftNGifts - Mega Support Store<br />
-            Union Trade Center<br />
-            India
-          </p>
-        </div>
-
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Email Support</h2>
-          <p>
-            For general inquiries or support, feel free to email us at:<br />
-            <a href="mailto:sales@giftNgifts.com" className=" hover:underline">
-              sales@giftNgifts.com
-            </a><br />
-            We typically respond within 24 hours on business days.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Phone Support</h2>
-          <p>
-            Call us at: <span className=" font-semibold">‪(+91) 9999-999-999‬</span><br />
-            Hours: Monday to Saturday, 9:00 AM – 6:00 PM
-          </p>
-        </div>
-
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Live Chat</h2>
-          <p>
-            Use our online chat feature available on the website to speak with a customer support representative in real-time.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="font-semibold text-lg  mb-1">Customer Satisfaction</h2>
-          <p>
-            We value your trust and are committed to providing a seamless gifting experience. If you have any feedback or suggestions, we’d love to hear from you.
-          </p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {contactCards.map((card, i) => (
+          <div key={i} className="group p-8 bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+            <div className="w-14 h-14 bg-purple-50 text-[#7d0492] rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-[#7d0492] group-hover:text-white transition-colors">
+              {card.icon}
+            </div>
+            <h3 className="text-lg font-bold mb-1">{card.title}</h3>
+            <p className="text-[#7d0492] font-medium text-sm mb-2">{card.detail}</p>
+            <p className="text-gray-400 text-xs">{card.desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
-export default ContactUs;
+export default ContactUs;

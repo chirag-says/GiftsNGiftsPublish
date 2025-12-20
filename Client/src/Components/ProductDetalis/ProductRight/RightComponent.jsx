@@ -102,6 +102,10 @@ const RightComponent = ({ product }) => {
         <span className="text-green-600 text-sm">{product.discount}% OFF</span>
       </div>
 
+ <div className="flex items-center gap-3 text-base">
+        <span className="text-lg font-semibold text-primary">Product availability := {product.availability}</span>
+       
+      </div>
       {/* Pincode */}
       {/* <div className="space-y-2">
         <p className="font-medium">Check Delivery Availability</p>

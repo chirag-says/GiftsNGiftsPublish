@@ -1,12 +1,10 @@
-// ... (imports remain the same)
 import React, { useEffect, useState } from 'react';
-import { TextField, Button } from '@mui/material';
+import { TextField, Button, Radio } from '@mui/material';
 import axios from 'axios';
 import Totalprice from '../Cart Page/Totalprice.jsx';
-import { MdModeEdit, MdDelete } from "react-icons/md";
-import {  useNavigate } from 'react-router-dom';
+import { MdModeEdit, MdDelete, MdAddLocationAlt, MdOutlineHomeWork } from "react-icons/md";
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
 
 function AddAddress() {
   const navigate = useNavigate();
@@ -51,20 +49,14 @@ function AddAddress() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const isDuplicate = addresses.some((addr) => (
       addr.fullName === newAddress.fullName &&
-      addr.phoneNumber === newAddress.phoneNumber &&
       addr.address === newAddress.address &&
-      addr.city === newAddress.city &&
-      addr.state === newAddress.state &&
-      addr.pin === newAddress.pin &&
-      addr.country === newAddress.country &&
       addr._id !== editAddressId
     ));
 
     if (isDuplicate) {
-     toast("This address already exists.");
+      toast.warning("This address already exists.");
       return;
     }
 
@@ -74,59 +66,41 @@ function AddAddress() {
           { userId: profile.user || profile._id, address: newAddress },
           { headers: { token } }
         );
-        if (data.success) {
-          toast("Address updated successfully");
-        }
+        if (data.success) toast.success("Address updated successfully");
       } else {
         const { data } = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/user/addaddress`,
           { address: newAddress },
           { headers: { token } }
         );
-        if (data.success) {
-          toast("Address added successfully");
-        }
+        if (data.success) toast.success("Address added successfully");
       }
-
       resetForm();
       getProfile();
       setShowAddForm(false);
     } catch (err) {
-      console.error('Address operation error:', err?.response?.data || err.message);
+      toast.error("Error saving address");
     }
   };
 
   const handleDeleteAddress = async (addressId) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    if (!window.confirm("Delete this address?")) return;
     try {
       const { data } = await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/user/deleteaddress/${addressId}`,
-        {
-          data: { userId: profile.user || profile._id },
-          headers: { token },
-        }
+        { data: { userId: profile.user || profile._id }, headers: { token } }
       );
       if (data.success) {
-        toast(data.message);
+        toast.info("Address deleted");
         getProfile();
       }
     } catch (error) {
-      console.error("Delete address error:", error?.response?.data || error.message);
-      toast("Failed to delete address.");
+      toast.error("Failed to delete");
     }
   };
 
   const resetForm = () => {
-    setNewAddress({
-      fullName: '',
-      phoneNumber: '',
-      address: '',
-      city: '',
-      state: '',
-      pin: '',
-      country: '',
-      isDefaultBilling: false,
-    });
+    setNewAddress({ fullName: '', phoneNumber: '', address: '', city: '', state: '', pin: '', country: '', isDefaultBilling: false });
     setEditAddressId(null);
   };
 
@@ -135,139 +109,139 @@ function AddAddress() {
       localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress));
       navigate("/ordersummery");
     } else {
-      toast("Please select a delivery address!");
+      toast.error("Please select a delivery address!");
     }
   };
 
   return (
-    <div className="container !my-4 lg:flex lg:flex-row flex flex-col w-[100%] lg:w-[80%] lg:!gap-5 !gap-1 mx-auto">
-      <div className="leftPart bg-white p-5 w-full lg:w-[70%]">
-        <div className="flex justify-between py-2 my-2 items-center">
-          <h2 className="text-[16px] font-[600]">Delivery Addresses</h2>
-          <Button
-            className="border border-gray-200 text-[12px]"
-            variant="outlined"
-            onClick={() => {
-              resetForm();
-              setShowAddForm(true);
-            }}
-          >
-            + Add New Address
-          </Button>
-        </div>
-
-      {addresses.map((addr) => (
-  <div key={addr._id} className="flex items-start gap-3 mb-4 p-3 shadow bg-white rounded">
-    <input
-      type="checkbox"
-      checked={selectedAddress?._id === addr._id}
-      onChange={(e) => {
-        if (e.target.checked) {
-          setSelectedAddress(addr);
-        } else {
-          setSelectedAddress(null);
-        }
-      }}
-      className="mt-2"
-    />
-    <div className="flex justify-between w-full">
-      <div
-        className={`flex flex-col sm:gap-1`}
-      >
-        <p className='text-[12px] sm:text-[14px]'>{addr.fullName}</p>
-        <p className='text-[12px] sm:text-[14px]'>{addr.phoneNumber}</p>
-        <p className='text-[12px] sm:text-[14px]'>
-          {addr.address}, {addr.city} - {addr.pin}, {addr.state}, {addr.country}
-        </p>
-        {addr.isDefaultBilling && (
-          <p className="text-green-600 font-semibold">Default Billing</p>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          className="h-8 p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditAddressId(addr._id);
-            setNewAddress({ ...addr });
-            setShowAddForm(true);
-          }}
-        >
-          <MdModeEdit className="text-blue-400 text-[22px]" />
-        </button>
-        <button
-          className="h-8 p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteAddress(addr._id);
-          }}
-        >
-          <MdDelete className="text-red-600 text-[22px]" />
-        </button>
-      </div>
-    </div>
-  </div>
-))}
-
-
-        {/* Conditionally show button if there is at least one address */}
-        {addresses.length > 0 && (
-          <Button
-            variant="contained"
-            className="w-[40%] float-right !text-white !bg-[#fb541b] !rounded-none !h-[45px]"
-            onClick={() => handlePlaceOrder()}
-          >
-            Deliver Here
-          </Button>
-        )}
-
-        {(showAddForm || editAddressId) && (
-          <div className="bg-white shadow-md rounded p-5 mt-2">
-            <h3 className="text-[16px] font-[600] mb-3">
-              {editAddressId ? 'Edit Address' : 'Add New Address'}
-            </h3>
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-2">
-              {["fullName", "phoneNumber", "address", "city", "state", "pin", "country"].map((field) => (
-                <TextField
-                  key={field}
-                  label={field.replace(/([A-Z])/g, " $1")}
-                  name={field}
-                  value={newAddress[field]}
-                  onChange={handleAddressChange}
-                  size="small"
-                  className="w-full my-2"
-                  variant="filled"
-                  required
-                />
-              ))}
-              <div className="flex justify-center mt-2 gap-4">
-                <Button
-                  type="submit"
-                  variant="contained"
-                  className="w-[30%] !bg-[#fb541b] !h-[45px]"
-                >
-                  {editAddressId ? 'Update Address' : 'Add Address'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  color="primary"
-                  className="h-[45px] w-[30%] border-blue-400"
-                  onClick={() => {
-                    resetForm();
-                    setShowAddForm(false);
-                  }}
-                >
-                  Cancel
-                </Button>
+    <div className="bg-gray-50 min-h-screen py-6 sm:py-10">
+      <div className="container max-w-7xl mx-auto px-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          
+          {/* Left Part: Address Management */}
+          <div className="lg:w-[70%] w-full order-2 lg:order-1">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <MdAddLocationAlt className="text-[#fb541b] text-2xl" /> Delivery Address
+                </h2>
+                {!showAddForm && (
+                  <Button
+                    className="!capitalize !text-[#fb541b] !border-[#fb541b] hover:!bg-orange-50 !rounded-lg"
+                    variant="outlined"
+                    onClick={() => { resetForm(); setShowAddForm(true); }}
+                  >
+                    + Add New Address
+                  </Button>
+                )}
               </div>
-            </form>
-          </div>
-        )}
-      </div>
 
-      <div className="rightPart w-full lg:m-0 mt-4 lg:w-[30%]">
-        <Totalprice />
+              {/* Address List */}
+              <div className="space-y-4">
+                {addresses.length > 0 ? (
+                  addresses.map((addr) => (
+                    <div 
+                      key={addr._id} 
+                      onClick={() => setSelectedAddress(addr)}
+                      className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-300 transition-all cursor-pointer ${
+                        selectedAddress?._id === addr._id 
+                        ? " bg-orange-50/20" 
+                        : "border-gray-100 hover:border-gray-200"
+                      }`}
+                    >
+                      <Radio
+                        checked={selectedAddress?._id === addr._id}
+                        className="!p-0 !mt-1"
+                        sx={{ '&.Mui-checked': { color: '#fb541b' } }}
+                      />
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-gray-900">{addr.fullName}</span>
+                          <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-bold uppercase tracking-widest">Home</span>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium mb-1">{addr.phoneNumber}</p>
+                        <p className="text-sm text-gray-500 leading-relaxed max-w-md">
+                          {addr.address}, {addr.city}, {addr.state} - <span className="font-bold text-gray-700">{addr.pin}</span>
+                        </p>
+                        
+                        {selectedAddress?._id === addr._id && (
+                          <Button
+                            variant="contained"
+                            className="!mt-5 !bg-[#fb541b] !shadow-lg !shadow-orange-100 !px-8 !py-2 !rounded-lg !font-bold !capitalize"
+                            onClick={(e) => { e.stopPropagation(); handlePlaceOrder(); }}
+                          >
+                            Deliver to this Address
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setEditAddressId(addr._id); setNewAddress({...addr}); setShowAddForm(true); }}
+                          className="text-gray-400 hover:text-blue-500 p-1 transition-colors"
+                        >
+                          <MdModeEdit size={20} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
+                          className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                        >
+                          <MdDelete size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <p className="text-gray-500 text-sm">No saved addresses found. Please add one.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Form to Add/Edit */}
+              {(showAddForm || editAddressId) && (
+                <div className="mt-10 pt-8 border-t border-gray-100">
+                  <div className="flex items-center gap-2 mb-6 text-gray-800">
+                     <MdOutlineHomeWork className="text-xl" />
+                     <h3 className="text-lg font-bold">
+                      {editAddressId ? 'Update Address' : 'New Address Detail'}
+                    </h3>
+                  </div>
+                  
+                  <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                    <TextField label="Full Name" name="fullName" value={newAddress.fullName} onChange={handleAddressChange} fullWidth size="small" required />
+                    <TextField label="Phone Number" name="phoneNumber" value={newAddress.phoneNumber} onChange={handleAddressChange} fullWidth size="small" required />
+                    <div className="md:col-span-2">
+                      <TextField label="Address (House No, Building, Area)" name="address" value={newAddress.address} onChange={handleAddressChange} fullWidth size="small" multiline rows={2} required />
+                    </div>
+                    <TextField label="City" name="city" value={newAddress.city} onChange={handleAddressChange} fullWidth size="small" required />
+                    <TextField label="State" name="state" value={newAddress.state} onChange={handleAddressChange} fullWidth size="small" required />
+                    <TextField label="Pincode" name="pin" value={newAddress.pin} onChange={handleAddressChange} fullWidth size="small" required />
+                    <TextField label="Country" name="country" value={newAddress.country} onChange={handleAddressChange} fullWidth size="small" required />
+                    
+                    <div className="md:col-span-2 flex items-center gap-4 mt-4">
+                      <Button type="submit" variant="contained" className="!bg-[#fb541b] !px-8 !py-2.5 !rounded-lg !font-bold !capitalize !shadow-none">
+                        {editAddressId ? 'Save Changes' : 'Save Address'}
+                      </Button>
+                      <Button variant="text" className="!text-gray-400 !capitalize hover:!bg-transparent" onClick={() => { resetForm(); setShowAddForm(false); }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Part: Summary */}
+          <div className="lg:w-[30%] w-full order-1 lg:order-2">
+            <div className="lg:sticky lg:top-24">
+              <Totalprice />
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

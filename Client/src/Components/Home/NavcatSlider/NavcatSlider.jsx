@@ -48,13 +48,13 @@ const NavCatSlider = () => {
   return (
     <div className="!bg-white border-b border-gray-100">
       {/* Subtle Promo Header */}
-      <div className="py-4 bg-gray-50">
+      <div className="sm:py-4 py-2 bg-gray-50">
         <h5 className="text-[11px] sm:text-[14px] tracking-wider font-medium text-gray-800 text-center">
           Celebrate Occasions with India's #1 Online Gift Store
         </h5>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-3 sm:py-8">
         <Swiper
           slidesPerView={4}
           spaceBetween={16}

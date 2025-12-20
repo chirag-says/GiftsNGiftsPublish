@@ -1,86 +1,96 @@
-
-// CartItems.jsx
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { IoCloseSharp } from "react-icons/io5";
-import Rating from "@mui/material/Rating";
+import { IoTrashOutline } from "react-icons/io5";
+import { HiOutlineBadgeCheck } from "react-icons/hi";
 
 function CartItems({ product, cartItemId, onRemove, onUpdateQuantity, quantity }) {
-
-  const handleIncrement = () => {
-    onUpdateQuantity(cartItemId, quantity + 1);
-  };
-
-  const handleDecrement = () => {
-    if (quantity > 1) {
-      onUpdateQuantity(cartItemId, quantity - 1);
-    }
-  };
-
   return (
-    <div className="cartitems border-b border-gray-100 w-full sm:p-3 p-3 flex items-center sm:gap-4 gap-3">
-      <div className="img lg:!w-[15%] w-[20%] rounded-md overflow-hidden">
-        <Link to={`/products/${product._id}`} className="group">
+    <div className="group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 py-5 px-4 mb-4 bg-white rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 hover:border-orange-100">
+      
+      {/* 1. Image Section - Centered on mobile, left-aligned on desktop */}
+      <div className="relative w-full sm:w-35 h-40 sm:h-35 bg-gray-50 rounded-xl flex items-center justify-center p-3 flex-shrink-0 overflow-hidden">
+        <Link to={`/products/${product._id}`} className="w-full h-full">
           <img
             src={product?.image || "https://placehold.co/150"}
             alt={product?.title}
-            className="w-full group-hover:scale-105 transition-all"
+            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500 rounded-xl"
           />
         </Link>
+        {/* Subtle Discount Tag on Image */}
+        {product.oldprice > product.price && (
+          <div className="absolute top-2 left-2 bg-[#fb541b] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            -{Math.round(((product.oldprice - product.price) / product.oldprice) * 100)}%
+          </div>
+        )}
       </div>
 
-      <div className="info w-[75%] sm:w-[85%] relative">
-        <IoCloseSharp
-          onClick={() => onRemove(cartItemId)}
-          className="cursor-pointer link transition-all absolute md:!top-[-3] !top-[0px] sm:!right-[10px] !right-[-8px] text-[14px] sm:text-[18px]"
-        />
+      {/* 2. Main Content Area */}
+      <div className="flex-1 w-full flex flex-col justify-between py-1">
+        
+        {/* Top Info Row */}
+        <div className="flex justify-between items-start gap-4 mb-3">
+          <div className="space-y-1">
+            <Link to={`/products/${product._id}`}>
+              <h3 className="text-gray-900 font-extrabold text-sm sm:text-base hover:text-[#fb541b] transition-colors line-clamp-1 leading-snug">
+                {product.title}
+              </h3>
+            </Link>
+            <div className="flex items-center gap-1.5 text-gray-400">
+              <HiOutlineBadgeCheck className="text-blue-500" />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
+                {product.brand || "Authentic Item"}
+              </span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => onRemove(cartItemId)} 
+            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 shadow-sm sm:shadow-none"
+            title="Remove from bag"
+          >
+            <IoTrashOutline size={20} />
+          </button>
+        </div>
 
-        <h3 className="md:text-[15px] text-[11px] text-black">
-          <Link to={`/products/${product._id}`} className="link">
-            {product.title}
-          </Link>
-        </h3>
-
-        <div className="flex items-center sm:py-2 gap-1 sm:gap-3">
-          <span className="text-gray-400 sm:!text-[15px] text-[11px]">
-            Brand:
-            <span className="font-[400] text-[10px] sm:!text-[14px] text-gray-600 pl-1">
-              {product.brand || "No Brand"}
+        {/* Bottom Interaction Row */}
+        <div className="flex items-center justify-between mt-auto">
+          
+          {/* Stylized Quantity Selector */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl gap-1">
+            <button 
+              onClick={() => quantity > 1 && onUpdateQuantity(cartItemId, quantity - 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              disabled={quantity <= 1}
+            > – </button>
+            
+            <span className="w-8 text-center text-xs font-black text-gray-800">
+              {quantity}
             </span>
-          </span>
-          <Rating name="size-small" defaultValue={4} size="small" readOnly />
-          <span className="text-[10px] sm:!text-[14px] cursor-pointer">
-            Reviews 5
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4  !mb-2">
-          <span className="text-black sm:text-[15px] text-[13px] font-[600]">
-            ₹{(product.price * quantity).toFixed(2)}
-          </span>
-          <span className="line-through text-gray-500 text-[10px] sm:!text-[14px] font-[500]">
-            ₹{product.oldprice}
-          </span>
-          <span className="text-[#7d0492] sm:text-[14px] text-[10px] font-[600]">
-            {product.discount}% off
-          </span>
-        </div>
-
-
-        <div className="flex items-center gap-3 !pt-1">
-          <button
-            onClick={handleDecrement}
-            className=" border border-gray-400 !p-0 !px-2 !text-black !text-[13px]"
-          >
-            -
-          </button>
-          <span className="font-medium !text-center  !pr-1 !text-[14px]">{quantity}</span>
-          <button
-            onClick={handleIncrement}
-            className=" border border-gray-400 !text-black !px-2 !p-0 !text-[13px]"
-          >
-            +
-          </button>
+            
+            <button 
+              onClick={() => onUpdateQuantity(cartItemId, quantity + 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all"
+            > + </button>
+          </div>
+          
+          {/* Pricing Section */}
+          <div className="flex flex-col items-end">
+            <div className="flex items-baseline gap-2">
+              <span className="text-gray-400 text-xs line-through decoration-gray-300">
+                ₹{(product.oldprice * quantity).toFixed(0)}
+              </span>
+              <span className="text-gray-900 font-black text-xl tracking-tight">
+                ₹{(product.price * quantity).toFixed(0)}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1 mt-0.5">
+               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+               <span className="text-[10px] font-bold text-green-600">
+                Saving ₹{((product.oldprice - product.price) * quantity).toFixed(0)}
+               </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -88,7 +98,14 @@ function CartItems({ product, cartItemId, onRemove, onUpdateQuantity, quantity }
 }
 
 CartItems.propTypes = {
-  product: PropTypes.object.isRequired,
+  product: PropTypes.shape({
+    _id: PropTypes.string,
+    title: PropTypes.string,
+    image: PropTypes.string,
+    brand: PropTypes.string,
+    price: PropTypes.number,
+    oldprice: PropTypes.number,
+  }).isRequired,
   cartItemId: PropTypes.string.isRequired,
   onRemove: PropTypes.func.isRequired,
   onUpdateQuantity: PropTypes.func.isRequired,

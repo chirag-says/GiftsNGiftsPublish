@@ -81,14 +81,22 @@ function ProductList() {
   };
 
   return (
-    <div className="w-full px-2">
-      <h1 className="text-center text-lg sm:text-xl font-semibold text-gray-800 my-4">
-        {activeCategoryName} Products
-      </h1>
-
+    <div className="w-full px-6">
+      <div className="border-b border-gray-100 py-6 ">
+        <div className="mx-auto">
+          <nav className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
+            Home / Products / <span className="text-[#7d0492] font-bold">{activeCategoryName}</span>
+          </nav>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 capitalize">
+              {activeCategoryName} <span className="text-sm font-normal text-gray-400 ml-2 italic">({products.length} Items)</span>
+            </h1>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left Filter */}
-        <div className="w-full lg:w-1/4 bg-white rounded shadow-md">
+        <div className="w-full lg:w-1/5 bg-white rounded shadow-md">
           <LeftFilter onApplyFilters={applyFilters} />
         </div>
 
@@ -102,7 +110,7 @@ function ProductList() {
                   className="bg-white rounded overflow-hidden shadow hover:shadow-lg transition w-[47%] sm:w-[45%] md:w-[30%] lg:w-[28%] xl:w-[23%]"
                 >
                   <Link to={`/products/${product._id}`}>
-                    <div className="w-full h-auto sm:h-[260px] md:h-[280px] lg:h-[280px] overflow-hidden">
+                    <div className="w-full h-auto sm:h-[260px] md:h-[280px] lg:h-[260px] overflow-hidden">
                       <img
                         src={product?.images?.[0]?.url || "/default-image.jpg"}
                         alt={product?.images?.[0]?.altText || product?.title}
@@ -111,7 +119,7 @@ function ProductList() {
                     </div>
                   </Link>
                   <div className="text-center p-2">
-                    <h3 className="text-gray-700 text-[13px] sm:text-[15px] md:text-[16px] font-semibold mb-1">
+                    <h3 className="text-gray-500 text-[13px] sm:text-[15px] md:text-[15px] font-semibold mb-1">
                       {product.title}
                     </h3>
                     <p className="text-gray-900 text-sm sm:text-base font-semibold">

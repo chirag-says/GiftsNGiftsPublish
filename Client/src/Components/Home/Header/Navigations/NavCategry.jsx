@@ -52,35 +52,41 @@ function NavCategory() {
       <ul className="flex items-center justify-center">
         {categories.map((cat) => (
           <li key={cat._id} className="relative group xl:px-3">
-            <Link to="/">
-              <Button
-                className="!text-black !text-[13px] hover:!text-[#7d0492] flex items-center gap-1"
-                style={{ textTransform: "capitalize" }}
-              >
-                {cat.categoryname}
-                <GoTriangleDown className="text-base" />
-              </Button>
-            </Link>
+  {/* Main Category Link */}
+  <Link to="/productlist" state={{ category: cat.categoryname, categoryId: cat._id }}>
+    <Button
+      className="!text-black !text-[13px] hover:!text-[#7d0492] flex items-center gap-1"
+      style={{ textTransform: "capitalize" }}
+    >
+      {cat.categoryname}
+      <GoTriangleDown className="text-base" />
+    </Button>
+  </Link>
 
-            {/* Hover Submenu */}
-            <div className="submenu absolute !mx-10 top-[110%] !-right-28 !left-25 transform -translate-x-1/2 min-w-[800px] bg-white shadow-lg border border-gray-200 opacity-0 invisible transition-all duration-500 ease-in-out group-hover:opacity-100 group-hover:visible z-10">
-              <ul className="grid grid-cols-4  !gap-2 p-4">
-                {(subcategoriesByCategory[cat._id] || []).map((subcat, index) => (
-                  <li
-                    key={`${cat._id}-${subcat._id}-${index}`}
-                    className="list-none text-[14px] text-center "
-                  >
-                    <Link
-                      to={`/subcategory/${subcat._id}`}
-                      className="text-[rgba(0,0,0,0.8)] hover:text-[#7d0492] transition-colors duration-200"
-                    >
-                      {subcat.subcategory}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+  {/* FIXED SUBMENU: Centered and Polished */}
+  <div className="submenu absolute top-full left-50 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out z-50">
+    <div className="min-w-[700px] bg-white shadow-2xl border border-gray-100 rounded-xl overflow-hidden">
+      <ul className="grid grid-cols-4 gap-x-6 gap-y-3 p-8">
+        {(subcategoriesByCategory[cat._id] || []).map((subcat) => (
+          <li key={subcat._id} className="list-none">
+            <Link
+              to="/productlist"
+              state={{ 
+                category: cat.categoryname, 
+                subcategory: subcat.subcategory, 
+                subcategoryId: subcat._id 
+              }}
+              className="text-[14px] text-gray-500 hover:text-[#7d0492] hover:translate-x-1 font-medium block py-1 transition-all duration-200"
+            >
+              {subcat.subcategory}
+            </Link>
           </li>
+        ))}
+      </ul>
+      {/* Footer Decoration */}
+    </div>
+  </div>
+</li>
         ))}
       </ul>
     </div>

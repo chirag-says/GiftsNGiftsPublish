@@ -64,7 +64,7 @@ function LeftFilter({ onApplyFilters }) {
 
       {/* Sidebar Filters */}
       <aside
-        className={`sidebar px-4 py-4 space-y-4 bg-white border rounded-md shadow-sm 
+        className={`sidebar px-4 py-4 space-y-4 bg-white rounded-md shadow-sm 
         ${showFilters ? 'block' : 'hidden'} lg:block w-full sm:max-w-sm lg:max-w-full`}
       >
         {/* Category Filter */}

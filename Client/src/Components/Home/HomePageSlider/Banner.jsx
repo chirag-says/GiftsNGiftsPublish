@@ -27,7 +27,7 @@ function Banner() {
           <img
             src={two}
             alt="Banner Image 2"
-            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
+            className="w-full h-40 sm:h-45 md:h-55 lg:h-95"
           />
         </SwiperSlide>
           <SwiperSlide>

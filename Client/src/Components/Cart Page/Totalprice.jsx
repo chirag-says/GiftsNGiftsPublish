@@ -1,56 +1,53 @@
-import React, { useContext } from 'react';
-import { Divider } from "@mui/material";
+import { Divider, Button } from "@mui/material";
+import { useContext } from 'react';
 import { AppContext } from '../context/Appcontext.jsx';
 
 function Totalprice({ handlePlaceOrder }) {
   const { cartItems: contextCartItems } = useContext(AppContext);
   const cartItems = contextCartItems || [];
 
-  const totalOriginalPrice = cartItems.reduce(
-    (acc, item) => acc + item.product.oldprice * item.quantity,
-    0
-  );
-
-  const totalDiscountedPrice = cartItems.reduce(
-    (acc, item) => acc + item.product.price * item.quantity,
-    0
-  );
-
+  const totalOriginalPrice = cartItems.reduce((acc, item) => acc + item.product.oldprice * item.quantity, 0);
+  const totalDiscountedPrice = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const discountAmount = totalOriginalPrice - totalDiscountedPrice;
-  const discountPercent = totalOriginalPrice
-    ? Math.round((discountAmount / totalOriginalPrice) * 100)
-    : 0;
 
   return (
-    <div className="shadow-md !w-[100%] rounded-md bg-white p-6">
-      <h3 className="py-2 pb-5 px-1 font-[500]">PRICE DETAILS</h3>
-      <Divider />
-      <p className="flex items-center justify-between !pt-5 px-1">
-        <span className="text-[15px] font-[500]">Price ({cartItems.length} items)</span>
-        <span className="font-bold">₹{totalOriginalPrice.toFixed(2)}</span>
-      </p>
-      <p className="flex items-center justify-between py-2 px-1">
-        <span className="text-[15px] font-[500]">Discount</span>
-        <span className="font-bold">{discountPercent}% Off</span>
-      </p>
-      <p className="flex items-center justify-between py-2 px-1">
-        <span className="text-[15px] font-[500]">Delivery Charges</span>
-        <span className="font-bold">Free</span>
-      </p>
-      <p className="flex items-center justify-between py-2 px-1">
-        <span className="text-[15px] font-[500]">Payment Process</span>
-        <span className="font-bold">Cash on Delivery
-        </span>
-      </p>
-      <Divider />
-      <p className="flex items-center justify-between px-1 py-1">
-        <span className="text-[15px] pt-2 text-black font-[600]">Total Amount</span>
-        <span className="font-bold text-[15px] mt-3 text-black">₹{totalDiscountedPrice.toFixed(2)}</span>
-      </p>
-      <p className="text-[#7d0492] px-1 text-sm  font-medium">
-        You will save ₹{discountAmount.toFixed(2)} on this order
-      </p>
-     
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6">
+        <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-wider">Order Summary</h3>
+        
+        <div className="space-y-4">
+          <div className="flex justify-between text-gray-500 text-sm">
+            <span>Price ({cartItems.length} items)</span>
+            <span>₹{totalOriginalPrice.toFixed(2)}</span>
+          </div>
+          
+          <div className="flex justify-between text-green-600 text-sm">
+            <span>Discount</span>
+            <span>- ₹{discountAmount.toFixed(2)}</span>
+          </div>
+          
+          <div className="flex justify-between text-gray-500 text-sm">
+            <span>Delivery Charges</span>
+            <span className="text-green-600 font-medium">FREE</span>
+          </div>
+
+          <Divider className="!my-4" />
+          
+          <div className="flex justify-between items-end">
+            <span className="text-gray-800 font-bold">Total Amount</span>
+            <div className="text-right">
+              <p className="text-2xl font-black text-gray-900 leading-none">₹{totalDiscountedPrice.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[#fb541b]/5 pb-2 pt-4 text-center">
+        <p className="text-sm font-medium text-[#fb541b]">
+          🎊 You saved ₹{discountAmount.toFixed(2)}!
+        </p>
+      </div>
+      
     </div>
   );
 }

@@ -112,13 +112,24 @@ const chatSessionSchema = new mongoose.Schema({
     userName: { type: String },
     userEmail: { type: String },
     userType: { type: String, enum: ['customer', 'vendor'], default: 'customer' },
+    channel: { type: String, enum: ['chatbot', 'live'], default: 'chatbot' },
+    source: { type: String, default: 'web' },
+    deviceMeta: {
+        browser: { type: String },
+        platform: { type: String },
+        locale: { type: String },
+        timezone: { type: String }
+    },
     status: { type: String, enum: ['waiting', 'active', 'closed'], default: 'waiting' },
     assignedAgent: { type: String },
     messages: [{
         sender: { type: String, enum: ['user', 'agent', 'system'] },
         message: { type: String },
+        intent: { type: String },
+        payload: { type: mongoose.Schema.Types.Mixed },
         timestamp: { type: Date, default: Date.now }
     }],
+    context: { type: mongoose.Schema.Types.Mixed, default: {} },
     rating: { type: Number, min: 1, max: 5 },
     feedback: { type: String }
 }, { timestamps: true });

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { backendurl, setIsLoggedin, getuserData, setUserdata,userData } =
+  const { backendurl, setIsLoggedin, getuserData, setUserdata, userData } =
     useContext(AppContext);
 
   const [state, setState] = useState("Login"); // Login or Sign Up
@@ -70,15 +70,15 @@ const Login = () => {
           // Auto-login: store token and user data
           localStorage.setItem("token", data.token);
           setIsLoggedin(true);
-          
+
           if (data.user) {
             setUserdata({
-              id: data.user.id,
+              _id: data.user.id || data.user._id,
               name: data.user.name,
               email: data.user.email,
             });
           }
-          
+
           toast.success("Account created successfully! You are now logged in.");
           navigate("/");
         } else {
@@ -122,34 +122,34 @@ const Login = () => {
       }
 
       const { data } = await axios.post(
-      `${backendurl}/api/auth/verify-login-otp`,
+        `${backendurl}/api/auth/verify-login-otp`,
         {
           email,
           otp,
         }
       );
 
-       try {
+      try {
 
-        if(data.success){
-          localStorage.setItem("token",data.token)
-             setIsLoggedin(true);
+        if (data.success) {
+          localStorage.setItem("token", data.token)
+          setIsLoggedin(true);
         }
- 
 
-    if (data.user) {
-      setUserdata({
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-      });
-    }
 
-    navigate("/");
-  } catch (innerError) {
-    console.error("Error after successful login:", innerError);
-    toast.error("Something went wrong after login.");
-  }
+        if (data.user) {
+          setUserdata({
+            _id: data.user.id || data.user._id,
+            name: data.user.name,
+            email: data.user.email,
+          });
+        }
+
+        navigate("/");
+      } catch (innerError) {
+        console.error("Error after successful login:", innerError);
+        toast.error("Something went wrong after login.");
+      }
     } catch (error) {
       const message =
         error?.response?.data?.message ||
@@ -157,9 +157,9 @@ const Login = () => {
       toast.error(message);
     }
   };
-useEffect(()=>{
-  console.log("user",userData)
-},[userData])
+  useEffect(() => {
+    console.log("user", userData)
+  }, [userData])
   return (
     <div className="flex justify-center items-center mt-5 px-6 sm:px-0 bg-gradient-to-br">
       <div className="bg-white p-6 sm:p-10 rounded-lg shadow-lg w-full sm:w-100 xl:w-[35%] text-black-300 text-sm">
@@ -167,8 +167,8 @@ useEffect(()=>{
           {isOtpPage
             ? "Verify OTP"
             : state === "Sign Up"
-            ? "Create Account"
-            : "Login"}
+              ? "Create Account"
+              : "Login"}
         </h2>
 
         {/* OTP Verification Form */}
@@ -282,4 +282,4 @@ useEffect(()=>{
   );
 };
 
-export default Login;
+export default Login;

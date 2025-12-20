@@ -31,6 +31,7 @@ import Desclaimer from './Components/Home/Footer/Desclaimer.jsx'
 import BulkOrders from './Components/Home/Footer/BulkOrders.jsx'
 import RefundPlicy from './Components/Home/Footer/RefundPolicy.jsx'
 import ErrorPage from "./Components/ErrorPage/ErrorPage.jsx";
+import ChatWidget from "./Components/Chatbot/ChatWidget.jsx";
 function App() {
   return (
     <>
@@ -68,6 +69,7 @@ function App() {
          <Route path="*" element={<ErrorPage />} />
       </Routes>
       <Footer />
+      <ChatWidget />
     </>
   );
 }

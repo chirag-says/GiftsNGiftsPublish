@@ -30,6 +30,7 @@ import supportRoutes from "./routes/supportRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import reportsRoutes from "./routes/reportsRoutes.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 
 
 
@@ -114,6 +115,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/product', productRoutes); // ✅ New Product Routes
 app.use('/api/client', clientRoutes); // ✅ New Client Routes
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', subcategoryRoutes);

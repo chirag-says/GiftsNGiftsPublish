@@ -1,31 +1,33 @@
 import usermodel from "../model/mongobd_usermodel.js";
 import Profile from "../model/userprofile.js";
 //Get all user data after register or login all of aperaton------
-export const getuserdeta = async (req,res)=>{
-    try {
-        const {userId} = req.body;
-        const user = await usermodel.findById(userId);
-        if(!user) {
-            return res.json({success:false, message : 'user not found'});
-        }
-        res.json({
-            success:true,
-            userData: {
-                name : user.name,
-                isAccountVerify : user.isAccountVerify
-            }
-        })
-
-    } catch (error) {
-        res.json({success: false, message: error.message});
+export const getuserdeta = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const user = await usermodel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: 'user not found' });
     }
+    res.json({
+      success: true,
+      userData: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAccountVerify: user.isAccountVerify
+      }
+    })
+
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
 
 }
 
 export const getProfile = async (req, res) => {
   try {
     const { userId } = req.body;
-    const profile = await Profile.findOne({ user:userId });
+    const profile = await Profile.findOne({ user: userId });
     if (!profile) {
       return res.status(404).json({ success: false, message: 'Profile not found' });
     }
@@ -65,7 +67,7 @@ export const UpdateProfile = async (req, res) => {
     if (!profile) {
       return res.status(404).json({ success: false, message: 'Profile not found' });
     }
-    res.json({ success: true, message:"profile updated" });
+    res.json({ success: true, message: "profile updated" });
   } catch (error) {
     console.error("Update Profile Error:", error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -156,6 +158,6 @@ export const setDefaultBilling = async (req, res) => {
     res.json({ success: true, message: 'Default billing address updated' });
   } catch (error) {
     console.error("Set Default Billing Error:", error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };

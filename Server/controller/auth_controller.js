@@ -309,7 +309,18 @@ export const verifyingEmail = async (req, res) => {
 //check if user is authenticated------
 export const isAuthenticated = async (req, res) => {
   try {
-    return res.json({ success: true });
+    const user = await usermodel.findById(req.body.userId);
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }

@@ -58,26 +58,26 @@ export const AppContextProvider = (props) => {
   };
 
   // Check if user is authenticated
- const getAuthstate = async () => {
-  if (!token) return;
+  const getAuthstate = async () => {
+    if (!token) return;
 
-  try {
-    const { data } = await axios.get(`${backendurl}/api/auth/is-auth`, {
-      headers: authHeader,
-    });
+    try {
+      const { data } = await axios.get(`${backendurl}/api/auth/is-auth`, {
+        headers: authHeader,
+      });
 
-    if (data.success) {
-      setIsLoggedin(true);
-      getuserData();
-      fetchCart();
-      fetchWishlist();
-    } else {
-      logout(); // remove invalid token
+      if (data.success) {
+        setIsLoggedin(true);
+        getuserData();
+        fetchCart();
+        fetchWishlist();
+      } else {
+        logout(); // remove invalid token
+      }
+    } catch (error) {
+      logout(); // clear invalid session
     }
-  } catch (error) {
-    logout(); // clear invalid session
-  }
-};
+  };
 
   // Fetch Cart
   const fetchCart = async () => {
@@ -91,18 +91,18 @@ export const AppContextProvider = (props) => {
       console.error("Error fetching cart:", err);
     }
   };
-const clearCartAfterOrder = async () => {
-  if (!token) return;
-  setCartItems([]);
-  try {
-    await axios.delete(`${backendurl}/api/auth/clear-cart`, {
-      headers: authHeader,
-    });
-    await fetchCart();
-  } catch (err) {
-    console.error("Error clearing backend cart:", err);
-  }
-};
+  const clearCartAfterOrder = async () => {
+    if (!token) return;
+    setCartItems([]);
+    try {
+      await axios.delete(`${backendurl}/api/auth/clear-cart`, {
+        headers: authHeader,
+      });
+      await fetchCart();
+    } catch (err) {
+      console.error("Error clearing backend cart:", err);
+    }
+  };
 
 
   // Fetch Wishlist
@@ -126,8 +126,10 @@ const clearCartAfterOrder = async () => {
       });
       if (data.success) {
         localStorage.removeItem("token");
+        // Clear chatbot session so previous user's data isn't shown
+        localStorage.removeItem("chatbotSessionId");
         setIsLoggedin(false);
-        setUserdata(false);
+        setUserdata(null);
         setProfile({ name: '', phone: '', email: '' });
         setCartItems([]);
         setWishlistItems([]);
@@ -139,14 +141,14 @@ const clearCartAfterOrder = async () => {
   };
 
   useEffect(() => {
-     const savedToken = localStorage.getItem("token");
+    const savedToken = localStorage.getItem("token");
 
-  if (savedToken) {
-    setIsLoggedin(true);
-    getuserData();       // fetch user details
-    fetchCart();         // fetch cart
-    fetchWishlist();     // fetch wishlist
-  }
+    if (savedToken) {
+      setIsLoggedin(true);
+      getuserData();       // fetch user details
+      fetchCart();         // fetch cart
+      fetchWishlist();     // fetch wishlist
+    }
 
     getAuthstate();
   }, []);

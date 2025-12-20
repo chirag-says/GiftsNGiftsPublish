@@ -129,7 +129,9 @@ export const useChatbot = ({ backendurl, userData }) => {
   }, [backendurl, isSending, userEnvelope]);
 
   const hydratedRef = useRef(false);
+  const previousUserIdRef = useRef(userId);
 
+  // Initial hydration on mount
   useEffect(() => {
     if (!hydratedRef.current) {
       hydratedRef.current = true;
@@ -139,6 +141,46 @@ export const useChatbot = ({ backendurl, userData }) => {
       abortRef.current = true;
     };
   }, []);
+
+  // Detect logout: when userId changes from a value to undefined/null
+  useEffect(() => {
+    const prevId = previousUserIdRef.current;
+    previousUserIdRef.current = userId;
+
+    // If user logged out (had userId, now doesn't)
+    if (prevId && !userId) {
+      console.log('[Chatbot] User logged out, resetting session');
+      // Clear stored session
+      localStorage.removeItem('chatbotSessionId');
+      sessionIdRef.current = '';
+
+      // Reset ALL chatbot state
+      setSession(null);
+      setMessages([]);
+      setSuggestions(BASE_SUGGESTIONS);
+      setError('');
+      setIsOpen(false); // Close the widget
+      setIsBootstrapping(true); // Show loading state
+
+      // Start fresh anonymous session after a brief delay
+      abortRef.current = false;
+      hydratedRef.current = false;
+      setTimeout(() => {
+        hydratedRef.current = true;
+        hydrateSession();
+      }, 300);
+    }
+
+    // If user logged in (didn't have userId, now has)
+    if (!prevId && userId) {
+      console.log('[Chatbot] User logged in, refreshing session');
+      // Clear old session and get new one linked to user
+      localStorage.removeItem('chatbotSessionId');
+      sessionIdRef.current = '';
+      setIsBootstrapping(true);
+      hydrateSession();
+    }
+  }, [userId, hydrateSession]);
 
   const toggleWidget = () => setIsOpen((prev) => !prev);
   const openWidget = () => setIsOpen(true);

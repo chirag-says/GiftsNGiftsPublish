@@ -51,16 +51,32 @@ const detectIntent = (text) => {
     // ============================================
     // PRIORITY 1: Order-related intents (check FIRST!)
     // ============================================
+
+    // "I have an order ID" - prompt them to enter it
+    if (/(?:i have|here is|here's)\s*(?:an|my|the)?\s*order\s*(?:id|number|#)?/i.test(normalized)) return 'order.provide-id';
+
+    // "Show my orders", "my orders"
+    if (/show\s*(?:my|all)?\s*orders?/i.test(normalized)) return 'order.status';
+    if (/my\s*orders?/i.test(normalized)) return 'order.status';
+
+    // Login to account
+    if (/login\s*to\s*(?:my)?\s*account/i.test(normalized)) return 'support.login';
+
+    // Cancel order
     if (/cancel/.test(normalized) && /order/i.test(normalized)) return 'order.cancel';
     if (/cancel\s*(my|the|an)?\s*order/i.test(normalized)) return 'order.cancel';
     if (/cancel/i.test(normalized)) return 'order.cancel';
 
+    // Return/replace
     if (/return|replace|exchange/i.test(normalized)) return 'order.return';
 
-    if (/track|status|where.*order|where.*my|delivery|shipment|order.*status|my.*order/i.test(normalized)) return 'order.status';
+    // Track/status
+    if (/track|status|where.*order|where.*my|delivery|shipment|order.*status/i.test(normalized)) return 'order.status';
 
+    // Address change
     if (/address|change address|update address/i.test(normalized)) return 'order.address';
 
+    // Refund
     if (/refund/i.test(normalized)) return 'order.refund';
 
     // ============================================
@@ -167,8 +183,26 @@ const ensureSession = async (params = {}) => {
         source = 'web'
     } = params;
 
-    let session = sessionId ? await ChatSession.findOne({ sessionId }) : null;
+    let session = null;
 
+    // Only look up session by sessionId if provided
+    if (sessionId) {
+        session = await ChatSession.findOne({ sessionId });
+
+        // If session found but belongs to a different user, don't reuse it
+        if (session && session.userId && userId && session.userId.toString() !== userId.toString()) {
+            console.log('[Chatbot] Session belongs to different user, creating new session');
+            session = null;
+        }
+
+        // If session found and had a userId but current request has no userId (logged out), don't reuse
+        if (session && session.userId && !userId) {
+            console.log('[Chatbot] Session has userId but request is anonymous, creating new session');
+            session = null;
+        }
+    }
+
+    // If no session found by sessionId but userId provided, find user's existing open session
     if (!session && userId) {
         session = await ChatSession.findOne({
             userId,
@@ -303,12 +337,38 @@ const createSupportTicketFromChat = async ({ session, order, type, message }) =>
 
 const orderStatusResponse = async ({ session, userId, explicitOrderId }) => {
     const order = await resolveOrder({ session, explicitOrderId, userId });
+
     if (!order) {
+        // Determine why we couldn't find an order
+        const isLoggedIn = !!userId || !!session?.userId;
+
+        if (!isLoggedIn) {
+            // User is not logged in
+            return {
+                reply: "Please log in to view your orders, or share the 24-digit order ID if you have one.",
+                intent: 'order.status.need-login',
+                payload: null,
+                suggestions: ['Login to my account', 'I have an order ID', 'Browse products']
+            };
+        }
+
+        // User is logged in but no orders found
+        if (explicitOrderId) {
+            // They provided an order ID but it wasn't found
+            return {
+                reply: "I couldn't find an order with that ID. Please double-check the order ID or try searching with a different one.",
+                intent: 'order.status.not-found',
+                payload: null,
+                suggestions: ['Show my orders', 'Talk to support', 'Browse products']
+            };
+        }
+
+        // User is logged in but simply has no orders
         return {
-            reply: "I couldn't find that order. Please share the 24-digit order ID or log in so I can fetch it automatically.",
-            intent: 'order.status.pending-id',
+            reply: "You don't have any orders yet! 🛒 Start shopping and I'll help you track your first order.",
+            intent: 'order.status.no-orders',
             payload: null,
-            suggestions: ['Here is my order ID', 'Show my latest order', 'Talk to support']
+            suggestions: ['Search products', 'Show trending items', 'Gift ideas']
         };
     }
 
@@ -330,18 +390,37 @@ const orderStatusResponse = async ({ session, userId, explicitOrderId }) => {
         suggestions: composeSuggestions([
             'Cancel this order',
             'Change delivery address',
-            'Talk to a human expert'
+            'Talk to support'
         ])
     };
 };
 
 const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
     const order = await resolveOrder({ session, explicitOrderId, userId });
+
     if (!order) {
+        const isLoggedIn = !!userId || !!session?.userId;
+
+        if (!isLoggedIn) {
+            return {
+                reply: "Please log in first so I can find your orders to cancel, or share the order ID directly.",
+                intent: 'order.cancel.need-login',
+                suggestions: ['Login to my account', 'I have an order ID', 'Talk to support']
+            };
+        }
+
+        if (explicitOrderId) {
+            return {
+                reply: "I couldn't find an order with that ID. Please check the order ID and try again.",
+                intent: 'order.cancel.not-found',
+                suggestions: ['Show my orders', 'Talk to support']
+            };
+        }
+
         return {
-            reply: 'I need the exact order ID to cancel. Please paste it here.',
-            intent: 'order.cancel.need-id',
-            suggestions: ['Track my order', 'Talk to support']
+            reply: "You don't have any orders to cancel. Once you place an order, I can help you manage it!",
+            intent: 'order.cancel.no-orders',
+            suggestions: ['Search products', 'Show trending items', 'Browse gift ideas']
         };
     }
 
@@ -385,11 +464,30 @@ const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
 
 const orderReturnResponse = async ({ session, userId, explicitOrderId }) => {
     const order = await resolveOrder({ session, explicitOrderId, userId });
+
     if (!order) {
+        const isLoggedIn = !!userId || !!session?.userId;
+
+        if (!isLoggedIn) {
+            return {
+                reply: "Please log in so I can find your delivered orders for return, or share the order ID directly.",
+                intent: 'order.return.need-login',
+                suggestions: ['Login to my account', 'I have an order ID', 'Talk to support']
+            };
+        }
+
+        if (explicitOrderId) {
+            return {
+                reply: "I couldn't find an order with that ID. Please double-check the order ID.",
+                intent: 'order.return.not-found',
+                suggestions: ['Show my orders', 'Talk to support']
+            };
+        }
+
         return {
-            reply: 'Share the order ID so that I can start the return paperwork for you.',
-            intent: 'order.return.need-id',
-            suggestions: ['Here is my order ID', 'Talk to support']
+            reply: "You don't have any orders to return yet. Once you receive a delivery, I can help you with returns!",
+            intent: 'order.return.no-orders',
+            suggestions: ['Search products', 'Show trending items', 'Browse gift ideas']
         };
     }
 
@@ -428,7 +526,19 @@ const addressResponse = ({ session }) => ({
 const refundResponse = ({ session }) => ({
     reply: 'Refunds go back to the original payment method. UPI/card refunds take 2-5 working days once the order is cancelled or the return is scanned. I will keep tracking it for you.',
     intent: 'order.refund',
-    suggestions: composeSuggestions(['Track refund status', 'Talk to a human expert'])
+    suggestions: composeSuggestions(['Track refund status', 'Talk to support'])
+});
+
+const loginResponse = () => ({
+    reply: "To log in, please click the 'Sign In' button in the top right corner of the page. Once logged in, I can help you track all your orders automatically!",
+    intent: 'support.login',
+    suggestions: composeSuggestions(['I have an order ID', 'Search products', 'Talk to support'])
+});
+
+const orderIdPromptResponse = () => ({
+    reply: "Please paste your 24-digit order ID here and I'll look it up for you right away! 📋\n\nYou can find it in your order confirmation email or SMS.",
+    intent: 'order.status.awaiting-id',
+    suggestions: composeSuggestions(['Track my order', 'Talk to support', 'Browse products'])
 });
 
 const marketingResponse = () => ({
@@ -718,6 +828,9 @@ export const handleChatMessage = async (req, res) => {
             case 'order.refund':
                 botResponse = refundResponse({ session });
                 break;
+            case 'order.provide-id':
+                botResponse = orderIdPromptResponse();
+                break;
 
             // Marketing & catalog
             case 'marketing.offer':
@@ -733,6 +846,9 @@ export const handleChatMessage = async (req, res) => {
                 break;
             case 'support.issue':
                 botResponse = await issueResponse({ session, rawMessage: userMessage });
+                break;
+            case 'support.login':
+                botResponse = loginResponse();
                 break;
 
             default:

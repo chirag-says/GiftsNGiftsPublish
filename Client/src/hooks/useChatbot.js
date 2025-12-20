@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
 const BASE_SUGGESTIONS = [
-  'Track my latest order',
+  'Track my order',
   'Cancel an order',
-  'Return or replace an item',
-  'Update delivery address',
-  'Talk to a human expert'
+  'Return or replace',
+  'Search products',
+  'Talk to support'
 ];
 
 const buildMetadataSnapshot = () => ({

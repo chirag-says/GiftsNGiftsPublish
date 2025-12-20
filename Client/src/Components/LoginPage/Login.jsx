@@ -24,7 +24,7 @@ const Login = () => {
     setPassword("");
     setIsOtpPage(false);
     // Ensure inputRefs exist before clearing
-    inputRefs.current.forEach((input) => { if(input) input.value = "" });
+    inputRefs.current.forEach((input) => { if (input) input.value = "" });
   }, [state]);
 
   // Focus handling for OTP fields
@@ -116,19 +116,12 @@ const Login = () => {
 
       const { data } = await axios.post(
         `${backendurl}/api/auth/verify-login-otp`,
-        {
-          email,
-          otp,
-        }
+        { email, otp }
       );
 
-      try {
-
-        if (data.success) {
-          localStorage.setItem("token", data.token)
-          setIsLoggedin(true);
-        }
-
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        setIsLoggedin(true);
 
         if (data.user) {
           setUserdata({
@@ -139,40 +132,30 @@ const Login = () => {
         }
 
         navigate("/");
-      } catch (innerError) {
-        console.error("Error after successful login:", innerError);
-        toast.error("Something went wrong after login.");
+      } else {
+        toast.error(data.message || "OTP verification failed.");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "OTP verification failed.");
     }
   };
+
   useEffect(() => {
-    console.log("user", userData)
-  }, [userData])
-  return (
-    <div className="flex justify-center items-center mt-5 px-6 sm:px-0 bg-gradient-to-br">
-      <div className="bg-white p-6 sm:p-10 rounded-lg shadow-lg w-full sm:w-100 xl:w-[35%] text-black-300 text-sm">
-        <h2 className="text-2xl font-semibold text-center mb-10">
-          {isOtpPage
-            ? "Verify OTP"
-            : state === "Sign Up"
-              ? "Create Account"
-              : "Login"}
-        </h2>
+    console.log("user", userData);
+  }, [userData]);
 
   return (
-    <div className="flex items-center justify-center bg-slate-50 px-4 py-10">
+    <div className="flex items-center justify-center bg-slate-50 px-4 py-10 min-h-[80vh]">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-        
+
         {/* Header */}
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900">
             {isOtpPage ? "Verify Identity" : state === "Sign Up" ? "Get Started" : "Welcome Back"}
           </h2>
           <p className="mt-2 text-sm text-gray-500">
-            {isOtpPage 
-              ? `Enter the code sent to ${email}` 
+            {isOtpPage
+              ? `Enter the code sent to ${email}`
               : state === "Sign Up" ? "Create an account to join us" : "Please enter your details"}
           </p>
         </div>
@@ -201,8 +184,8 @@ const Login = () => {
             >
               Verify & Login
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setIsOtpPage(false)}
               className="w-full text-sm text-gray-500 hover:text-gray-700"
             >
@@ -241,15 +224,15 @@ const Login = () => {
 
               <div>
                 <div className="flex justify-between mb-1">
-                   <label className="block text-xs font-semibold text-gray-500 uppercase ml-1">Password</label>
-                   {state === "Login" && (
-                    <span 
+                  <label className="block text-xs font-semibold text-gray-500 uppercase ml-1">Password</label>
+                  {state === "Login" && (
+                    <span
                       onClick={() => navigate("/Reset_pass")}
                       className="text-xs font-semibold text-[#fb541b] cursor-pointer hover:underline"
                     >
                       Forgot?
                     </span>
-                   )}
+                  )}
                 </div>
                 <input
                   onChange={(e) => setPassword(e.target.value)}

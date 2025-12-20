@@ -4,11 +4,12 @@ import orderModel from '../model/order.js';
 import { ChatSession, SupportTicket } from '../model/supportModel.js';
 import { searchProducts, getTrendingProducts, getProductsByCategory, simpleSearch } from '../services/productSearchService.js';
 
+// Comprehensive suggestions - both order management AND product search
 const BASE_SUGGESTIONS = [
-    'Track my latest order',
+    'Track my order',
+    'Cancel an order',
+    'Return or replace',
     'Search products',
-    'Show trending items',
-    'Gift ideas under ₹1500',
     'Talk to support'
 ];
 
@@ -41,42 +42,56 @@ const buildDeviceMeta = (metadata = {}) => ({
 
 const defaultWelcome = (name) => {
     const greeting = name ? `Hi ${name.split(' ')[0]},` : 'Hi there,';
-    return `${greeting} I am Ava, your order assistant. I can track orders, schedule returns, push updates to support, and even share gifting shortcuts. How can I help today?`;
+    return `${greeting} I am Ava, your assistant. I can track orders, process returns/cancellations, search products, and help with support. How can I help you today?`;
 };
 
 const detectIntent = (text) => {
     const normalized = text.toLowerCase();
 
-    // Product search patterns - check these first
-    if (/(?:show|find|search|looking for|want|need|buy|get)\s+(?:me\s+)?(?:some\s+)?(?:a\s+)?/i.test(normalized) &&
-        !/(order|track|cancel|return|refund|status)/i.test(normalized)) {
-        return 'product.search';
-    }
-    if (/(?:under|below|above|around|between)\s*(?:₹|rs\.?|inr)?\s*\d+/i.test(normalized) &&
-        !/(order|cancel|return)/i.test(normalized)) {
-        return 'product.search';
-    }
-    if (/trending|popular|best\s*sellers?|featured|new arrivals?|latest/i.test(normalized)) {
+    // ============================================
+    // PRIORITY 1: Order-related intents (check FIRST!)
+    // ============================================
+    if (/cancel/.test(normalized) && /order/i.test(normalized)) return 'order.cancel';
+    if (/cancel\s*(my|the|an)?\s*order/i.test(normalized)) return 'order.cancel';
+    if (/cancel/i.test(normalized)) return 'order.cancel';
+
+    if (/return|replace|exchange/i.test(normalized)) return 'order.return';
+
+    if (/track|status|where.*order|where.*my|delivery|shipment|order.*status|my.*order/i.test(normalized)) return 'order.status';
+
+    if (/address|change address|update address/i.test(normalized)) return 'order.address';
+
+    if (/refund/i.test(normalized)) return 'order.refund';
+
+    // ============================================
+    // PRIORITY 2: Support intents
+    // ============================================
+    if (/agent|human|support|person|talk.*to|speak.*to|customer.*care/i.test(normalized)) return 'support.agent';
+    if (/help|issue|problem|complaint|not working|broken|damaged/i.test(normalized)) return 'support.issue';
+
+    // ============================================
+    // PRIORITY 3: Marketing/Gifting
+    // ============================================
+    if (/offer|discount|deal|coupon|promo|sale/i.test(normalized)) return 'marketing.offer';
+    if (/gift|ideas|recommend|occasion|birthday|anniversary|wedding|festive/i.test(normalized)) return 'catalog.gifting';
+
+    // ============================================
+    // PRIORITY 4: Product search intents
+    // ============================================
+    if (/trending|popular|best\s*sellers?|featured|new arrivals?|latest products?/i.test(normalized)) {
         return 'product.trending';
     }
     if (/browse|category|categories|shop\s+by/i.test(normalized)) {
         return 'product.browse';
     }
+    // Generic product search - only if no order/support keywords
+    if (/(?:show|find|search|looking for|want|need|buy|get)\s+(?:me\s+)?(?:some\s+)?(?:a\s+)?/i.test(normalized)) {
+        return 'product.search';
+    }
+    if (/(?:under|below|above|around|between)\s*(?:₹|rs\.?|inr)?\s*\d+/i.test(normalized)) {
+        return 'product.search';
+    }
 
-    // Order-related intents
-    if (/cancel/.test(normalized)) return 'order.cancel';
-    if (/return|replace/.test(normalized)) return 'order.return';
-    if (/track|status|where.*order|delivery|shipment/.test(normalized)) return 'order.status';
-    if (/address|change address|update address/.test(normalized)) return 'order.address';
-    if (/refund/.test(normalized)) return 'order.refund';
-
-    // Support intents
-    if (/agent|human|support|person/.test(normalized)) return 'support.agent';
-    if (/help|issue|problem|complaint/.test(normalized)) return 'support.issue';
-
-    // Marketing/catalog
-    if (/offer|discount|deal|coupon|promo/i.test(normalized)) return 'marketing.offer';
-    if (/gift|ideas|recommend|occasion|birthday|anniversary/i.test(normalized)) return 'catalog.gifting';
 
     // If contains product-like keywords, try search
     const productKeywords = ['shirt', 'dress', 'bag', 'watch', 'mug', 'box', 'hamper', 'chocolate',

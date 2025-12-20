@@ -1,6 +1,8 @@
 import addproductmodel from "../model/addproduct.js";
 import mongoose from "mongoose";
 import Review from "../model/review.js";
+import orderModel from "../model/order.js";
+
 export const addProduct = async (req, res) => {
   try {
     const sellerId = req.sellerId;
@@ -91,16 +93,16 @@ export const updateProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    const sellerId = req.sellerId; 
-    
+    const sellerId = req.sellerId;
+
     const products = await addproductmodel.find({ sellerId });
-    console.log("p",products)
-    if(!products){
+    console.log("p", products)
+    if (!products) {
       return res.status(404).json("no product found")
     }
-   return  res.status(200).json({ success: true, data: products });
+    return res.status(200).json({ success: true, data: products });
   } catch (error) {
-   return res.status(500).json({ success: false, message: "Server error", error: error.message });
+    return res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 export const getProductById = async (req, res) => {
@@ -211,30 +213,184 @@ export const deleteProduct = async (req, res) => {
 
 export const createReview = async (req, res) => {
   try {
-    const { productId, rating, comment, userName } = req.body;
+    const { productId, rating, comment, userName, userId, title } = req.body;
 
     if (!productId || !rating || !userName) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ success: false, error: "Missing required fields: productId, rating, and userName are required" });
     }
 
-    const newReview = new Review({ productId, rating, comment, userName });
+    // Validate rating is between 1-5
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, error: "Rating must be between 1 and 5" });
+    }
+
+    // Check if product exists
+    const product = await addproductmodel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, error: "Product not found" });
+    }
+
+    // Check if user has already reviewed this product (if userId provided)
+    if (userId) {
+      const existingReview = await Review.findOne({ productId, userId });
+      if (existingReview) {
+        return res.status(400).json({
+          success: false,
+          error: "You have already reviewed this product",
+          existingReviewId: existingReview._id
+        });
+      }
+    }
+
+    // Check if user has purchased and received this product (Verified Purchase)
+    let isVerifiedPurchase = false;
+    let verifiedOrderId = null;
+
+    if (userId) {
+      const deliveredOrder = await orderModel.findOne({
+        user: userId,
+        'items.productId': productId,
+        status: { $in: ['Delivered', 'Completed'] }
+      });
+
+      if (deliveredOrder) {
+        isVerifiedPurchase = true;
+        verifiedOrderId = deliveredOrder._id;
+      }
+    }
+
+    const newReview = new Review({
+      productId,
+      userId: userId || null,
+      rating,
+      comment: comment || '',
+      title: title || '',
+      userName,
+      isVerifiedPurchase,
+      orderId: verifiedOrderId,
+      status: 'Approved' // Auto-approve for now
+    });
+
     const savedReview = await newReview.save();
 
-    res.status(201).json(savedReview);
+    res.status(201).json({
+      success: true,
+      data: savedReview,
+      isVerifiedPurchase,
+      message: isVerifiedPurchase
+        ? "Review submitted with Verified Purchase badge!"
+        : "Review submitted successfully!"
+    });
   } catch (error) {
-    res.status(500).json({ error: "Failed to create review" });
+    console.error("Create Review Error:", error);
+    res.status(500).json({ success: false, error: "Failed to create review" });
   }
 };
 
-// GET: Get all reviews for a product
+// GET: Get all reviews for a product with stats
 export const getProductReviews = async (req, res) => {
   try {
-    const reviews = await Review.find({ productId: req.params.id }).sort({ createdAt: -1 });
-    res.json(reviews);
+    const { id } = req.params;
+    const reviews = await Review.find({ productId: id, status: 'Approved' })
+      .sort({ isVerifiedPurchase: -1, createdAt: -1 }); // Verified purchases first
+
+    // Calculate stats
+    const totalReviews = reviews.length;
+    const avgRating = totalReviews > 0
+      ? reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+      : 0;
+
+    const ratingBreakdown = {
+      5: reviews.filter(r => r.rating === 5).length,
+      4: reviews.filter(r => r.rating === 4).length,
+      3: reviews.filter(r => r.rating === 3).length,
+      2: reviews.filter(r => r.rating === 2).length,
+      1: reviews.filter(r => r.rating === 1).length
+    };
+
+    const verifiedCount = reviews.filter(r => r.isVerifiedPurchase).length;
+
+    res.json({
+      success: true,
+      reviews,
+      stats: {
+        totalReviews,
+        avgRating: parseFloat(avgRating.toFixed(1)),
+        ratingBreakdown,
+        verifiedPurchases: verifiedCount
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching reviews" });
+    console.error("Get Reviews Error:", error);
+    res.status(500).json({ success: false, error: "Error fetching reviews" });
   }
 };
+
+// Check if user can review a product (has purchased and not already reviewed)
+export const canUserReview = async (req, res) => {
+  try {
+    const { productId, userId } = req.query;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, canReview: false, reason: "Product ID required" });
+    }
+
+    // If no userId, anyone can review (but won't be verified)
+    if (!userId) {
+      return res.json({
+        success: true,
+        canReview: true,
+        isVerifiedPurchase: false,
+        reason: "Guest users can review, but without Verified Purchase badge"
+      });
+    }
+
+    // Check if already reviewed
+    const existingReview = await Review.findOne({ productId, userId });
+    if (existingReview) {
+      return res.json({
+        success: true,
+        canReview: false,
+        reason: "You have already reviewed this product",
+        existingReview: {
+          _id: existingReview._id,
+          rating: existingReview.rating,
+          comment: existingReview.comment,
+          createdAt: existingReview.createdAt
+        }
+      });
+    }
+
+    // Check if user has purchased this product
+    const hasPurchased = await orderModel.findOne({
+      user: userId,
+      'items.productId': productId,
+      status: { $in: ['Delivered', 'Completed'] }
+    });
+
+    if (hasPurchased) {
+      return res.json({
+        success: true,
+        canReview: true,
+        isVerifiedPurchase: true,
+        reason: "You can review this product with a Verified Purchase badge!"
+      });
+    }
+
+    // User hasn't purchased but can still review
+    return res.json({
+      success: true,
+      canReview: true,
+      isVerifiedPurchase: false,
+      reason: "You can review this product (not a verified purchase)"
+    });
+
+  } catch (error) {
+    console.error("Can User Review Error:", error);
+    res.status(500).json({ success: false, canReview: false, reason: "Server error" });
+  }
+};
+
 // Get related products
 export const getRelatedProducts = async (req, res) => {
   try {
@@ -253,6 +409,6 @@ export const getRelatedProducts = async (req, res) => {
 
     res.status(200).json({ success: true, data: related });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
 };

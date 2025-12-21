@@ -5,13 +5,32 @@ import sellermodel from "../model/sellermodel.js";
 /**
  * Seller Authentication Middleware
  * SECURITY: Validates JWT and checks seller account status
+ * 
+ * Token Priority:
+ * 1. HttpOnly Cookie (stoken) - Most secure, preferred
+ * 2. Authorization Header (Bearer token) - For mobile apps
+ * 3. Custom Header (stoken) - Legacy support, deprecated
  */
 const authseller = async (req, res, next) => {
   try {
-    const token = req.headers.stoken;
+    // SECURITY: Try to get token from multiple sources (prioritize cookies)
+    let token = null;
+
+    // 1. Try HttpOnly Cookie first (most secure)
+    if (req.cookies && req.cookies.stoken) {
+      token = req.cookies.stoken;
+    }
+    // 2. Try Authorization header (for mobile/API clients)
+    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    // 3. Legacy: Custom header (deprecated, for backward compatibility)
+    else if (req.headers.stoken) {
+      token = req.headers.stoken;
+    }
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Login again" });
+      return res.status(401).json({ success: false, message: "Login required" });
     }
 
     const decode = jwt.verify(token, process.env.JWT_SECRET);
@@ -64,3 +83,4 @@ const authseller = async (req, res, next) => {
 };
 
 export default authseller;
+

@@ -828,3 +828,21 @@ export const clearUserCart = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };
+
+// ========================= LOGOUT USER =========================
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear the user token cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      path: "/"
+    });
+
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    res.status(500).json({ success: false, message: "Logout failed" });
+  }
+};

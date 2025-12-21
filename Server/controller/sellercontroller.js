@@ -152,9 +152,18 @@ export const loginseller = async (req, res) => {
     // SECURITY: JWT with expiry (7 days)
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
+    // SECURITY: Set HttpOnly cookie (XSS protection)
+    res.cookie("stoken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
+    });
+
     res.json({
       success: true,
-      token,
+      token, // Keep for backward compatibility (will be removed in future)
       message: responseMessage,
       user: {
         name: seller.name,
@@ -920,5 +929,23 @@ export const isSellerAuthenticated = async (req, res) => {
   } catch (error) {
     console.error("Auth Check Error:", error);
     res.status(500).json({ success: false, message: "Authentication check failed" });
+  }
+};
+
+// ========================= LOGOUT SELLER =========================
+export const logoutSeller = async (req, res) => {
+  try {
+    // Clear the seller token cookie
+    res.clearCookie("stoken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      path: "/"
+    });
+
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    res.status(500).json({ success: false, message: "Logout failed" });
   }
 };

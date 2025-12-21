@@ -20,7 +20,8 @@ import {
   resendVerificationOtp,
   sellerForgotPassword,
   sellerResetPassword,
-  isSellerAuthenticated
+  isSellerAuthenticated,
+  logoutSeller
 } from "../controller/sellercontroller.js";
 import upload from "../middleware/multer.js";
 
@@ -35,8 +36,9 @@ sellerrouter.post("/forgot-password", sellerForgotPassword);    // NEW: Forgot p
 sellerrouter.post("/reset-password", sellerResetPassword);      // NEW: Reset password
 
 // ========================= PROTECTED ROUTES (Require Auth) =========================
-// Auth Check
-sellerrouter.get("/is-authenticated", authseller, isSellerAuthenticated);  // NEW: Check if authenticated
+// Auth Check & Logout
+sellerrouter.get("/is-authenticated", authseller, isSellerAuthenticated);  // Check if authenticated
+sellerrouter.post("/logout", logoutSeller);  // NEW: Logout (clears cookie)
 
 // Products
 sellerrouter.post("/addproducts", upload.array('images', 5), authseller, addproducts);

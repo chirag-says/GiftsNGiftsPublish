@@ -79,7 +79,7 @@ const Login = () => {
             }, 100);
           } else {
             // Fallback for direct login (if backend changes)
-            localStorage.setItem("token", data.token);
+            // Token is now set via HttpOnly cookie by the server
             setIsLoggedin(true);
             if (data.user) {
               setUserdata({
@@ -134,7 +134,7 @@ const Login = () => {
       const { data } = await axios.post(endpoint, { email, otp });
 
       if (data.success) {
-        localStorage.setItem("token", data.token);
+        // Token is now set via HttpOnly cookie by the server (XSS protection)
         setIsLoggedin(true);
 
         if (data.user) {

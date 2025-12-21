@@ -97,7 +97,7 @@ const Navigation = () => {
                 <Button
                   onClick={() => navigate("/login")}
                   variant="outlined"
-                  className="!text-white !border-white/40 !rounded-full !px-5 !text-xs !font-bold hover:!bg-white hover:!text-[#7d0492] !transition-all"
+                  className="!text-white !border-white/40 !rounded-full !pb-2 !pt-2 !px-5 !text-xs !font-bold hover:!bg-white hover:!text-[#7d0492] !transition-all"
                 >
                   Sign In
                 </Button>

@@ -53,7 +53,7 @@ function Overview() {
       }
     };
     fetchData();
-  }, [period, stoken]);
+  }, [period]);
 
   const handleExport = () => {
     const exportData = [

@@ -85,24 +85,26 @@ function Settings() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const [settingsRes, businessRes, verificationRes, holidayRes] = await Promise.all([
+        const results = await Promise.allSettled([
           api.get('/api/seller-panel/store/settings'),
           api.get('/api/seller-panel/store/business-info'),
           api.get('/api/seller-panel/store/verification'),
           api.get('/api/seller-panel/store/holiday-mode')
         ]);
 
-        if (settingsRes.data.success && settingsRes.data.data) {
-          setGeneralSettings(prev => ({ ...prev, ...settingsRes.data.data }));
+        const [settingsRes, businessRes, verificationRes, holidayRes] = results;
+
+        if (settingsRes.status === 'fulfilled' && settingsRes.value.data.success && settingsRes.value.data.data) {
+          setGeneralSettings(prev => ({ ...prev, ...settingsRes.value.data.data }));
         }
-        if (businessRes.data.success && businessRes.data.data) {
-          setBusinessInfo(prev => ({ ...prev, ...businessRes.data.data }));
+        if (businessRes.status === 'fulfilled' && businessRes.value.data.success && businessRes.value.data.data) {
+          setBusinessInfo(prev => ({ ...prev, ...businessRes.value.data.data }));
         }
-        if (verificationRes.data.success && verificationRes.data.data) {
-          setVerification(prev => ({ ...prev, ...verificationRes.data.data }));
+        if (verificationRes.status === 'fulfilled' && verificationRes.value.data.success && verificationRes.value.data.data) {
+          setVerification(prev => ({ ...prev, ...verificationRes.value.data.data }));
         }
-        if (holidayRes.data.success && holidayRes.data.data) {
-          const hData = holidayRes.data.data;
+        if (holidayRes.status === 'fulfilled' && holidayRes.value.data.success && holidayRes.value.data.data) {
+          const hData = holidayRes.value.data.data;
           setPreferences(prev => ({
             ...prev,
             holidayMode: hData.isEnabled || false,

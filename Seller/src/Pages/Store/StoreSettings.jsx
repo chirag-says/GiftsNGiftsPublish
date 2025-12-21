@@ -12,6 +12,11 @@ function StoreSettings() {
     storePhone: "",
     storeAddress: ""
   });
+  const [logoFile, setLogoFile] = useState(null);
+  const [bannerFile, setBannerFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -36,10 +41,25 @@ function StoreSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await api.post('/api/seller-panel/store/settings', settings);
+      const formData = new FormData();
+      Object.keys(settings).forEach(key => {
+        formData.append(key, settings[key]);
+      });
+      if (logoFile) formData.append("storeLogo", logoFile);
+      if (bannerFile) formData.append("storeBanner", bannerFile);
+
+      const res = await api.post('/api/seller-panel/store/settings', formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
       if (res.data.success) {
         setEditing(false);
+        setLogoFile(null);
+        setBannerFile(null);
         alert("Settings saved successfully!");
+        // Refresh data to get new URLs
+        const updated = await api.get('/api/seller-panel/store/settings');
+        if (updated.data.success) setSettings(updated.data.data);
       }
     } catch (err) {
       console.error(err);
@@ -51,6 +71,19 @@ function StoreSettings() {
 
   const handleChange = (e) => {
     setSettings(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleFileChange = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (type === 'logo') {
+        setLogoFile(file);
+        setLogoPreview(URL.createObjectURL(file));
+      } else {
+        setBannerFile(file);
+        setBannerPreview(URL.createObjectURL(file));
+      }
+    }
   };
 
   if (loading) {
@@ -101,21 +134,56 @@ function StoreSettings() {
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <div
           className="h-48 bg-gradient-to-br from-indigo-600 to-purple-700 relative"
-          style={settings.storeBanner ? { backgroundImage: `url(${settings.storeBanner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+          style={{ 
+            backgroundImage: bannerPreview ? `url(${bannerPreview})` : (settings.storeBanner ? `url(${settings.storeBanner})` : 'none'), 
+            backgroundSize: 'cover', 
+            backgroundPosition: 'center' 
+          }}
         >
           {editing && (
-            <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-white transition-all text-sm font-medium shadow-sm">
-              <LuCamera className="w-4 h-4" /> Change Banner
-            </button>
+            <>
+              <input 
+                type="file" 
+                id="banner-upload" 
+                hidden 
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, 'banner')}
+              />
+              <label 
+                htmlFor="banner-upload"
+                className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-white transition-all text-sm font-medium shadow-sm cursor-pointer"
+              >
+                <LuCamera className="w-4 h-4" /> Change Banner
+              </label>
+            </>
           )}
         </div>
         <div className="p-6 -mt-16 relative">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="w-28 h-28 bg-white rounded-xl border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-              {settings.storeLogo ? (
-                <img src={settings.storeLogo} alt="Store Logo" className="w-full h-full object-cover" />
-              ) : (
-                <LuStore className="w-10 h-10 text-gray-300" />
+            <div className="relative group">
+              <div className="w-28 h-28 bg-white rounded-xl border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
+                {logoPreview || settings.storeLogo ? (
+                  <img src={logoPreview || settings.storeLogo} alt="Store Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <LuStore className="w-10 h-10 text-gray-300" />
+                )}
+              </div>
+              {editing && (
+                <>
+                  <input 
+                    type="file" 
+                    id="logo-upload" 
+                    hidden 
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'logo')}
+                  />
+                  <label 
+                    htmlFor="logo-upload"
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-xl"
+                  >
+                    <LuCamera className="w-8 h-8 text-white" />
+                  </label>
+                </>
               )}
             </div>
             <div className="mt-6 md:mt-10">

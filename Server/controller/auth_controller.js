@@ -33,7 +33,7 @@ export const loginRequestOtp = async (req, res) => {
 
     // Reusing your existing mail logic
     const mailOption = {
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
+      from: process.env.SENDER_EMAIL,
       to: email,
       subject: "Your Login OTP",
       text: `Your OTP is: ${otp}`,
@@ -65,24 +65,17 @@ export const verifyLoginOtp = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    // SECURITY: Clear OTP after successful verification
-    user.verifyotp = '';
-    user.verifyotpexpAt = 0;
-    await user.save();
-
-    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/"
     });
 
     res.status(200).json({
       success: true,
       message: "Login successful",
+      token,
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
@@ -100,135 +93,62 @@ export const register = async (req, res) => {
       message: "Missing Details",
     });
   }
-
-  // Validate password length
-  if (password.length < 8) {
-    return res.json({
-      success: false,
-      message: "Password must be at least 8 characters",
-    });
-  }
-
   try {
-    const existinguser = await usermodel.findOne({ email: email.toLowerCase().trim() });
+    const existinguser = await usermodel.findOne({ email });
 
-    //check user exist or not--
+    //check user exsit or not--
     if (existinguser) {
       return res.json({
         success: false,
-        message: "User already exists",
+        message: "User already exists ",
       });
     }
 
     const hashedpasswoed = await bcrypt.hash(password, 10);
 
-    // Generate OTP for verification
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-    //create new user with OTP
-    const user = new usermodel({
-      name,
-      email: email.toLowerCase().trim(),
-      password: hashedpasswoed,
-      verifyotp: otp,
-      verifyotpexpAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      isAccountVerify: false
-    });
+    //create new user--- and save it --
+    const user = new usermodel({ name, email, password: hashedpasswoed });
     await user.save();
 
     const profile = new Profile({
       user: user._id,
-      phone: "",
+      phone: "", // optionally set default
       addresses: [],
       name: name,
       email: email,
     });
     await profile.save();
 
-    // Send OTP email for verification
-    const mailOption = {
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
-      to: email,
-      subject: "Verify Your GiftNGifts Account",
-      text: `Welcome to GiftNGifts! Your verification OTP is: ${otp}. This code expires in 10 minutes.`,
-      html: `
-        <h1>Welcome to GiftNGifts!</h1>
-        <p>Your verification OTP is: <b>${otp}</b></p>
-        <p>This code expires in 10 minutes.</p>
-        <p>If you did not create this account, please ignore this email.</p>
-      `
-    };
-
-    await transporter.sendMail(mailOption);
-
-    // Return success - user needs to verify OTP
-    return res.json({
-      success: true,
-      message: "Registration successful! Please verify your email with OTP.",
-      requiresOtp: true,
-      email: email.toLowerCase().trim()
-    });
-  } catch (error) {
-    console.error("Registration Error:", error);
-    res.json({
-      success: false,
-      message: process.env.NODE_ENV === 'production'
-        ? "Registration failed. Please try again."
-        : error.message,
-    });
-  }
-};
-
-// Verify Registration OTP
-export const verifyRegistrationOtp = async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    return res.json({ success: false, message: "Email and OTP are required" });
-  }
-
-  try {
-    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
-
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-
-    if (user.isAccountVerify) {
-      return res.json({ success: false, message: "Account is already verified. Please login." });
-    }
-
-    if (user.verifyotp !== otp) {
-      return res.json({ success: false, message: "Invalid OTP" });
-    }
-
-    if (user.verifyotpexpAt < Date.now()) {
-      return res.json({ success: false, message: "OTP has expired. Please register again." });
-    }
-
-    // Mark account as verified
-    user.isAccountVerify = true;
-    user.verifyotp = "";
-    user.verifyotpexpAt = 0;
-    await user.save();
-
-    // Create token and log user in
+    //create token------
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/"
     });
 
+    //send welcome email (non-blocking - don't wait for it)
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Welcome to GiftNGifts",
+      text: `Welcome to GiftNGifts! Your account has been created successfully with email: ${email}`,
+    };
+
+    // Send email in background - don't block registration
+    transporter.sendMail(mailOption).catch(err => {
+      console.log("Welcome email failed:", err.message);
+    });
+
+    // Return success with user data for auto-login
     return res.json({
       success: true,
-      message: "Email verified successfully! Welcome to GiftNGifts.",
+      token,
+      message: "Account created successfully!",
       user: {
         id: user._id,
         name: user.name,
@@ -236,58 +156,10 @@ export const verifyRegistrationOtp = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Verify Registration OTP Error:", error);
-    res.json({ success: false, message: "Verification failed. Please try again." });
-  }
-};
-
-// Resend Registration OTP
-export const resendRegistrationOtp = async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.json({ success: false, message: "Email is required" });
-  }
-
-  try {
-    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
-
-    if (!user) {
-      return res.json({ success: false, message: "User not found. Please register first." });
-    }
-
-    if (user.isAccountVerify) {
-      return res.json({ success: false, message: "Account is already verified. Please login." });
-    }
-
-    // Rate limiting: Check if OTP was sent recently (1 minute cooldown)
-    if (user.verifyotpexpAt && user.verifyotpexpAt > Date.now() - 60000) {
-      return res.json({
-        success: false,
-        message: "Please wait 1 minute before requesting a new OTP"
-      });
-    }
-
-    // Generate new OTP
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    user.verifyotp = otp;
-    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
-    await user.save();
-
-    // Send OTP email
-    const mailOption = {
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
-      to: email,
-      subject: "Your New Verification OTP",
-      text: `Your new verification OTP is: ${otp}. This code expires in 10 minutes.`,
-    };
-
-    await transporter.sendMail(mailOption);
-
-    return res.json({ success: true, message: "New OTP sent to your email" });
-  } catch (error) {
-    console.error("Resend Registration OTP Error:", error);
-    res.json({ success: false, message: "Failed to resend OTP. Please try again." });
+    res.json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -302,7 +174,7 @@ export const login = async (req, res) => {
     });
   }
   try {
-    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
+    const user = await usermodel.findOne({ email });
 
     if (!user) {
       return res.json({
@@ -335,7 +207,7 @@ export const login = async (req, res) => {
 
     // Send OTP via email (reuse your transporter)
     await transporter.sendMail({
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
+      from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Login OTP",
       text: `Your OTP is: ${otp}`,
@@ -346,12 +218,9 @@ export const login = async (req, res) => {
       message: "OTP sent to your email. Please verify to login.",
     });
   } catch (error) {
-    console.error("Login Error:", error);
     res.json({
       success: false,
-      message: process.env.NODE_ENV === 'production'
-        ? "Login failed. Please try again."
-        : error.message,
+      message: error.message,
     });
   }
 };
@@ -393,7 +262,7 @@ export const sendverifyotp = async (req, res) => {
     await user.save();
 
     const mailOption = {
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
+      from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Login OTP",
       text: `Your OTP is ${otp}.`,
@@ -486,7 +355,7 @@ export const sendResetpassword = async (req, res) => {
 
     //send to the email----
     const mailOption = {
-      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
+      from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Account Verification OTP",
       text: `Your OTP is ${otp}. Use this OTP to proceed with resetting your password.`,
@@ -837,54 +706,121 @@ export const clearUserCart = async (req, res) => {
   }
 };
 
-// ========================= LOGOUT USER =========================
-export const logoutUser = async (req, res) => {
+// ==========================================
+// NEW AUTH FUNCTIONS (Fixing Missing Exports)
+// ==========================================
+
+export const verifyRegistrationOtp = async (req, res) => {
+  const { email, otp } = req.body;
   try {
-    // Clear the user token cookie
-    res.clearCookie("token", {
+    const user = await usermodel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (user.verifyotp !== otp) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+
+    if (user.verifyotpexpAt < Date.now()) {
+      return res.status(400).json({ success: false, message: "OTP expired" });
+    }
+
+    user.isAccountVerify = true;
+    user.verifyotp = '';
+    user.verifyotpexpAt = 0;
+    await user.save();
+
+    // Generate token for auto-login after verification
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      path: "/"
+      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ success: true, message: "Logged out successfully" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Email verified successfully",
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
+
   } catch (error) {
-    console.error("Logout Error:", error);
-    res.status(500).json({ success: false, message: "Logout failed" });
+    console.error("Verify Registration OTP Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ========================= GET CURRENT USER (Session Check) =========================
-/**
- * GET /api/auth/me
- * Used by frontend to check if user is logged in on page load
- * Replaces localStorage.getItem('token') check
- */
-export const getMe = async (req, res) => {
+export const resendRegistrationOtp = async (req, res) => {
+  const { email } = req.body;
   try {
-    // Token is already verified by userAuth middleware
-    // req.userId is set by the middleware
-    const user = await usermodel.findById(req.userId).select('name email isAccountVerify');
-
+    const user = await usermodel.findOne({ email });
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found"
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    res.json({
+    if (user.isAccountVerify) {
+      return res.status(400).json({ success: false, message: "Account already verified" });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.verifyotp = otp;
+    user.verifyotpexpAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    await user.save();
+
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Verify your account",
+      text: `Your verification OTP is: ${otp}`,
+    };
+    await transporter.sendMail(mailOption);
+
+    res.status(200).json({ success: true, message: "OTP sent to email" });
+  } catch (error) {
+    console.error("Resend Registration OTP Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+    });
+    return res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const userId = req.userId; // Set by userAuth middleware
+    const user = await usermodel.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
       success: true,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        isVerified: user.isAccountVerify
+        isAccountVerified: user.isAccountVerify,
+        // Add other fields if needed
       }
     });
   } catch (error) {
     console.error("Get Me Error:", error);
-    res.status(500).json({ success: false, message: "Failed to get user info" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

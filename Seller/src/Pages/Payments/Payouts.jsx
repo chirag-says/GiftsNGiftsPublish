@@ -46,7 +46,7 @@ function Payouts() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [stoken]);
+  useEffect(() => { fetchData(); }, []);
 
   const handleRequestPayout = async (e) => {
     e.preventDefault();
@@ -195,8 +195,8 @@ function Payouts() {
                         <td className="px-6 py-4 text-right font-semibold text-amber-600">{formatINR(order.amount)}</td>
                         <td className="px-6 py-4 text-center">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                              order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-gray-100 text-gray-700'
+                            order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
                             }`}>
                             {order.status}
                           </span>

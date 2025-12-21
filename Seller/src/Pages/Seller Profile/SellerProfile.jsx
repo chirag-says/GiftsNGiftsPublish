@@ -4,6 +4,39 @@ import api from "../../utils/api";
 import { FaUserEdit, FaMapMarkerAlt, FaEnvelope, FaPhone, FaUpload, FaTimes, FaPhoneSquareAlt } from "react-icons/fa";
 import { RiStore2Fill } from "react-icons/ri";
 
+// Helper Component for Display
+const ProfileField = ({ icon: Icon, label, value }) => (
+  <div className="flex items-start text-gray-700">
+    <Icon className="w-5 h-5 mr-3 mt-1 text-indigo-500 flex-shrink-0" />
+    <div>
+      <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
+      <p className="text-base font-medium text-gray-800 break-words">{value || 'N/A'}</p>
+    </div>
+  </div>
+);
+
+// Helper Component for Inputs
+const CustomInput = ({ name, label, value, onChange, type = "text", required = false, disabled = false }) => (
+  <div className="w-full">
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      name={name}
+      id={name}
+      value={value}
+      onChange={onChange}
+      required={required}
+      disabled={disabled}
+      className={`block w-full rounded-lg border py-2.5 px-4 text-gray-900 shadow-sm transition duration-150 sm:text-sm ${disabled
+        ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
+        : 'bg-white border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50'
+        }`}
+    />
+  </div>
+);
+
 function SellerProfile() {
   const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -98,39 +131,6 @@ function SellerProfile() {
       toast.error("An error occurred during profile update.");
     }
   };
-
-  // Helper Component for Display
-  const ProfileField = ({ icon: Icon, label, value }) => (
-    <div className="flex items-start text-gray-700">
-      <Icon className="w-5 h-5 mr-3 mt-1 text-indigo-500 flex-shrink-0" />
-      <div>
-        <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
-        <p className="text-base font-medium text-gray-800 break-words">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
-
-  // Helper Component for Inputs
-  const CustomInput = ({ name, label, value, onChange, type = "text", required = false, disabled = false }) => (
-    <div className="w-full">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type={type}
-        name={name}
-        id={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        className={`block w-full rounded-lg border py-2.5 px-4 text-gray-900 shadow-sm transition duration-150 sm:text-sm ${disabled
-          ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
-          : 'bg-white border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50'
-          }`}
-      />
-    </div>
-  );
 
   if (!profile) return (
     <div className="flex items-center justify-center h-64 bg-white rounded-xl shadow-lg max-w-4xl mx-auto mt-8">

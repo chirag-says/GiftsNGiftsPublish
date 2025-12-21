@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import api from '../utils/api';
+import axios from 'axios';
 
 const BASE_SUGGESTIONS = [
   'Track my order',
@@ -39,12 +39,12 @@ export const useChatbot = ({ backendurl, userData }) => {
   }), [userEmail, userId, userName]);
 
   const hydrateSession = useCallback(async () => {
-    /* if (!backendurl) {
-      console.warn('Chatbot: No backend URL provided.'); // backendurl check removed as api handles base url
+    if (!backendurl) {
+      console.warn('Chatbot: No backend URL provided.');
       setError('Unable to connect: Server URL missing.');
       setIsBootstrapping(false);
       return;
-    } */
+    }
 
     setIsBootstrapping(true);
     setError('');
@@ -56,11 +56,12 @@ export const useChatbot = ({ backendurl, userData }) => {
         metadata: buildMetadataSnapshot()
       };
 
-      console.log('[Chatbot] Connecting to: /api/chatbot/session');
+      console.log('[Chatbot] Connecting to:', `${backendurl}/api/chatbot/session`);
 
       // Add a timeout to the request
-      const { data } = await api.post('/api/chatbot/session', payload, {
+      const { data } = await axios.post(`${backendurl}/api/chatbot/session`, payload, {
         timeout: 10000, // 10 seconds timeout
+        withCredentials: true
       });
 
       if (abortRef.current) return;
@@ -82,11 +83,11 @@ export const useChatbot = ({ backendurl, userData }) => {
     } finally {
       if (!abortRef.current) setIsBootstrapping(false);
     }
-  }, [userEnvelope]);
+  }, [backendurl, userEnvelope]);
 
   const sendMessage = useCallback(async (text, extraPayload = {}) => {
     const trimmed = text.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || !backendurl || isSending) return;
 
     setMessages((prev) => ([
       ...prev,
@@ -110,7 +111,7 @@ export const useChatbot = ({ backendurl, userData }) => {
         metadata: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }
       };
 
-      const { data } = await api.post('/api/chatbot/message', payload);
+      const { data } = await axios.post(`${backendurl}/api/chatbot/message`, payload);
       if (abortRef.current) return;
 
       sessionIdRef.current = data.session.sessionId;
@@ -125,7 +126,7 @@ export const useChatbot = ({ backendurl, userData }) => {
     } finally {
       if (!abortRef.current) setIsSending(false);
     }
-  }, [isSending, userEnvelope]);
+  }, [backendurl, isSending, userEnvelope]);
 
   const hydratedRef = useRef(false);
   const previousUserIdRef = useRef(userId);

@@ -11,14 +11,14 @@ import api from "../../utils/api";
 function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const { atoken, setatoken } = useContext(Admincontext);
+  const { atoken, setatoken, isAuthenticated, logout } = useContext(Admincontext);
   const navigate = useNavigate();
   const [sellerProfile, setSellerProfile] = useState({ name: "", nickName: "" });
-  const authToken = atoken || localStorage.getItem("stoken") || "";
+  // Use isAuthenticated from context instead of checking token manually
   const displayName = sellerProfile.nickName || sellerProfile.name || "Seller";
 
   useEffect(() => {
-    if (!authToken) {
+    if (!isAuthenticated) {
       setSellerProfile({ name: "", nickName: "" });
       return;
     }
@@ -42,19 +42,18 @@ function Header() {
     return () => {
       ignore = true;
     };
-  }, [authToken]);
+  }, [isAuthenticated]);
 
   const handleClick = (event) => {
-    if (authToken) setAnchorEl(event.currentTarget);
+    if (isAuthenticated) setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("stoken");
-    setatoken("");
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -99,7 +98,7 @@ function Header() {
             </button>
 
             {/* Profile Dropdown */}
-            {authToken && (
+            {isAuthenticated && (
               <button
                 onClick={handleClick}
                 className="flex items-center gap-3 p-1.5 pr-4 rounded-full 

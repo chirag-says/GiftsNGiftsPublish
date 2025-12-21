@@ -32,7 +32,6 @@ import BulkOrders from './Components/Home/Footer/BulkOrders.jsx'
 import RefundPlicy from './Components/Home/Footer/RefundPolicy.jsx'
 import ErrorPage from "./Components/ErrorPage/ErrorPage.jsx";
 import ChatWidget from "./Components/Chatbot/ChatWidget.jsx";
-import ProtectedRoute from "./Components/ProtectedRoute/ProtectedRoute.jsx";
 function App() {
   return (
     <>
@@ -42,37 +41,32 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/email-verify" element={<Emailverify />} />
         <Route path="/Reset_pass" element={<Reset_pass />} />
-
-        {/* Protected Routes */}
-        <Route path="/myProfile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-        <Route path="/cartlist" element={<ProtectedRoute><Cartpage /></ProtectedRoute>} />
-        <Route path="/addaddress" element={<ProtectedRoute><AddAddress /></ProtectedRoute>} />
-        <Route path="/ordersummery" element={<ProtectedRoute><OrderSummery /></ProtectedRoute>} />
-        <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-        <Route path="/order-success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
-        <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-
-        {/* Public Routes */}
+        <Route path="/myProfile" element={<MyProfile />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/productlist" element={<ProductList />} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/cartlist" element={<Cartpage />} />
         {/* <Route path="/checkout" element={<Checkout/>}/> */}
-
+        <Route path="/addaddress" element={<AddAddress />} />
+        <Route path="/ordersummery" element={<OrderSummery />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/feedback" element={<Feedback />} />
         <Route path="/search-results" element={<SearchResultsPage />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/support-policy" element={<Support_Policy />} />
         <Route path="/shipping-info" element={<ShippingInfo />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/contact-us" element={<ContactUs />} /> 
         <Route path="/help-center" element={<HelpCenter />} />
-        <Route path="/order-tracking" element={<OrderTracking />} />
-        <Route path="/terms-of-use" element={<TermsOfUse />} />
-        <Route path="/faqs" element={<FAQs />} />
-        <Route path="/disclaimer" element={<Desclaimer />} />
-        <Route path="/bulk-orders" element={<BulkOrders />} />
-        <Route path="/refund-policy" element={<RefundPlicy />} />
-        <Route path="*" element={<ErrorPage />} />
+        <Route path="/order-tracking" element={<OrderTracking />} /> 
+        <Route path="/terms-of-use" element={<TermsOfUse />} /> 
+        <Route path="/faqs" element={<FAQs/>} /> 
+        <Route path="/disclaimer" element={<Desclaimer/>} /> 
+         <Route path="/bulk-orders" element={<BulkOrders/>} /> 
+         <Route path="/refund-policy" element={<RefundPlicy/>} />
+         <Route path="*" element={<ErrorPage />} />
       </Routes>
       <Footer />
       <ChatWidget />

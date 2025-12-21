@@ -18,6 +18,7 @@ import { PiStorefrontLight } from "react-icons/pi";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { Collapse as ReactCollapse } from "react-collapse";
 import { MyContext } from "../../App.jsx";
+import { Admincontext } from "../context/admincontext";
 
 const menuSections = [
   {
@@ -127,6 +128,7 @@ const menuSections = [
 
 function SideBar() {
   const { setIsOpenAddProductPanel } = useContext(MyContext);
+  const { logout } = useContext(Admincontext);
   const [submenuIndex, setSubmenuIndex] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -136,8 +138,8 @@ function SideBar() {
     setSubmenuIndex((prev) => (prev === index ? null : index));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("stoken");
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
     setSidebarOpen(false);
   };

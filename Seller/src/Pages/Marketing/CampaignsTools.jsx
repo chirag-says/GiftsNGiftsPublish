@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import api from "../../utils/api";
 import { LuPlus, LuTrash2, LuPencil, LuPlay, LuPause, LuCopy, LuExternalLink, LuShare2, LuQrCode } from "react-icons/lu";
 import { MdCampaign, MdOutlineBarChart, MdAdsClick, MdTrendingUp, MdOutlineVisibility } from "react-icons/md";
-import { FiDollarSign, FiTarget, FiTool, FiShare, FiMessageCircle } from "react-icons/fi";
-import { FaWhatsapp, FaFacebook, FaInstagram } from "react-icons/fa";
+import { FiTarget, FiTool, FiShare, FiMessageCircle } from "react-icons/fi";
+import { FaWhatsapp, FaFacebook, FaInstagram, FaRupeeSign } from "react-icons/fa";
 
 function CampaignsTools() {
   const [activeTab, setActiveTab] = useState("campaigns");
@@ -247,7 +247,7 @@ function CampaignsTools() {
               <p className="text-indigo-100 text-sm">Total Budget</p>
               <h3 className="text-2xl font-bold mt-1">{formatCurrency(budgetData.budget.total)}</h3>
             </div>
-            <FiDollarSign className="w-8 h-8 text-indigo-200" />
+            <FaRupeeSign className="w-8 h-8 text-indigo-200" />
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">

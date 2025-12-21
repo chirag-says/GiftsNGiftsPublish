@@ -29,7 +29,7 @@ function Transactions() {
       }
     };
     fetchData();
-  }, [page, typeFilter, stoken]);
+  }, [page, typeFilter]);
 
   const filteredTransactions = data.transactions.filter(txn =>
     txn.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||

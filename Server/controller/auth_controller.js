@@ -33,7 +33,7 @@ export const loginRequestOtp = async (req, res) => {
 
     // Reusing your existing mail logic
     const mailOption = {
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: email,
       subject: "Your Login OTP",
       text: `Your OTP is: ${otp}`,
@@ -147,7 +147,7 @@ export const register = async (req, res) => {
 
     // Send OTP email for verification
     const mailOption = {
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: email,
       subject: "Verify Your GiftNGifts Account",
       text: `Welcome to GiftNGifts! Your verification OTP is: ${otp}. This code expires in 10 minutes.`,
@@ -276,7 +276,7 @@ export const resendRegistrationOtp = async (req, res) => {
 
     // Send OTP email
     const mailOption = {
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: email,
       subject: "Your New Verification OTP",
       text: `Your new verification OTP is: ${otp}. This code expires in 10 minutes.`,
@@ -302,7 +302,7 @@ export const login = async (req, res) => {
     });
   }
   try {
-    const user = await usermodel.findOne({ email });
+    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
       return res.json({
@@ -335,7 +335,7 @@ export const login = async (req, res) => {
 
     // Send OTP via email (reuse your transporter)
     await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: user.email,
       subject: "Login OTP",
       text: `Your OTP is: ${otp}`,
@@ -393,7 +393,7 @@ export const sendverifyotp = async (req, res) => {
     await user.save();
 
     const mailOption = {
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: user.email,
       subject: "Login OTP",
       text: `Your OTP is ${otp}.`,
@@ -486,7 +486,7 @@ export const sendResetpassword = async (req, res) => {
 
     //send to the email----
     const mailOption = {
-      from: process.env.SENDER_EMAIL,
+      from: process.env.SMTP_EMAIL || process.env.SMTP_USER,
       to: user.email,
       subject: "Account Verification OTP",
       text: `Your OTP is ${otp}. Use this OTP to proceed with resetting your password.`,

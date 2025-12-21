@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../../utils/api";
 import Rating from "@mui/material/Rating";
 import TextField from "@mui/material/TextField";
@@ -212,6 +212,8 @@ const OfferCard = ({ offer, index }) => (
 function ProductDetail() {
   const { id: productId } = useParams();
   const { userData, isLoggedin, fetchWishlist, wishlistItems, fetchCart } = useContext(AppContext);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(0);
   const [product, setProduct] = useState(null);
@@ -309,6 +311,7 @@ function ProductDetail() {
 
     if (!isLoggedin) {
       toast.warning("Please login to submit a review");
+      navigate("/login", { state: { from: location } });
       return;
     }
 
@@ -344,23 +347,27 @@ function ProductDetail() {
   const handleToggleWishlist = async () => {
     if (!isLoggedin) {
       toast.warning("Please login to manage wishlist");
+      navigate("/login", { state: { from: location } });
       return;
     }
 
+    const wasWishlisted = isWishlisted;
+    setIsWishlisted(!wasWishlisted); // Optimistic update
+
     try {
-      const method = isWishlisted ? "delete" : "post";
-      setIsWishlisted(!isWishlisted);
-
-      await api({
-        method,
-        url: `/api/auth/wishlist`,
-        data: { productId: product._id }
-      });
-
-      toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
+      if (wasWishlisted) {
+        // Remove from wishlist
+        await api.delete(`/api/auth/delete-wishlist/${product._id}`);
+        toast.success("Removed from wishlist");
+      } else {
+        // Add to wishlist
+        await api.post(`/api/auth/wishlist`, { productId: product._id });
+        toast.success("Added to wishlist");
+      }
       fetchWishlist();
     } catch (error) {
-      setIsWishlisted(!isWishlisted);
+      setIsWishlisted(wasWishlisted); // Revert on error
+      console.error("Wishlist operation failed:", error);
       toast.error("Failed to update wishlist");
     }
   };
@@ -368,6 +375,7 @@ function ProductDetail() {
   const handleAddToCart = async () => {
     if (!isLoggedin) {
       toast.warning("Please login to add to cart");
+      navigate("/login", { state: { from: location } });
       return;
     }
 

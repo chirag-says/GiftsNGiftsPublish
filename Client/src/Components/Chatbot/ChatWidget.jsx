@@ -1,156 +1,223 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  RiRobot2Fill,
-  RiRefreshLine,
+  RiChatSmile3Fill,
   RiSendPlaneFill,
   RiCloseLine,
   RiCustomerService2Fill,
   RiSparklingFill,
-  RiCheckDoubleLine
+  RiCheckDoubleLine,
+  RiRefreshLine,
+  RiShoppingBag3Line,
+  RiArrowLeftSLine,
+  RiArrowRightSLine
 } from 'react-icons/ri';
 import { AppContext } from '../context/Appcontext.jsx';
 import { useChatbot } from '../../hooks/useChatbot.js';
 import './ChatWidget.css';
 
+// --- Sub-Components ---
+
 const TypingIndicator = () => (
-  <div className="chatbot-bubble bubble-bot typing-indicator">
-    <span className="dot"></span>
-    <span className="dot"></span>
-    <span className="dot"></span>
+  <div className="chat-bubble bot typing">
+    <div className="dot"></div>
+    <div className="dot"></div>
+    <div className="dot"></div>
   </div>
 );
 
-// Product Card Component
 const ProductCard = ({ product }) => {
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-IN', {
+  const formatPrice = (price) =>
+    new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(price);
-  };
 
   return (
     <a
       href={`/products/${product._id}`}
-      className="chatbot-product-card"
+      className="chat-product-card"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <div className="product-card-image">
+      <div className="product-image-container">
         {product.image ? (
           <img src={product.image} alt={product.title} loading="lazy" />
         ) : (
-          <div className="product-card-placeholder">🎁</div>
+          <div className="placeholder-icon"><RiShoppingBag3Line /></div>
         )}
         {product.discount > 0 && (
-          <span className="product-discount-badge">-{product.discount}%</span>
+          <span className="badge discount">-{product.discount}%</span>
         )}
       </div>
-      <div className="product-card-info">
-        <h4 className="product-card-title">{product.title}</h4>
-        {product.brand && <span className="product-card-brand">{product.brand}</span>}
-        <div className="product-card-pricing">
-          <span className="product-card-price">{formatPrice(product.price)}</span>
+      <div className="product-details">
+        <h4 className="product-title">{product.title}</h4>
+        <div className="product-price-row">
+          <span className="current-price">{formatPrice(product.price)}</span>
           {product.oldPrice > product.price && (
-            <span className="product-card-old-price">{formatPrice(product.oldPrice)}</span>
+            <span className="old-price">{formatPrice(product.oldPrice)}</span>
           )}
         </div>
-        {!product.isAvailable && (
-          <span className="product-out-of-stock">Out of Stock</span>
+        {!product.isAvailable ? (
+          <span className="stock-status out">Out of Stock</span>
+        ) : (
+          <span className="stock-status in">In Stock</span>
         )}
       </div>
     </a>
   );
 };
 
-// Product List Component
-const ProductList = ({ products }) => (
-  <div className="chatbot-product-list">
-    {products.map((product) => (
-      <ProductCard key={product._id} product={product} />
-    ))}
+// New Carousel Component with Arrows
+const ProductCarousel = ({ products }) => {
+  const scrollRef = useRef(null);
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(true);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setShowLeft(scrollLeft > 0);
+    // Allow a small buffer (1px) for calculation errors
+    setShowRight(scrollLeft < scrollWidth - clientWidth - 1);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    // Check again if products change
+  }, [products]);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = 180; // Approximate card width + gap
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="carousel-wrapper">
+      {showLeft && (
+        <button
+          className="nav-arrow left"
+          onClick={(e) => { e.preventDefault(); scroll('left'); }}
+          aria-label="Scroll Left"
+        >
+          <RiArrowLeftSLine />
+        </button>
+      )}
+
+      <div
+        className="product-carousel"
+        ref={scrollRef}
+        onScroll={checkScroll}
+      >
+        {products.map((product) => (
+          <ProductCard key={product._id} product={product} />
+        ))}
+      </div>
+
+      {showRight && (
+        <button
+          className="nav-arrow right"
+          onClick={(e) => { e.preventDefault(); scroll('right'); }}
+          aria-label="Scroll Right"
+        >
+          <RiArrowRightSLine />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const OrderCard = ({ order }) => (
+  <div className="chat-order-card">
+    <div className="order-header">
+      <div className="order-id-group">
+        <span className="label">Order</span>
+        <span className="id">#{order.orderShort}</span>
+      </div>
+      <span className={`status-pill ${order.statusLabel?.toLowerCase().replace(/\s+/g, '-')}`}>
+        {order.statusLabel}
+      </span>
+    </div>
+    <div className="order-details">
+      <div className="detail-item">
+        <span className="label">Amount</span>
+        <span className="value">{order.totalAmount}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Items</span>
+        <span className="value">{order.itemCount}</span>
+      </div>
+    </div>
   </div>
 );
 
 const MessageBubble = ({ data, isLast }) => {
   const isUser = data.sender === 'user';
-  const bubbleClass = `chatbot-bubble ${isUser ? 'bubble-user' : 'bubble-bot'}`;
   const time = new Date(data.timestamp || Date.now()).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
   });
 
   return (
-    <div className={`message-row ${isUser ? 'row-user' : 'row-bot'}`}>
+    <div className={`message-group ${isUser ? 'user' : 'bot'}`}>
       {!isUser && (
-        <div className="bot-avatar-small">
-          <RiSparklingFill />
+        <div className="bot-avatar">
+          <RiCustomerService2Fill />
         </div>
       )}
-      <div className={bubbleClass}>
-        <p className="chatbot-bubble-text">{data.message}</p>
 
-        {/* Product List from search results */}
+      <div className="message-content">
+        <div className={`chat-bubble ${isUser ? 'user' : 'bot'}`}>
+          <p>{data.message}</p>
+        </div>
+
+        {/* Carousel Renderer */}
         {data.payload?.type === 'product-list' && data.payload.products?.length > 0 && (
-          <ProductList products={data.payload.products} />
+          <ProductCarousel products={data.payload.products} />
         )}
 
-        {/* Order Card with enhanced styling */}
-        {data.payload?.order && (
-          <div className="chatbot-order-card">
-            <div className="chatbot-order-card__header">
-              <span className="order-id">#{data.payload.order.orderShort}</span>
-              <span className={`status-badge ${data.payload.order.statusLabel?.toLowerCase().replace(/\s+/g, '-')}`}>
-                {data.payload.order.statusLabel}
-              </span>
-            </div>
-            <div className="chatbot-order-card__body">
-              <p className="amount">{data.payload.order.totalAmount}</p>
-              <p className="meta">{data.payload.order.itemCount} items</p>
-            </div>
-          </div>
-        )}
+        {data.payload?.order && <OrderCard order={data.payload.order} />}
 
-        {/* Timeline with progress visualization */}
         {data.payload?.timeline && (
-          <div className="chatbot-timeline">
+          <div className="timeline-container">
             {data.payload.timeline.map((step, idx) => (
-              <div key={step.key || idx} className={`timeline-step ${step.done ? 'done' : ''}`}>
-                <div className="step-indicator">
-                  <div className="dot" />
-                  {idx < data.payload.timeline.length - 1 && <div className="line" />}
+              <div key={idx} className={`timeline-item ${step.done ? 'completed' : ''}`}>
+                <div className="timeline-marker"></div>
+                <div className="timeline-content">
+                  <span className="timeline-label">{step.label}</span>
                 </div>
-                <span className="step-label">{step.label}</span>
               </div>
             ))}
           </div>
         )}
 
-        {/* Support Ticket Chip */}
         {data.payload?.ticketId && (
-          <div className="chatbot-ticket-chip">
-            <RiCustomerService2Fill /> Ticket #{data.payload.ticketId}
+          <div className="ticket-chip">
+            <RiSparklingFill /> Ticket #{data.payload.ticketId} Created
           </div>
         )}
 
-        <span className="message-time">
-          {time}
-          {isUser && isLast && <RiCheckDoubleLine style={{ marginLeft: 4, verticalAlign: 'middle' }} />}
-        </span>
+        <div className="message-meta">
+          <span>{time}</span>
+          {isUser && isLast && <RiCheckDoubleLine className="read-receipt" />}
+        </div>
       </div>
     </div>
   );
 };
 
 const QuickActions = ({ actions, onSelect, disabled }) => (
-  <div className="chatbot-quick-actions-container">
-    <div className="chatbot-quick-actions">
+  <div className="quick-actions-scroll">
+    <div className="quick-actions-wrapper">
       {actions.slice(0, 5).map((action) => (
         <button
           key={action}
-          type="button"
-          className="quick-action-chip"
+          className="action-chip"
           onClick={() => onSelect(action)}
           disabled={disabled}
         >
@@ -161,13 +228,7 @@ const QuickActions = ({ actions, onSelect, disabled }) => (
   </div>
 );
 
-const WelcomeScreen = ({ userName }) => (
-  <div className="chatbot-welcome">
-    <div className="welcome-emoji">👋</div>
-    <h4>Hi{userName ? `, ${userName.split(' ')[0]}` : ''}!</h4>
-    <p>How can I help you today?</p>
-  </div>
-);
+// --- Main Widget ---
 
 const ChatWidget = () => {
   const { backendurl, userData } = useContext(AppContext);
@@ -175,7 +236,6 @@ const ChatWidget = () => {
   const [hasOpenedOnce, setHasOpenedOnce] = useState(false);
 
   const {
-    session,
     messages,
     suggestions,
     isBootstrapping,
@@ -191,21 +251,12 @@ const ChatWidget = () => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && !hasOpenedOnce) {
-      setHasOpenedOnce(true);
-    }
     if (isOpen) {
+      if (!hasOpenedOnce) setHasOpenedOnce(true);
       setTimeout(() => inputRef.current?.focus(), 150);
+      setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     }
-  }, [isOpen, hasOpenedOnce]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [messages, isOpen, isSending]);
+  }, [isOpen, messages, isSending, hasOpenedOnce]);
 
   const handleSend = () => {
     if (!draft.trim()) return;
@@ -213,153 +264,94 @@ const ChatWidget = () => {
     setDraft('');
   };
 
-  const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
-    }
-  };
-
   const handleRestart = () => {
     localStorage.removeItem('chatbotSessionId');
     window.location.reload();
   };
 
-  const orderSummary = useMemo(() => session?.context?.orderSnapshot, [session]);
-  const userName = userData?.name || session?.userName;
-
   return (
-    <div className={`chatbot-shell ${isOpen ? 'active' : ''}`}>
-      {/* Floating Action Button */}
+    <div className={`chat-widget-container ${isOpen ? 'active' : ''}`}>
       <button
-        type="button"
-        className={`chatbot-toggle ${isOpen ? 'hidden' : ''}`}
+        className={`launcher-btn ${isOpen ? 'rotate-out' : 'rotate-in'}`}
         onClick={toggleWidget}
-        aria-label="Open Support Chat"
+        aria-label="Toggle Chat"
       >
-        <RiRobot2Fill size={28} />
-        <span className="notification-dot"></span>
+        <RiChatSmile3Fill size={28} />
       </button>
 
-      {/* Chat Panel */}
-      <div className={`chatbot-panel ${isOpen ? 'open' : ''}`}>
-        {/* Header */}
-        <header className="chatbot-header">
-          <div className="header-info">
-            <div className="avatar-ring">
-              <RiSparklingFill size={24} />
+      <div className={`chat-window ${isOpen ? 'open' : ''}`}>
+        <div className="chat-header">
+          <div className="brand-lockup">
+            <div className="brand-logo">
+              <RiCustomerService2Fill />
             </div>
-            <div className="meta">
-              <h3 className="title">GNG Assistant</h3>
-              <p className="status">
-                <span className="status-dot"></span>
-                {isBootstrapping ? 'Connecting...' : 'Online • Ready to help'}
+            <div className="brand-info">
+              <h3>Support Assistant</h3>
+              <p className={isBootstrapping ? 'connecting' : 'online'}>
+                {isBootstrapping ? 'Connecting...' : 'Replies instantly'}
               </p>
             </div>
           </div>
-          <div className="header-actions">
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={handleRestart}
-              title="Start New Chat"
-            >
-              <RiRefreshLine size={20} />
-            </button>
-            <button
-              type="button"
-              className="icon-btn close-btn"
-              onClick={toggleWidget}
-              aria-label="Close Chat"
-            >
-              <RiCloseLine size={24} />
-            </button>
+          <div className="header-controls">
+            <button onClick={handleRestart} title="Reset Chat"><RiRefreshLine /></button>
+            <button onClick={toggleWidget} title="Close"><RiCloseLine size={20} /></button>
           </div>
-        </header>
-
-        {/* Context Bar - Shows active order */}
-        {orderSummary && (
-          <div className="chatbot-context-bar">
-            <div className="context-info">
-              <span className="label">Tracking</span>
-              <span className="value">#{orderSummary.orderShort}</span>
-            </div>
-            <span className="context-status">{orderSummary.statusLabel}</span>
-          </div>
-        )}
-
-        {/* Chat Body */}
-        <div className="chatbot-body">
-          {isBootstrapping ? (
-            <div className="chatbot-loading-state">
-              <div className="spinner"></div>
-              <p>Starting secure session...</p>
-            </div>
-          ) : (
-            <div className="chatbot-messages-list">
-              <div className="messages-start">
-                <p>Today</p>
-              </div>
-
-              {messages.map((message, idx) => (
-                <MessageBubble
-                  data={message}
-                  key={`${message.timestamp}-${idx}`}
-                  isLast={idx === messages.length - 1}
-                />
-              ))}
-
-              {isSending && (
-                <div className="message-row row-bot">
-                  <div className="bot-avatar-small">
-                    <RiSparklingFill />
-                  </div>
-                  <TypingIndicator />
-                </div>
-              )}
-
-              <div ref={endRef} />
-            </div>
-          )}
         </div>
 
-        {/* Error Banner */}
-        {!!error && (
-          <div className="chatbot-error-banner">
-            <span>{error}</span>
-            <button onClick={resetError} aria-label="Dismiss error">
-              <RiCloseLine size={18} />
-            </button>
-          </div>
-        )}
+        <div className="chat-viewport">
+          <div className="date-separator"><span>Today</span></div>
 
-        {/* Footer */}
-        <div className="chatbot-footer">
+          {messages.map((msg, idx) => (
+            <MessageBubble
+              key={`${msg.timestamp}-${idx}`}
+              data={msg}
+              isLast={idx === messages.length - 1}
+            />
+          ))}
+
+          {isSending && (
+            <div className="message-group bot">
+              <div className="bot-avatar"><RiCustomerService2Fill /></div>
+              <TypingIndicator />
+            </div>
+          )}
+
+          {error && (
+            <div className="error-toast">
+              {error}
+              <button onClick={resetError}><RiCloseLine /></button>
+            </div>
+          )}
+          <div ref={endRef} />
+        </div>
+
+        <div className="chat-footer">
           <QuickActions
             actions={suggestions}
-            onSelect={(value) => sendMessage(value)}
+            onSelect={sendMessage}
             disabled={isSending || isBootstrapping}
           />
 
-          <div className="chatbot-input-area">
+          <div className="input-group">
             <textarea
               ref={inputRef}
-              placeholder="Type your message..."
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isBootstrapping}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+              placeholder="Type your message..."
               rows={1}
+              disabled={isBootstrapping}
             />
             <button
-              type="button"
               className="send-btn"
               onClick={handleSend}
-              disabled={!draft.trim() || isSending || isBootstrapping}
-              aria-label="Send message"
+              disabled={!draft.trim() || isSending}
             >
-              <RiSendPlaneFill size={20} />
+              <RiSendPlaneFill />
             </button>
+          </div>
+          <div className="branding-footer">
+            Powered by Gifts n Gifts AI
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../context/Appcontext";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
@@ -9,7 +9,10 @@ import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { backendurl, setIsLoggedin, setUserdata, onLoginSuccess } =
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
+  const { backendurl, setIsLoggedin, setUserdata, onLoginSuccess, userData } =
     useContext(AppContext);
 
   const [state, setState] = useState("Login"); // Login or Sign Up
@@ -91,7 +94,7 @@ const Login = () => {
               });
             }
             toast.success("Account created successfully!");
-            navigate("/");
+            navigate(from, { replace: true });
           }
         } else {
           toast.error(data.message);
@@ -141,7 +144,7 @@ const Login = () => {
         onLoginSuccess(data.user);
 
         toast.success(state === "Sign Up" ? "Account verified! Welcome!" : "Login successful!");
-        navigate("/");
+        navigate(from, { replace: true });
       } else {
         toast.error(data.message || "OTP verification failed.");
       }

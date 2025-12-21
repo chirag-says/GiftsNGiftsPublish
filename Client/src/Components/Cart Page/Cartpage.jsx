@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/Appcontext.jsx";
 import CartItems from "./CartItems";
 import Totalprice from "./Totalprice";
@@ -10,10 +10,32 @@ import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 function Cartpage() {
   const navigate = useNavigate();
   const { cartItems, setCartItems, fetchCart } = useContext(AppContext);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     fetchCart();
   }, []);
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      if (!initialized) {
+        setSelectedItems(cartItems.map(item => item.product._id));
+        setInitialized(true);
+      } else {
+        // Remove IDs that are no longer in cart
+        setSelectedItems(prev => prev.filter(id => cartItems.some(item => item.product._id === id)));
+      }
+    }
+  }, [cartItems]);
+
+  const handleSelect = (id) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
+    } else {
+      setSelectedItems(prev => [...prev, id]);
+    }
+  };
 
   const handleRemove = async (cartItemId) => {
     try {
@@ -68,6 +90,8 @@ function Cartpage() {
                       quantity={item.quantity}
                       onRemove={handleRemove}
                       onUpdateQuantity={handleUpdateQuantity}
+                      isSelected={selectedItems.includes(item.product._id)}
+                      onSelect={handleSelect}
                     />
                   ))
                 ) : (
@@ -96,11 +120,21 @@ function Cartpage() {
           {/* Right Part: Checkout Summary (Sticky) */}
           <div className="w-full lg:w-[32%] lg:sticky lg:top-24">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <Totalprice handlePlaceOrder={() => navigate("/addaddress")} />
+              <Totalprice
+                handlePlaceOrder={() => navigate("/addaddress", { state: { selectedItems } })}
+                selectedItemIds={selectedItems}
+              />
               <Button
                 fullWidth
-                onClick={() => navigate("/addaddress")}
+                onClick={() => {
+                  if (selectedItems.length === 0) {
+                    alert("Please select at least one item to checkout.");
+                    return;
+                  }
+                  navigate("/addaddress", { state: { selectedItems } });
+                }}
                 variant="contained"
+                disabled={selectedItems.length === 0}
                 className="!mt-6 !bg-[#fb541b] !py-3 !rounded-xl !font-bold !text-lg !shadow-orange-200 !shadow-lg hover:!bg-[#e44a15]"
               >
                 Proceed to Checkout

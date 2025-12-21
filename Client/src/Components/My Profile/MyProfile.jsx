@@ -1,20 +1,28 @@
 import React, { useContext, useState, useEffect } from "react";
-import { TextField, Button, Paper } from "@mui/material";
+import { TextField, Button, Paper, Avatar } from "@mui/material";
 import api from "../../utils/api";
 import SideMenu from "./SideMenu.jsx";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/Appcontext.jsx";
-import { FiEdit2, FiUser, FiPhone, FiMail, FiCheckCircle } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiUser,
+  FiPhone,
+  FiMail,
+  FiCheckCircle,
+  FiShield,
+  FiCamera
+} from "react-icons/fi";
 
 function Myprofile() {
-  const { profile, setProfile, backendurl } = useContext(AppContext);
+  const { profile, setProfile } = useContext(AppContext);
   const [editing, setEditing] = useState(false);
-  const [localProfile, setLocalProfile] = useState(profile);
-
-
+  const [localProfile, setLocalProfile] = useState(profile || {});
 
   useEffect(() => {
-    setLocalProfile(profile);
+    if (profile) {
+      setLocalProfile(profile);
+    }
   }, [profile]);
 
   const handleChange = (e) => {
@@ -24,10 +32,7 @@ function Myprofile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post(
-        '/api/user/updateprofile',
-        localProfile
-      );
+      const { data } = await api.post('/api/user/updateprofile', localProfile);
       if (data.message) {
         toast.success(data.message);
         setEditing(false);
@@ -38,52 +43,98 @@ function Myprofile() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#f8f9fa] py-6 md:py-12">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
+  // Helper to get initials
+  const getInitials = (name) => {
+    return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+  };
 
-          {/* Side Menu Section - Hidden on small mobile or stacked */}
+  return (
+    <div className="min-h-screen bg-slate-50 py-8 md:py-12 font-sans">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="flex flex-col lg:flex-row gap-8">
+
+          {/* Side Menu */}
           <div className="lg:w-1/4 w-full order-2 lg:order-1">
             <SideMenu />
           </div>
 
-          {/* Profile Content Section */}
+          {/* Main Content */}
           <div className="lg:w-3/4 w-full order-1 lg:order-2 space-y-6">
+
+            {/* Main Profile Card */}
             <Paper
               elevation={0}
-              className="!rounded-3xl border border-gray-100 overflow-hidden bg-white shadow-sm"
+              className="!rounded-3xl border border-slate-200 overflow-hidden bg-white shadow-sm"
             >
               <div className="p-6 md:p-10">
-                {/* Header: Responsive flex direction */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Account Settings</h1>
-                    <p className="text-gray-500 text-sm mt-1">Update your personal details and contact info</p>
+
+                {/* Header with Avatar */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-8 border-b border-slate-100">
+                  <div className="flex items-center gap-5">
+                    <div className="relative group cursor-pointer">
+                      <Avatar
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          bgcolor: '#4f46e5',
+                          fontSize: '2rem',
+                          fontWeight: 'bold',
+                          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                        }}
+                      >
+                        {getInitials(profile?.name)}
+                      </Avatar>
+                      {editing && (
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <FiCamera className="text-white text-xl" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold text-slate-900">{profile?.name || 'User Profile'}</h1>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider">
+                          Active Customer
+                        </span>
+                        <p className="text-slate-500 text-sm">Member since 2025</p>
+                      </div>
+                    </div>
                   </div>
+
                   {!editing && (
                     <button
                       onClick={() => setEditing(true)}
-                      className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-2xl transition-all duration-300 active:scale-95"
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all duration-200"
                     >
                       <FiEdit2 /> Edit Profile
                     </button>
                   )}
                 </div>
 
+                {/* Content Area */}
                 {!editing ? (
-                  /* Display Grid: 1 col on mobile, 3 on desktop */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    <ProfileInfoItem icon={<FiUser className="text-purple-500" />} label="Full Name" value={profile?.name} />
-                    <ProfileInfoItem icon={<FiPhone className="text-blue-500" />} label="Phone Number" value={profile?.phone} />
-                    <ProfileInfoItem icon={<FiMail className="text-orange-500" />} label="Email Address" value={profile?.email} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <ProfileInfoItem
+                      icon={<FiUser className="text-indigo-600" />}
+                      label="Full Name"
+                      value={profile?.name}
+                    />
+                    <ProfileInfoItem
+                      icon={<FiPhone className="text-blue-500" />}
+                      label="Phone Number"
+                      value={profile?.phone}
+                    />
+                    <ProfileInfoItem
+                      icon={<FiMail className="text-rose-500" />}
+                      label="Email Address"
+                      value={profile?.email}
+                    />
                   </div>
                 ) : (
-                  /* Form Grid: Optimized for touch and spacing */
-                  <form className="animate-in fade-in slide-in-from-top-2 duration-400" onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-bold uppercase text-gray-400 ml-1 tracking-wider">Full Name</label>
+                  <form className="animate-in fade-in slide-in-from-top-2 duration-300" onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold uppercase text-slate-500 ml-1">Full Name</label>
                         <TextField
                           fullWidth
                           name="name"
@@ -95,8 +146,9 @@ function Myprofile() {
                           sx={inputStyles}
                         />
                       </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-bold uppercase text-gray-400 ml-1 tracking-wider">Phone Number</label>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold uppercase text-slate-500 ml-1">Phone Number</label>
                         <TextField
                           fullWidth
                           name="phone"
@@ -108,32 +160,35 @@ function Myprofile() {
                           sx={inputStyles}
                         />
                       </div>
+
+                      <div className="flex flex-col gap-2 md:col-span-2">
+                        <label className="text-xs font-bold uppercase text-slate-500 ml-1">Email Address</label>
+                        <TextField
+                          fullWidth
+                          name="email"
+                          value={localProfile?.email || ""}
+                          onChange={handleChange}
+                          variant="outlined"
+                          required
+                          sx={inputStyles}
+                        />
+                        <p className="text-[11px] text-slate-400 ml-1 flex items-center gap-1">
+                          <FiShield size={10} /> This email is linked to your login credentials.
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-1.5 mb-10">
-                      <label className="text-[11px] font-bold uppercase text-gray-400 ml-1 tracking-wider">Email Address</label>
-                      <TextField
-                        fullWidth
-                        name="email"
-                        value={localProfile?.email || ""}
-                        onChange={handleChange}
-                        variant="outlined"
-                        required
-                        sx={inputStyles}
-                      />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex items-center gap-4 border-t border-slate-100 pt-6">
                       <Button
                         type="submit"
                         variant="contained"
-                        className="!bg-purple-700 !rounded-2xl !px-10 !py-3.5 !normal-case !font-bold !shadow-none hover:!bg-purple-800 transition-all w-full sm:w-auto"
+                        className="!bg-indigo-600 !rounded-xl !px-8 !py-3 !normal-case !font-semibold !shadow-lg !shadow-indigo-200 hover:!bg-indigo-700 hover:!shadow-indigo-300 transition-all"
                       >
                         Save Changes
                       </Button>
                       <Button
                         onClick={() => setEditing(false)}
-                        className="!text-gray-500 !bg-gray-100 !rounded-2xl !px-8 !py-3.5 !normal-case !font-bold hover:!bg-gray-200 transition-all w-full sm:w-auto"
+                        className="!text-slate-500 !bg-transparent hover:!bg-slate-50 !rounded-xl !px-6 !py-3 !normal-case !font-semibold transition-all"
                       >
                         Cancel
                       </Button>
@@ -143,21 +198,27 @@ function Myprofile() {
               </div>
             </Paper>
 
-            {/* Verification/Status Card (Bonus modern touch) */}
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4 text-center md:text-left">
-                <div className="p-3 bg-white/20 rounded-2xl">
-                  <FiCheckCircle size={24} />
+            {/* Security/Status Card */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-slate-200 border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-start gap-5">
+                <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
+                  <FiCheckCircle className="text-indigo-400" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold">Account Verified</h3>
-                  <p className="text-white/80 text-xs">Your account is secure and information is encrypted.</p>
+                  <h3 className="font-bold text-lg mb-1">Identity Verified</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed max-w-md">
+                    Your personal information is encrypted and secured with industry-standard protocols.
+                  </p>
                 </div>
               </div>
-              {/* <button className="px-5 py-2 bg-white text-purple-700 text-sm font-bold rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
-                 Privacy Settings
-               </button> */}
+              {/* Optional Action */}
+              {/* <div className="text-right">
+                  <span className="text-xs font-mono text-indigo-300 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                    ID: {profile?._id?.slice(-8).toUpperCase()}
+                  </span>
+              </div> */}
             </div>
+
           </div>
         </div>
       </div>
@@ -165,30 +226,44 @@ function Myprofile() {
   );
 }
 
+// Sub-component for display mode
 const ProfileInfoItem = ({ icon, label, value }) => (
-  <div className="p-5 rounded-2xl bg-white border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all duration-300">
+  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-md transition-all duration-300 group">
     <div className="flex items-center gap-3 mb-3">
-      <div className="p-2.5 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
+      <div className="p-2 bg-white rounded-lg shadow-sm text-lg group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
     </div>
-    <p className="text-gray-900 font-bold truncate text-[15px]">{value || "Not provided"}</p>
+    <p className="text-slate-900 font-semibold truncate text-[15px] pl-1">{value || "Not provided"}</p>
   </div>
 );
 
-// Custom MUI input styling to match modern UI
+// Custom MUI Styles aligned with "Professional Indigo" theme
 const inputStyles = {
   '& .MuiOutlinedInput-root': {
-    borderRadius: '16px',
+    borderRadius: '12px',
     backgroundColor: '#fff',
-    '& fieldset': { borderColor: '#e5e7eb' },
-    '&:hover fieldset': { borderColor: '#a855f7' },
-    '&.Mui-focused fieldset': { borderColor: '#7d0492' },
+    transition: 'all 0.2s ease-in-out',
+    '& fieldset': {
+      borderColor: '#e2e8f0',
+      borderWidth: '1px'
+    },
+    '&:hover fieldset': {
+      borderColor: '#cbd5e1'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#4f46e5',
+      borderWidth: '2px'
+    },
+    '&.Mui-focused': {
+      boxShadow: '0 0 0 4px rgba(79, 70, 229, 0.1)'
+    }
   },
   '& .MuiInputBase-input': {
     padding: '14px 16px',
-    fontSize: '14px',
+    fontSize: '15px',
+    color: '#1e293b',
     fontWeight: 500
   }
 };

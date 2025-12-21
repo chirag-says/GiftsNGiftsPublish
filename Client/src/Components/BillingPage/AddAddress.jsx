@@ -3,11 +3,13 @@ import { TextField, Button, Radio } from '@mui/material';
 import api from "../../utils/api";
 import Totalprice from '../Cart Page/Totalprice.jsx';
 import { MdModeEdit, MdDelete, MdAddLocationAlt, MdOutlineHomeWork } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 function AddAddress() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedItems = location.state?.selectedItems;
   const [profile, setProfile] = useState({ name: '', phone: '', email: '' });
   const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
@@ -103,7 +105,7 @@ function AddAddress() {
   const handlePlaceOrder = () => {
     if (selectedAddress) {
       localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress));
-      navigate("/ordersummery");
+      navigate("/ordersummery", { state: { selectedItems } });
     } else {
       toast.error("Please select a delivery address!");
     }
@@ -140,8 +142,8 @@ function AddAddress() {
                       key={addr._id}
                       onClick={() => setSelectedAddress(addr)}
                       className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-300 transition-all cursor-pointer ${selectedAddress?._id === addr._id
-                          ? " bg-orange-50/20"
-                          : "border-gray-100 hover:border-gray-200"
+                        ? " bg-orange-50/20"
+                        : "border-gray-100 hover:border-gray-200"
                         }`}
                     >
                       <Radio
@@ -232,7 +234,7 @@ function AddAddress() {
           {/* Right Part: Summary */}
           <div className="lg:w-[30%] w-full order-1 lg:order-2">
             <div className="lg:sticky lg:top-24">
-              <Totalprice />
+              <Totalprice selectedItemIds={selectedItems} />
             </div>
           </div>
 

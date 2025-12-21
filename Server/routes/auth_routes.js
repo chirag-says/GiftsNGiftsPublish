@@ -26,7 +26,6 @@ import {
     getMe
 } from "../controller/auth_controller.js";
 import userAuth from "../middleware/userAuth.js";
-import auth from "../middleware/cartmiddleare.js"
 
 const router = express.Router();
 
@@ -49,15 +48,15 @@ router.get('/me', userAuth, getMe);           // NEW: Get current user (replaces
 router.post('/logout-session', logoutUser);    // NEW: Proper logout (clears cookie)
 
 // ============ CART ROUTES ============
-router.post('/Cart', auth, Addtocart)
-router.get('/Cart', auth, GetCart)
-router.delete('/delete/:productId', auth, DeleteFromCart)
-router.put('/update-quantity', auth, ToggleCartQuantity);
-router.delete("/clear-cart", auth, clearUserCart);
+router.post('/Cart', userAuth, Addtocart)
+router.get('/Cart', userAuth, GetCart)
+router.delete('/delete/:productId', userAuth, DeleteFromCart)
+router.put('/update-quantity', userAuth, ToggleCartQuantity);
+router.delete("/clear-cart", userAuth, clearUserCart);
 
 // ============ WISHLIST ROUTES ============
-router.post('/wishlist', auth, AddToWishlist)
-router.get('/wishlist', auth, GetWishlist)
-router.delete('/delete-wishlist/:productId', auth, RemoveFromWishlist)
+router.post('/wishlist', userAuth, AddToWishlist)
+router.get('/wishlist', userAuth, GetWishlist)
+router.delete('/delete-wishlist/:productId', userAuth, RemoveFromWishlist)
 
 export default router

@@ -74,8 +74,8 @@ function LeftComponent({ product }) {
             <SwiperSlide key={index}>
               <div
                 className={`aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${activeIndex === index
-                    ? "border-[#7d0492] shadow-md"
-                    : "border-gray-200 hover:border-gray-300"
+                  ? "border-[#7d0492] shadow-md"
+                  : "border-gray-200 hover:border-gray-300"
                   }`}
               >
                 <img
@@ -92,10 +92,10 @@ function LeftComponent({ product }) {
       {/* Stock Badge */}
       {product?.availability && (
         <div className={`mt-4 inline-block px-3 py-1 rounded-full text-sm font-medium ${product.availability === "In Stock"
-            ? "bg-green-100 text-green-700"
-            : product.availability === "Low Stock"
-              ? "bg-yellow-100 text-yellow-700"
-              : "bg-red-100 text-red-700"
+          ? "bg-green-100 text-green-700"
+          : product.availability === "Low Stock"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-red-100 text-red-700"
           }`}>
           {product.availability}
           {product.availability === "Low Stock" && product.stock && (

@@ -34,13 +34,29 @@ export const getAllProductsByCategory = async (req, res) => {
 
 export const placeorder = async (req, res) => {
   try {
-    
     const { items, totalAmount, shippingAddress, userId, image, paymentId } = req.body;
 
     if (!items?.length || !shippingAddress || !totalAmount) {
       return res.status(400).json({ success: false, message: "Missing order details." });
     }
 
+    // 1. Validate Stock for all items first
+    const productsToUpdate = [];
+    for (const item of items) {
+      const product = await addproductmodel.findById(item.productId);
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Product not found: ${item.name || item.productId}` });
+      }
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.title}. Available: ${product.stock}`
+        });
+      }
+      productsToUpdate.push({ product, quantity: item.quantity });
+    }
+
+    // 2. Create the Order
     const newOrder = new orderModel({
       user: userId,
       items,
@@ -48,12 +64,19 @@ export const placeorder = async (req, res) => {
       shippingAddress,
       image,
       paymentId: paymentId || null
-     
     });
 
     await newOrder.save();
+
+    // 3. Deduct Stock (pre-save hook in model will handle isAvailable/status)
+    for (const { product, quantity } of productsToUpdate) {
+      product.stock -= quantity;
+      await product.save();
+    }
+
     res.status(201).json({ success: true, message: "Order placed successfully", order: newOrder });
   } catch (error) {
+    console.error("Place Order Error:", error);
     res.status(500).json({ success: false, message: "Failed to place order", error: error.message });
   }
 };

@@ -48,6 +48,7 @@ const userAuth = async (req, res, next) => {
         // Attach user ID to request
         req.body.userId = decoded.id;
         req.userId = decoded.id; // Also attach directly to req for convenience
+        req.user = { id: decoded.id }; // Standard express user object for compatibility
 
         next();
     } catch (error) {

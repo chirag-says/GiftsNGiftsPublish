@@ -3,13 +3,19 @@ import { AppContext } from "../context/Appcontext.jsx";
 import CartItems from "../Cart Page/CartItems.jsx";
 import Totalprice from "../Cart Page/Totalprice.jsx";
 import api from "../../utils/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Divider, Paper } from "@mui/material";
 import { HiOutlineLocationMarker, HiOutlineShieldCheck, HiOutlineShoppingBag } from "react-icons/hi";
 
 function OrderSummery() {
   const navigate = useNavigate();
   const { cartItems, setCartItems, fetchCart, clearCartAfterOrder } = useContext(AppContext);
+  const location = useLocation();
+  const selectedItems = location.state?.selectedItems;
+
+  const itemsToBuy = selectedItems
+    ? cartItems.filter(item => selectedItems.includes(item.product._id))
+    : cartItems;
 
   const [address, setAddress] = useState(null);
 
@@ -50,7 +56,7 @@ function OrderSummery() {
       throw new Error("Address missing");
     }
 
-    const items = cartItems.map((item) => ({
+    const items = itemsToBuy.map((item) => ({
       productId: item.product._id,
       name: item.product.title || item.product.name,
       quantity: item.quantity,
@@ -69,12 +75,12 @@ function OrderSummery() {
         phone: address.phoneNumber,
         address: address.address,
       },
-      image: cartItems[0]?.product.image || "",
+      image: itemsToBuy[0]?.product.image || "",
     };
   };
 
   const checkoutHandler = async () => {
-    const totalAmount = cartItems.reduce((t, i) => t + i.product.price * i.quantity, 0);
+    const totalAmount = itemsToBuy.reduce((t, i) => t + i.product.price * i.quantity, 0);
 
     try {
       const { data: { key } } = await api.get('/api/getkey');
@@ -98,7 +104,15 @@ function OrderSummery() {
             );
 
             if (res.data.success) {
-              await clearCartAfterOrder();
+              if (selectedItems && selectedItems.length < cartItems.length) {
+                // Partial cleanup
+                for (const item of itemsToBuy) {
+                  await api.delete(`/api/auth/delete/${item.product._id}`);
+                }
+                fetchCart();
+              } else {
+                await clearCartAfterOrder();
+              }
               navigate("/payment-success");
             }
           } catch (error) {
@@ -161,13 +175,13 @@ function OrderSummery() {
             <Paper elevation={0} className="border border-gray-200 rounded-xl overflow-hidden">
               <div className="p-6 border-b bg-white">
                 <h3 className="flex items-center gap-2 font-bold text-gray-700">
-                  <HiOutlineShoppingBag className="text-[#7d0492]" /> Items in your Order ({cartItems.length})
+                  <HiOutlineShoppingBag className="text-[#7d0492]" /> Items in your Order ({itemsToBuy.length})
                 </h3>
               </div>
 
               <div className="max-h-[500px] overflow-y-auto bg-white">
-                {cartItems.length > 0 ? (
-                  cartItems.map((item) => (
+                {itemsToBuy.length > 0 ? (
+                  itemsToBuy.map((item) => (
                     <CartItems
                       key={item.product._id}
                       cartItemId={item.product._id}
@@ -189,7 +203,7 @@ function OrderSummery() {
                 fullWidth
                 variant="contained"
                 onClick={checkoutHandler}
-                disabled={cartItems.length === 0 || !address}
+                disabled={itemsToBuy.length === 0 || !address}
                 className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-lg"
               >
                 Confirm and Pay
@@ -200,14 +214,14 @@ function OrderSummery() {
           {/* Sidebar (Price Summary) */}
           <div className="lg:w-[30%]">
             <div className="sticky top-28 space-y-4">
-              <Totalprice />
+              <Totalprice selectedItemIds={selectedItems} />
 
               <div className="hidden lg:block">
                 <Button
                   fullWidth
                   variant="contained"
                   onClick={checkoutHandler}
-                  disabled={cartItems.length === 0 || !address}
+                  disabled={itemsToBuy.length === 0 || !address}
                   className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-xl hover:!bg-[#e68a00] transition-all transform hover:scale-[1.02]"
                 >
                   Complete Payment

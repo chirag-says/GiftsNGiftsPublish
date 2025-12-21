@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
-import { Autoplay } from "swiper/modules";
+import "swiper/css/navigation";
+import { Autoplay, Navigation } from "swiper/modules";
 import { Link } from "react-router-dom";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import api from "../../../utils/api";
 
 const NavCatSlider = () => {
@@ -17,9 +19,7 @@ const NavCatSlider = () => {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(
-        '/api/getcategories'
-      );
+      const response = await api.get('/api/getcategories');
       const categoryArray = Array.isArray(response.data)
         ? response.data
         : response.data.categories || [];
@@ -42,58 +42,77 @@ const NavCatSlider = () => {
   };
 
   if (isLoading || error || categories.length === 0) {
-    return null; // Keep it clean if loading or empty
+    return null;
   }
 
   return (
-    <div className="!bg-white border-b border-gray-100">
-      {/* Subtle Promo Header */}
-      <div className="sm:py-4 py-2 bg-gray-50">
-        <h5 className="text-[11px] sm:text-[14px] tracking-wider font-medium text-gray-800 text-center">
+    <div className="bg-white border-b border-gray-100 pb-6">
+
+      {/* 1. Promo Header - Clean & Minimal */}
+      <div className="py-2.5 bg-gray-50 border-b border-gray-100 mb-6">
+        <h5 className="text-[11px] sm:text-[13px] tracking-wide font-semibold text-gray-600 text-center uppercase">
           Celebrate Occasions with India's #1 Online Gift Store
         </h5>
       </div>
 
-      <div className="container mx-auto px-4 py-3 sm:py-8">
+      <div className="container mx-auto px-4 relative group/slider">
         <Swiper
-          slidesPerView={4}
+          modules={[Autoplay, Navigation]}
           spaceBetween={16}
-          modules={[Autoplay]}
-          autoplay={{ delay: 4000, disableOnInteraction: false }}
-          breakpoints={{
-            480: { slidesPerView: 5, spaceBetween: 20 },
-            768: { slidesPerView: 7, spaceBetween: 24 },
-            1024: { slidesPerView: 9, spaceBetween: 30 },
+          slidesPerView={4}
+          navigation={{
+            nextEl: '.nav-cat-next',
+            prevEl: '.nav-cat-prev',
           }}
-          className="category-swiper"
+          autoplay={{
+            delay: 4000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true
+          }}
+          breakpoints={{
+            320: { slidesPerView: 3, spaceBetween: 12 },
+            480: { slidesPerView: 4, spaceBetween: 16 },
+            640: { slidesPerView: 5, spaceBetween: 20 },
+            850: { slidesPerView: 7, spaceBetween: 24 },
+            1100: { slidesPerView: 9, spaceBetween: 28 },
+          }}
+          className="!px-2 !py-2"
         >
           {categories.map((category, index) => (
             <SwiperSlide key={index}>
               <Link
                 to="/productlist"
                 state={{ category: category.categoryname }}
-                className="group flex flex-col items-center"
+                className="group flex flex-col items-center cursor-pointer"
               >
-                {/* Image Container - Circular with Modern Hover */}
-                <div className="relative overflow-hidden w-16 h-16 sm:w-24 sm:h-24 md:w-30 md:h-30 rounded-full border-2 border-transparent group-hover:border-gray-300 transition-all duration-500 p-1">
-                  <div className="w-full h-full rounded-full overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                {/* 2. Image Container - Gradient Ring Effect */}
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full p-[2px] bg-gradient-to-tr from-gray-200 to-gray-200 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all duration-300">
+                  <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                     <img
                       src={getCategoryImageUrl(category)}
                       alt={category.categoryname}
-                      className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover rounded-full transform transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
                     />
                   </div>
                 </div>
 
-                {/* Text Label */}
-                <h3 className="mt-3 text-[11px] sm:text-[13px] font-semibold text-gray-700 group-hover:text-purple-700 text-center leading-tight transition-colors line-clamp-1 px-1">
+                {/* 3. Text Label */}
+                <h3 className="mt-3 text-[11px] sm:text-[13px] font-semibold text-gray-600 group-hover:text-purple-700 text-center leading-tight transition-colors line-clamp-1 px-1 capitalize">
                   {category.categoryname}
                 </h3>
               </Link>
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* 4. Floating Navigation Arrows */}
+        <button className="nav-cat-prev absolute top-[40%] -left-2 sm:-left-4 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white text-gray-700 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 hover:bg-purple-600 hover:text-white hover:scale-110 disabled:opacity-0 disabled:invisible opacity-0 group-hover/slider:opacity-100 cursor-pointer">
+          <HiChevronLeft size={20} />
+        </button>
+        <button className="nav-cat-next absolute top-[40%] -right-2 sm:-right-4 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white text-gray-700 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 hover:bg-purple-600 hover:text-white hover:scale-110 disabled:opacity-0 disabled:invisible opacity-0 group-hover/slider:opacity-100 cursor-pointer">
+          <HiChevronRight size={20} />
+        </button>
       </div>
     </div>
   );

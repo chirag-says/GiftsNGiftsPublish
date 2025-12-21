@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Switch, FormControlLabel, Select, MenuItem, FormControl, InputLabel, LinearProgress, Alert } from "@mui/material";
 import { MdEmail, MdSend } from "react-icons/md";
 import { FiRefreshCw, FiSave } from "react-icons/fi";
 
 function EmailSettings() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
@@ -26,7 +26,7 @@ function EmailSettings() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/email-settings`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/email-settings');
             if (data.success && data.settings) {
                 setEmailSettings(prev => ({ ...prev, ...data.settings }));
             }
@@ -40,7 +40,7 @@ function EmailSettings() {
     const saveSettings = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/email-settings`, emailSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/email-settings', emailSettings);
             if (data.success) {
                 setSuccess("Email settings saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);
@@ -55,7 +55,7 @@ function EmailSettings() {
     const testEmail = async () => {
         setTesting(true);
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/email-settings/test`, {}, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/email-settings/test');
             if (data.success) {
                 setSuccess("Test email sent successfully!");
                 setTimeout(() => setSuccess(""), 3000);

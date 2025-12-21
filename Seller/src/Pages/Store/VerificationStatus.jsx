@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdVerified, MdUpload, MdCheckCircle, MdPending, MdError } from "react-icons/md";
 import { FiFileText, FiCamera, FiCreditCard, FiShield } from "react-icons/fi";
 
@@ -20,14 +20,12 @@ function VerificationStatus() {
   });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(null);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/verification`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/store/verification');
         if (res.data.success && res.data.data) {
           setData(prev => ({
             ...prev,
@@ -58,10 +56,10 @@ function VerificationStatus() {
       formData.append('documentType', docType);
 
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/verification`,
+        const res = await api.post(
+          '/api/seller-panel/store/verification',
           formData,
-          { headers: { stoken, 'Content-Type': 'multipart/form-data' } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
         if (res.data.success) {
           alert("Document uploaded successfully!");

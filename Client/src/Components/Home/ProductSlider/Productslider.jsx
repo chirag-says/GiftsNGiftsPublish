@@ -6,7 +6,7 @@ import 'swiper/css/free-mode';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import { Navigation } from 'swiper/modules';
-import axios from 'axios';
+import api from '../../../utils/api';
 import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi"; // arrow icons
@@ -31,10 +31,8 @@ const ProductSlider = () => {
 
   const getProducts = async () => {
     try {
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/client/productsbycategory`;
-      const { data } = await axios.get(url, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const url = `/api/client/productsbycategory`;
+      const { data } = await api.get(url);
 
       if (data?.success && Array.isArray(data.categories)) {
         const filteredCategories = data.categories
@@ -82,37 +80,37 @@ const ProductSlider = () => {
 
           {/* Swiper with Navigation */}
           <Swiper
-  spaceBetween={20}
-  breakpoints={{
-    320: { slidesPerView: 1 },
-    480: { slidesPerView: 2 },
-    768: { slidesPerView: 3 },
-    1280: { slidesPerView: 4 },
-  }}
-  className="mySwiper"
->
-  {cat.products.map((product) => (
-    <SwiperSlide key={product._id}>
-      <Link to={`/products/${product._id}`}>
-        <div className="bg-white !mb-4 rounded overflow-hidden shadow-md hover:shadow-lg transition duration-300">
-          <div className="w-full h-[280px] overflow-hidden">
-            <img
-              src={product?.images?.[0]?.url || '/default-image.jpg'}
-              alt={product?.images?.[0]?.altText || product?.title}
-              className="w-full h-full object-contain sm:object-cover hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-          <div className="p-3 text-center">
-            <h3 className="text-gray-700 text-sm sm:text-base truncate">{product.title}</h3>
-            <h2 className="text-gray-900 text-sm sm:text-lg font-semibold mt-1">
-              ₹{product.price || "N/A"}
-            </h2>
-          </div>
-        </div>
-      </Link>
-    </SwiperSlide>
-  ))}
-</Swiper>
+            spaceBetween={20}
+            breakpoints={{
+              320: { slidesPerView: 1 },
+              480: { slidesPerView: 2 },
+              768: { slidesPerView: 3 },
+              1280: { slidesPerView: 4 },
+            }}
+            className="mySwiper"
+          >
+            {cat.products.map((product) => (
+              <SwiperSlide key={product._id}>
+                <Link to={`/products/${product._id}`}>
+                  <div className="bg-white !mb-4 rounded overflow-hidden shadow-md hover:shadow-lg transition duration-300">
+                    <div className="w-full h-[280px] overflow-hidden">
+                      <img
+                        src={product?.images?.[0]?.url || '/default-image.jpg'}
+                        alt={product?.images?.[0]?.altText || product?.title}
+                        className="w-full h-full object-contain sm:object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-3 text-center">
+                      <h3 className="text-gray-700 text-sm sm:text-base truncate">{product.title}</h3>
+                      <h2 className="text-gray-900 text-sm sm:text-lg font-semibold mt-1">
+                        ₹{product.price || "N/A"}
+                      </h2>
+                    </div>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
 
           {/* Navigation Arrows */}

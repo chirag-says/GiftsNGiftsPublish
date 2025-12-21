@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { useLocation } from "react-router-dom";
 import {
@@ -18,7 +18,7 @@ import { BiReceipt } from "react-icons/bi";
 import { HiOutlineTemplate } from "react-icons/hi";
 
 function Settings() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -91,7 +91,7 @@ function Settings() {
     const fetchSettingsData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings');
             if (data.success) {
                 if (data.siteConfig && Object.keys(data.siteConfig).length > 0) setSiteConfig(prev => ({ ...prev, ...data.siteConfig }));
                 setPaymentGateways(data.paymentGateways || []);
@@ -119,7 +119,7 @@ function Settings() {
     // Save functions
     const saveSiteConfig = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/site-config`, siteConfig, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/site-config', siteConfig);
             if (data.success) alert("Site configuration saved!");
         } catch (e) {
             alert("Failed to save site configuration");
@@ -128,7 +128,7 @@ function Settings() {
 
     const saveEmailSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/email-settings`, emailSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/email-settings', emailSettings);
             if (data.success) alert("Email settings saved!");
         } catch (e) {
             alert("Failed to save email settings");
@@ -137,7 +137,7 @@ function Settings() {
 
     const saveSmsSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/sms-settings`, smsSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/sms-settings', smsSettings);
             if (data.success) alert("SMS settings saved!");
         } catch (e) {
             alert("Failed to save SMS settings");
@@ -146,7 +146,7 @@ function Settings() {
 
     const saveTaxConfig = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/tax-config`, taxConfig, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/tax-config', taxConfig);
             if (data.success) alert("Tax configuration saved!");
         } catch (e) {
             alert("Failed to save tax configuration");
@@ -155,7 +155,7 @@ function Settings() {
 
     const saveSecuritySettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/security`, securitySettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/security', securitySettings);
             if (data.success) alert("Security settings saved!");
         } catch (e) {
             alert("Failed to save security settings");
@@ -164,7 +164,7 @@ function Settings() {
 
     const saveGdprSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/gdpr`, gdprSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/gdpr', gdprSettings);
             if (data.success) alert("GDPR settings saved!");
         } catch (e) {
             alert("Failed to save GDPR settings");
@@ -173,7 +173,7 @@ function Settings() {
 
     const saveBackupSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/backup-settings`, backupSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/backup-settings', backupSettings);
             if (data.success) alert("Backup settings saved!");
         } catch (e) {
             alert("Failed to save backup settings");
@@ -182,7 +182,7 @@ function Settings() {
 
     const savePersonalization = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/personalization`, personalization, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/personalization', personalization);
             if (data.success) alert("Personalization settings saved!");
         } catch (e) {
             alert("Failed to save personalization settings");
@@ -191,7 +191,7 @@ function Settings() {
 
     const saveCustomization = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/customization`, customization, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/customization', customization);
             if (data.success) alert("Customization settings saved!");
         } catch (e) {
             alert("Failed to save customization settings");
@@ -201,7 +201,7 @@ function Settings() {
     // CRUD functions
     const createApiKey = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/api-key`, newApiKey, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/api-key', newApiKey);
             if (data.success) {
                 fetchSettingsData();
                 setNewApiKey({ apiName: "", rateLimit: 1000 });
@@ -215,7 +215,7 @@ function Settings() {
 
     const createRole = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/role`, newRole, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/role', newRole);
             if (data.success) {
                 fetchSettingsData();
                 setNewRole({ roleName: "", description: "", permissions: {} });
@@ -229,7 +229,7 @@ function Settings() {
 
     const createBackup = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/backup`, { backupType: "full" }, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/backup', { backupType: "full" });
             if (data.success) {
                 fetchSettingsData();
                 alert("Backup started!");
@@ -241,7 +241,7 @@ function Settings() {
 
     const createMessageTemplate = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/message-template`, newTemplate, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/message-template', newTemplate);
             if (data.success) {
                 fetchSettingsData();
                 setNewTemplate({ name: "", type: "email", subject: "", body: "" });
@@ -255,7 +255,7 @@ function Settings() {
 
     const createGreetingCard = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/greeting-card`, newCard, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/greeting-card', newCard);
             if (data.success) {
                 fetchSettingsData();
                 setNewCard({ title: "", category: "birthday", template: "" });
@@ -270,7 +270,7 @@ function Settings() {
     const deleteItem = async (type, id) => {
         if (!window.confirm("Are you sure you want to delete this?")) return;
         try {
-            const { data } = await axios.delete(`${backendurl}/api/admin/settings/${type}/${id}`, { headers: { token: atoken } });
+            const { data } = await api.delete(`/api/admin/settings/${type}/${id}`);
             if (data.success) {
                 fetchSettingsData();
                 alert("Deleted successfully!");
@@ -384,7 +384,7 @@ function Settings() {
                                             </div>
                                             <Switch checked={existing.isActive} onChange={async (e) => {
                                                 try {
-                                                    await axios.put(`${backendurl}/api/admin/settings/payment-gateway/${gw.gateway}/toggle`, { isActive: e.target.checked }, { headers: { token: atoken } });
+                                                    await api.put(`/api/admin/settings/payment-gateway/${gw.gateway}/toggle`, { isActive: e.target.checked });
                                                     fetchSettingsData();
                                                 } catch (err) { console.error(err); }
                                             }} />

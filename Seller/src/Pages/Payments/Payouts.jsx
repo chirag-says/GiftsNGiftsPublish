@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdAccountBalance, MdAdd, MdCheck, MdClose, MdAccessTime, MdPendingActions, MdCalendarToday, MdDownload } from "react-icons/md";
 import { FiClock, FiPackage } from "react-icons/fi";
 import { exportToExcel, PAYOUT_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
 function Payouts() {
-  const [data, setData] = useState({ 
-    payouts: [], 
-    availableBalance: 0, 
+  const [data, setData] = useState({
+    payouts: [],
+    availableBalance: 0,
     totalWithdrawn: 0,
     pendingAmount: 0,
     pendingOrders: [],
@@ -19,23 +19,18 @@ function Payouts() {
   const [requestAmount, setRequestAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [submitting, setSubmitting] = useState(false);
-  const stoken = localStorage.getItem("stoken");
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [payoutsRes, pendingRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/payouts`, {
-          headers: { stoken }
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/pending-payments`, {
-          headers: { stoken }
-        })
+        api.get("/api/seller-panel/finance/payouts"),
+        api.get("/api/seller-panel/finance/pending-payments")
       ]);
-      
+
       const payoutsData = payoutsRes.data.success ? payoutsRes.data.data : {};
       const pendingData = pendingRes.data.success ? pendingRes.data.data : {};
-      
+
       setData({
         payouts: payoutsData.payouts || [],
         availableBalance: payoutsData.availableBalance || 0,
@@ -56,13 +51,12 @@ function Payouts() {
   const handleRequestPayout = async (e) => {
     e.preventDefault();
     if (!requestAmount || parseFloat(requestAmount) <= 0) return;
-    
+
     setSubmitting(true);
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/payouts`,
-        { amount: parseFloat(requestAmount), paymentMethod },
-        { headers: { stoken } }
+      const res = await api.post(
+        "/api/seller-panel/finance/payouts",
+        { amount: parseFloat(requestAmount), paymentMethod }
       );
       if (res.data.success) {
         setShowModal(false);
@@ -81,7 +75,7 @@ function Payouts() {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case "Completed": return <MdCheck className="text-green-500" />;
       case "Credited": return <MdAccountBalance className="text-emerald-500" />;
       case "Processing": return <FiClock className="text-blue-500" />;
@@ -92,7 +86,7 @@ function Payouts() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Completed": return "bg-green-100 text-green-700";
       case "Credited": return "bg-emerald-100 text-emerald-700";
       case "Processing": return "bg-blue-100 text-blue-700";
@@ -179,7 +173,7 @@ function Payouts() {
                 </div>
                 <span className="text-sm text-amber-600 font-medium">{data.pendingOrders.length} orders</span>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
@@ -200,11 +194,10 @@ function Payouts() {
                         <td className="px-6 py-4 font-medium text-gray-800">{order.customer}</td>
                         <td className="px-6 py-4 text-right font-semibold text-amber-600">{formatINR(order.amount)}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                            order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-700'
+                            }`}>
                             {order.status}
                           </span>
                         </td>
@@ -224,7 +217,7 @@ function Payouts() {
             <div className="p-5 border-b border-gray-200">
               <h3 className="font-semibold text-gray-800">Payout History</h3>
             </div>
-            
+
             {data.payouts.length === 0 ? (
               <div className="p-12 text-center">
                 <MdAccountBalance className="text-6xl text-gray-300 mx-auto mb-4" />
@@ -293,7 +286,7 @@ function Payouts() {
                 <MdClose className="text-xl" />
               </button>
             </div>
-            
+
             <form onSubmit={handleRequestPayout} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Available Balance</label>

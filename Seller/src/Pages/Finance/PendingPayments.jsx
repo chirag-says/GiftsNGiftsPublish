@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdPendingActions, MdAccessTime, MdCalendarToday } from "react-icons/md";
 import { FiPackage } from "react-icons/fi";
@@ -7,14 +7,11 @@ import { FiPackage } from "react-icons/fi";
 function PendingPayments() {
   const [data, setData] = useState({ pendingAmount: 0, pendingOrders: [], totalPendingOrders: 0 });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/pending-payments`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/finance/pending-payments");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -75,7 +72,7 @@ function PendingPayments() {
           <h3 className="font-semibold text-gray-800">Pending Orders</h3>
           <span className="text-sm text-gray-500">{data.pendingOrders.length} orders</span>
         </div>
-        
+
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
@@ -108,11 +105,10 @@ function PendingPayments() {
                     <td className="px-6 py-4 font-medium text-gray-800">{order.customer}</td>
                     <td className="px-6 py-4 text-right font-semibold text-amber-600">{formatINR(order.amount)}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                          order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
                         {order.status}
                       </span>
                     </td>

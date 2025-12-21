@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import Tooltip from "@mui/material/Tooltip";
 import { LuTrash2 } from "react-icons/lu";
 import { IconButton } from "@mui/material";
@@ -56,7 +56,7 @@ function ProductList({ type }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/products?type=${type || 'all'}`);
+      const response = await api.get(`/api/admin/products?type=${type || 'all'}`);
       if (response.data.success) {
         setProducts(response.data.products);
       }
@@ -69,13 +69,13 @@ function ProductList({ type }) {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`);
+      const response = await api.get("/api/getcategories");
       setCategories(response.data);
     } catch (error) { console.error(error); }
   };
   const fetchSubcategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getsubcategories`);
+      const response = await api.get("/api/getsubcategories");
       setSubcategories(response.data);
     } catch (error) { console.error(error); }
   };
@@ -93,7 +93,7 @@ function ProductList({ type }) {
   const removeproduct = async (_id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/product/deleteproduct/${_id}`);
+      const response = await api.delete(`/api/product/deleteproduct/${_id}`);
       if (response.data.success) {
         setProducts(products.filter((product) => product._id !== _id));
       }
@@ -102,14 +102,14 @@ function ProductList({ type }) {
 
   const toggleApprove = async (_id) => {
     try {
-      const res = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/admin/toggle-product/${_id}`);
+      const res = await api.put(`/api/admin/toggle-product/${_id}`);
       if (res.data.success) fetchProducts();
     } catch (error) { console.error(error); }
   };
 
   const toggleFeaturedStatus = async (_id) => {
     try {
-      const res = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/admin/toggle-featured/${_id}`);
+      const res = await api.put(`/api/admin/toggle-featured/${_id}`);
       if (res.data.success) {
         if (type === 'featured') {
           // Use filter to remove if we are in 'featured' view and un-featuring
@@ -187,8 +187,8 @@ function ProductList({ type }) {
                       <div className="flex flex-col items-center">
                         <span className="text-black font-bold">₹{product.price}</span>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mt-1 ${stockCount > 0
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-600"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-600"
                           }`}>
                           {stockCount > 0 ? `${stockCount} in Stock` : "Out of Stock"}
                         </span>

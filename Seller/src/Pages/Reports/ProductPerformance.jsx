@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 
 function ProductPerformance() {
   const [performance, setPerformance] = useState([]);
@@ -8,7 +8,7 @@ function ProductPerformance() {
   useEffect(() => {
     async function fetchPerformance() {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/reports/product-performance`);
+        const { data } = await api.get("/api/reports/product-performance");
         if (data.success) setPerformance(data.data);
       } catch (error) {
         console.error('Failed to fetch product performance:', error);

@@ -1,16 +1,16 @@
-import axios from 'axios';
+import api from '../../utils/api';
 import React, { useEffect, useState, createContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 export const AppContext = createContext();
 
-// CRITICAL: Enable cookies for all axios requests
-axios.defaults.withCredentials = true;
+// CRITICAL: Enable cookies for all requests via api instance
+// axios.defaults.withCredentials = true;
 
 export const AppContextProvider = (props) => {
   const navigate = useNavigate();
-  const backendurl = import.meta.env.VITE_BACKEND_URL || "http://localhost:7000";
+  const backendurl = import.meta.env.VITE_BACKEND_URL;
 
   // Auth state - no localStorage token, server cookie is the source of truth
   const [isLoggedin, setIsLoggedin] = useState(false);
@@ -26,7 +26,7 @@ export const AppContextProvider = (props) => {
   // Fetch detailed profile info
   const fetchProfile = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/user/profile`);
+      const { data } = await api.get('/api/user/profile');
       if (data.success && data.profile) {
         setProfile(data.profile);
       }
@@ -38,7 +38,7 @@ export const AppContextProvider = (props) => {
   // Fetch basic user data
   const getuserData = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/user/data`);
+      const { data } = await api.get('/api/user/data');
       if (data.success) {
         setUserdata(data.userData);
         fetchProfile();
@@ -51,7 +51,7 @@ export const AppContextProvider = (props) => {
   // Fetch Cart
   const fetchCart = useCallback(async () => {
     try {
-      const res = await axios.get(`${backendurl}/api/auth/cart`);
+      const res = await api.get('/api/auth/cart');
       setCartItems(res.data.cart || []);
     } catch (err) {
       console.error("Error fetching cart:", err);
@@ -61,7 +61,7 @@ export const AppContextProvider = (props) => {
   // Fetch Wishlist
   const fetchWishlist = useCallback(async () => {
     try {
-      const res = await axios.get(`${backendurl}/api/auth/wishlist`);
+      const res = await api.get('/api/auth/wishlist');
       setWishlistItems(res.data.wishlist || []);
     } catch (err) {
       console.error("Error fetching wishlist:", err);
@@ -72,7 +72,7 @@ export const AppContextProvider = (props) => {
   const clearCartAfterOrder = useCallback(async () => {
     setCartItems([]);
     try {
-      await axios.delete(`${backendurl}/api/auth/clear-cart`);
+      await api.delete('/api/auth/clear-cart');
       await fetchCart();
     } catch (err) {
       console.error("Error clearing backend cart:", err);
@@ -88,7 +88,7 @@ export const AppContextProvider = (props) => {
    */
   const checkAuthStatus = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/auth/me`);
+      const { data } = await api.get('/api/auth/me');
 
       if (data.success && data.user) {
         setIsLoggedin(true);
@@ -120,7 +120,7 @@ export const AppContextProvider = (props) => {
    */
   const logout = useCallback(async () => {
     try {
-      await axios.post(`${backendurl}/api/auth/logout-session`);
+      await api.post('/api/auth/logout-session');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

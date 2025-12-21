@@ -1,12 +1,11 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/Appcontext";
-import axios from "axios";
+import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 
-// Ensure cookies are sent with all requests
-axios.defaults.withCredentials = true;
+// Ensure cookies are sent with all requests via api defaults
 
 const Login = () => {
   const navigate = useNavigate();
@@ -63,11 +62,11 @@ const Login = () => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    axios.defaults.withCredentials = true;
+    // axios.defaults.withCredentials = true;
 
     try {
       if (state === "Sign Up") {
-        const { data } = await axios.post(`${backendurl}/api/auth/register`, {
+        const { data } = await api.post('/api/auth/register', {
           name, email, password,
         });
 
@@ -98,7 +97,7 @@ const Login = () => {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(`${backendurl}/api/auth/login`, {
+        const { data } = await api.post('/api/auth/login', {
           email, password,
         });
 
@@ -131,10 +130,10 @@ const Login = () => {
 
       // Use different endpoint based on login vs registration
       const endpoint = state === "Sign Up"
-        ? `${backendurl}/api/auth/verify-registration-otp`
-        : `${backendurl}/api/auth/verify-login-otp`;
+        ? '/api/auth/verify-registration-otp'
+        : '/api/auth/verify-login-otp';
 
-      const { data } = await axios.post(endpoint, { email, otp });
+      const { data } = await api.post(endpoint, { email, otp });
 
       if (data.success) {
         // Token is now set via HttpOnly cookie by the server (XSS protection)
@@ -155,8 +154,8 @@ const Login = () => {
   const resendOtpHandler = async () => {
     try {
       const endpoint = state === "Sign Up"
-        ? `${backendurl}/api/auth/resend-registration-otp`
-        : `${backendurl}/api/auth/login`;
+        ? '/api/auth/resend-registration-otp'
+        : '/api/auth/login';
 
       const payload = state === "Sign Up" ? { email } : { email, password: "" };
 
@@ -167,7 +166,7 @@ const Login = () => {
         return;
       }
 
-      const { data } = await axios.post(endpoint, payload);
+      const { data } = await api.post(endpoint, payload);
 
       if (data.success) {
         toast.success("New OTP sent to your email.");

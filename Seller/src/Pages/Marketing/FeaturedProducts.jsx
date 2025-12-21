@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdAdd, MdRemove, MdSearch } from "react-icons/md";
 import { FiPackage, FiStar, FiTrendingUp } from "react-icons/fi";
 
 function FeaturedProducts() {
-  const [data, setData] = useState({ 
-    featuredProducts: [], 
+  const [data, setData] = useState({
+    featuredProducts: [],
     availableProducts: [],
-    maxFeatured: 10 
+    maxFeatured: 10
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -27,9 +26,7 @@ function FeaturedProducts() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/featured`, {
-        headers: { stoken }
-      });
+      const res = await api.get("/api/seller-panel/marketing/featured");
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -41,10 +38,9 @@ function FeaturedProducts() {
   const handleToggleFeatured = async (productId, isFeatured) => {
     try {
       const endpoint = isFeatured ? 'unfeature' : 'feature';
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/featured/${endpoint}/${productId}`,
-        {},
-        { headers: { stoken } }
+      const res = await api.post(
+        `/api/seller-panel/marketing/featured/${endpoint}/${productId}`,
+        {}
       );
       if (res.data.success) {
         fetchData();
@@ -55,7 +51,7 @@ function FeaturedProducts() {
     }
   };
 
-  const filteredProducts = data.availableProducts?.filter(p => 
+  const filteredProducts = data.availableProducts?.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
@@ -77,7 +73,7 @@ function FeaturedProducts() {
         <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <FiStar className="text-yellow-500" /> Currently Featured
         </h3>
-        
+
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>

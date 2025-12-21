@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdSearch, MdLocalShipping, MdRefresh } from "react-icons/md";
 import { FiPackage, FiTruck, FiCheckCircle, FiClock } from "react-icons/fi";
 
@@ -8,7 +8,7 @@ function TrackingOrders() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -24,9 +24,7 @@ function TrackingOrders() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/tracking`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/shipping/tracking');
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -36,7 +34,7 @@ function TrackingOrders() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Delivered": return "bg-green-100 text-green-700";
       case "Out for Delivery": return "bg-blue-100 text-blue-700";
       case "In Transit": return "bg-yellow-100 text-yellow-700";
@@ -47,7 +45,7 @@ function TrackingOrders() {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case "Delivered": return <FiCheckCircle className="text-green-500" />;
       case "Out for Delivery": return <FiTruck className="text-blue-500" />;
       case "In Transit": return <MdLocalShipping className="text-yellow-500" />;
@@ -56,13 +54,13 @@ function TrackingOrders() {
   };
 
   const filteredOrders = data.orders?.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.orderId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.trackingNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customerName?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesFilter = filter === "all" || order.status === filter;
-    
+
     return matchesSearch && matchesFilter;
   }) || [];
 
@@ -84,35 +82,35 @@ function TrackingOrders() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div 
+        <div
           onClick={() => setFilter("all")}
           className={`bg-white border rounded-xl p-4 cursor-pointer transition ${filter === "all" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
           <p className="text-sm text-gray-500">Total</p>
           <h3 className="text-2xl font-bold text-gray-800">{data.orders?.length || 0}</h3>
         </div>
-        <div 
+        <div
           onClick={() => setFilter("Processing")}
           className={`bg-white border rounded-xl p-4 cursor-pointer transition ${filter === "Processing" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
           <p className="text-sm text-gray-500">Processing</p>
           <h3 className="text-2xl font-bold text-gray-600">{data.orders?.filter(o => o.status === "Processing").length || 0}</h3>
         </div>
-        <div 
+        <div
           onClick={() => setFilter("In Transit")}
           className={`bg-white border rounded-xl p-4 cursor-pointer transition ${filter === "In Transit" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
           <p className="text-sm text-gray-500">In Transit</p>
           <h3 className="text-2xl font-bold text-yellow-600">{data.orders?.filter(o => o.status === "In Transit").length || 0}</h3>
         </div>
-        <div 
+        <div
           onClick={() => setFilter("Out for Delivery")}
           className={`bg-white border rounded-xl p-4 cursor-pointer transition ${filter === "Out for Delivery" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
           <p className="text-sm text-gray-500">Out for Delivery</p>
           <h3 className="text-2xl font-bold text-blue-600">{data.orders?.filter(o => o.status === "Out for Delivery").length || 0}</h3>
         </div>
-        <div 
+        <div
           onClick={() => setFilter("Delivered")}
           className={`bg-white border rounded-xl p-4 cursor-pointer transition ${filter === "Delivered" ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}
         >

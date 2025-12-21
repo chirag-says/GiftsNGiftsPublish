@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { useLocation } from "react-router-dom";
 import {
@@ -17,7 +17,7 @@ import { FiPlus, FiRefreshCw, FiBell, FiAlertCircle, FiTruck, FiUsers } from "re
 import { IoTicketOutline } from "react-icons/io5";
 
 function Notifications() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -61,7 +61,7 @@ function Notifications() {
     const fetchNotificationsData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/notifications`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/notifications');
             if (data.success) {
                 setNotifications(data.notifications || []);
                 setOrderAlerts(data.orderAlerts || []);
@@ -84,7 +84,7 @@ function Notifications() {
     // CRUD Operations
     const createSystemUpdate = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/notifications/system-update`, newSystemUpdate, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/notifications/system-update', newSystemUpdate);
             if (data.success) {
                 fetchNotificationsData();
                 setNewSystemUpdate({ title: "", description: "", updateType: "announcement", version: "", scheduledAt: "" });
@@ -99,7 +99,7 @@ function Notifications() {
 
     const updateVendorRequestStatus = async (id, status) => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/notifications/vendor-request/${id}`, { status }, { headers: { token: atoken } });
+            const { data } = await api.put(`/api/admin/notifications/vendor-request/${id}`, { status });
             if (data.success) {
                 fetchNotificationsData();
             }
@@ -111,7 +111,7 @@ function Notifications() {
 
     const updateComplaintStatus = async (id, status, resolution = "") => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/notifications/complaint/${id}`, { status, resolution }, { headers: { token: atoken } });
+            const { data } = await api.put(`/api/admin/notifications/complaint/${id}`, { status, resolution });
             if (data.success) {
                 fetchNotificationsData();
             }
@@ -123,7 +123,7 @@ function Notifications() {
 
     const saveSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/notifications/settings`, settings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/notifications/settings', settings);
             if (data.success) {
                 alert("Settings saved successfully!");
             }
@@ -135,7 +135,7 @@ function Notifications() {
 
     const markOrderAlertRead = async (id) => {
         try {
-            await axios.put(`${backendurl}/api/admin/notifications/order-alert/${id}/read`, {}, { headers: { token: atoken } });
+            await api.put(`/api/admin/notifications/order-alert/${id}/read`);
             fetchNotificationsData();
         } catch (e) {
             console.error("Mark Read Error:", e);
@@ -145,7 +145,7 @@ function Notifications() {
     const deleteItem = async (type, id) => {
         if (!window.confirm("Are you sure you want to delete this?")) return;
         try {
-            const { data } = await axios.delete(`${backendurl}/api/admin/notifications/${type}/${id}`, { headers: { token: atoken } });
+            const { data } = await api.delete(`/api/admin/notifications/${type}/${id}`);
             if (data.success) {
                 fetchNotificationsData();
                 alert("Deleted successfully!");
@@ -160,7 +160,7 @@ function Notifications() {
         if (!window.confirm("Clear all activity logs older than 30 days?")) return;
         try {
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            const { data } = await axios.post(`${backendurl}/api/admin/notifications/activity-logs/clear`, { olderThan: thirtyDaysAgo }, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/notifications/activity-logs/clear', { olderThan: thirtyDaysAgo });
             if (data.success) {
                 fetchNotificationsData();
                 alert("Old logs cleared!");

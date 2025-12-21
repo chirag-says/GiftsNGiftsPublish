@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdSearch, MdFilterList, MdDownload, MdCalendarMonth } from "react-icons/md";
 import { FiArrowDownCircle, FiArrowUpCircle, FiClock, FiDollarSign } from "react-icons/fi";
 import { exportToExcel, SETTLEMENT_EXPORT_COLUMNS } from "../../utils/exportUtils";
@@ -14,7 +14,6 @@ function Settlements() {
   });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -31,9 +30,7 @@ function Settlements() {
   const fetchSettlements = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/settlements?status=${filter}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/finance/settlements?status=${filter}`);
       if (res.data.success) {
         setSettlements(res.data.data.settlements || []);
         setStats(res.data.data.stats || stats);
@@ -63,7 +60,7 @@ function Settlements() {
           <h1 className="text-2xl font-bold text-gray-800">Settlement History</h1>
           <p className="text-sm text-gray-500">Track your payment settlements from orders</p>
         </div>
-        <button 
+        <button
           onClick={() => exportToExcel(settlements, `settlements_${filter}`, SETTLEMENT_EXPORT_COLUMNS)}
           className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
         >
@@ -125,11 +122,10 @@ function Settlements() {
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filter === status 
-                      ? "bg-blue-600 text-white" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === status
+                      ? "bg-blue-600 text-white"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </button>

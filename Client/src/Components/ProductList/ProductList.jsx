@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
+import api from "../../utils/api";
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import LeftFilter from './LeftFilter';
@@ -19,9 +19,7 @@ function ProductList() {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/client/productsbycategory`
-        );
+        const { data } = await api.get('/api/client/productsbycategory');
         if (data.success && Array.isArray(data.categories)) {
           const categoryData = data.categories.find(cat => cat.category === category);
           if (categoryData && Array.isArray(categoryData.products)) {
@@ -47,9 +45,7 @@ function ProductList() {
 
     try {
       // First: resolve the category name based on ID
-      const categoryResponse = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/getcategories`
-      );
+      const categoryResponse = await api.get('/api/getcategories');
       const allCategories = categoryResponse.data;
 
       if (appliedFilters.selectedCategories.length > 0) {
@@ -61,8 +57,8 @@ function ProductList() {
       }
 
       // Then: fetch filtered products
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/filter`,
+      const response = await api.get(
+        '/api/product/filter',
         {
           params: {
             categoryname: appliedFilters.selectedCategories.join(","),

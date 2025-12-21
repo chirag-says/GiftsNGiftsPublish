@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, LinearProgress, Alert, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Switch, Tooltip } from "@mui/material";
 import { MdDelete, MdContentCopy, MdVisibility, MdVisibilityOff } from "react-icons/md";
@@ -7,7 +7,7 @@ import { MdApi } from "react-icons/md";
 import { FiRefreshCw, FiPlus, FiKey } from "react-icons/fi";
 
 function ApiManagement() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
@@ -22,7 +22,7 @@ function ApiManagement() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/api-keys`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/api-keys');
             if (data.success) setApiKeys(data.keys || []);
         } catch (e) {
             console.error("Error fetching API keys:", e);
@@ -34,10 +34,10 @@ function ApiManagement() {
     const createKey = async () => {
         if (!newApiKey.apiName) return;
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/api-key`, {
+            const { data } = await api.post('/api/admin/settings/api-key', {
                 ...newApiKey,
                 allowedOrigins: newApiKey.allowedOrigins.split(',').map(s => s.trim()).filter(Boolean)
-            }, { headers: { token: atoken } });
+            });
             if (data.success) {
                 fetchData();
                 setOpenDialog(false);
@@ -53,7 +53,7 @@ function ApiManagement() {
     const deleteKey = async (id) => {
         if (!window.confirm("Are you sure you want to delete this API key?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/settings/api-key/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/settings/api-key/${id}`);
             fetchData();
             setSuccess("API key deleted!");
             setTimeout(() => setSuccess(""), 3000);
@@ -64,7 +64,7 @@ function ApiManagement() {
 
     const toggleKey = async (id, isActive) => {
         try {
-            await axios.put(`${backendurl}/api/admin/settings/api-key/${id}/toggle`, { isActive }, { headers: { token: atoken } });
+            await api.put(`/api/admin/settings/api-key/${id}/toggle`, { isActive });
             fetchData();
         } catch (e) {
             alert("Failed to update API key");

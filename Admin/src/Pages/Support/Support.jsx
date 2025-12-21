@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { useLocation } from "react-router-dom";
 import {
@@ -16,7 +16,7 @@ import { FiPlus, FiRefreshCw, FiDownload, FiFilter } from "react-icons/fi";
 import { RiCustomerService2Line } from "react-icons/ri";
 
 function Support() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { backendurl } = useContext(Admincontext);
     const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -61,7 +61,7 @@ function Support() {
     const fetchSupportData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/support`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/support');
             if (data.success) {
                 setVendorMessages(data.vendorMessages || []);
                 setSupportTickets(data.supportTickets || []);
@@ -87,7 +87,7 @@ function Support() {
     // CRUD Operations
     const createAnnouncement = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/announcement`, newAnnouncement, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/support/announcement', newAnnouncement);
             if (data.success) {
                 fetchSupportData();
                 setNewAnnouncement({ title: "", message: "", priority: "normal", targetAudience: "all" });
@@ -102,7 +102,7 @@ function Support() {
 
     const createEmailTemplate = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/email-template`, newEmailTemplate, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/support/email-template', newEmailTemplate);
             if (data.success) {
                 fetchSupportData();
                 setNewEmailTemplate({ name: "", subject: "", body: "", type: "general" });
@@ -117,7 +117,7 @@ function Support() {
 
     const createSmsTemplate = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/sms-template`, newSmsTemplate, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/support/sms-template', newSmsTemplate);
             if (data.success) {
                 fetchSupportData();
                 setNewSmsTemplate({ name: "", message: "", type: "general" });
@@ -132,7 +132,7 @@ function Support() {
 
     const createHelpDoc = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/help-doc`, newHelpDoc, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/support/help-doc', newHelpDoc);
             if (data.success) {
                 fetchSupportData();
                 setNewHelpDoc({ title: "", content: "", category: "general" });
@@ -147,7 +147,7 @@ function Support() {
 
     const createTrainingResource = async () => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/training-resource`, newTrainingResource, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/support/training-resource', newTrainingResource);
             if (data.success) {
                 fetchSupportData();
                 setNewTrainingResource({ title: "", description: "", type: "video", url: "" });
@@ -162,7 +162,7 @@ function Support() {
 
     const updateTicketStatus = async (ticketId, newStatus) => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/support/ticket/${ticketId}`, { status: newStatus }, { headers: { token: atoken } });
+            const { data } = await api.put(`/api/admin/support/ticket/${ticketId}`, { status: newStatus });
             if (data.success) {
                 fetchSupportData();
             }
@@ -175,7 +175,7 @@ function Support() {
     const replyToTicket = async () => {
         if (!ticketReply.trim()) return;
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/support/ticket/${selectedTicket._id}/reply`, { message: ticketReply }, { headers: { token: atoken } });
+            const { data } = await api.post(`/api/admin/support/ticket/${selectedTicket._id}/reply`, { message: ticketReply });
             if (data.success) {
                 fetchSupportData();
                 setTicketReply("");
@@ -192,7 +192,7 @@ function Support() {
     const deleteItem = async (type, id) => {
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            const { data } = await axios.delete(`${backendurl}/api/admin/support/${type}/${id}`, { headers: { token: atoken } });
+            const { data } = await api.delete(`/api/admin/support/${type}/${id}`);
             if (data.success) {
                 fetchSupportData();
                 alert("Item deleted successfully!");

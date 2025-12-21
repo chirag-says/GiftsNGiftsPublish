@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdHistory, MdSearch, MdFilterList } from "react-icons/md";
 import { FiPackage, FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -9,15 +9,13 @@ function OrderHistory() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/customers/order-history?page=${page}`,
-          { headers: { stoken } }
+        const res = await api.get(
+          `/api/seller-panel/customers/order-history?page=${page}`
         );
         if (res.data.success) setData(res.data.data);
       } catch (err) {
@@ -30,7 +28,7 @@ function OrderHistory() {
   }, [page]);
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Delivered": case "Completed": return "bg-green-100 text-green-700";
       case "Shipped": return "bg-blue-100 text-blue-700";
       case "Processing": return "bg-yellow-100 text-yellow-700";
@@ -40,7 +38,7 @@ function OrderHistory() {
     }
   };
 
-  const filteredOrders = data.orders.filter(order => 
+  const filteredOrders = data.orders.filter(order =>
     order.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     order.orderId.toLowerCase().includes(searchQuery.toLowerCase())
   );

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../../../utils/api";
 
 const OrderTracking = () => {
   const [orderId, setOrderId] = useState("");
@@ -18,7 +18,7 @@ const OrderTracking = () => {
     setOrder(null);
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/order/${orderId}`);
+      const res = await api.get(`/api/client/order/${orderId}`);
       if (res.data.success) {
         setOrder(res.data.order);
       } else {
@@ -36,7 +36,7 @@ const OrderTracking = () => {
     return steps.indexOf(status);
   };
   return (
-    
+
     <div className="max-w-4xl mx-auto p-6">
       {/* Heading */}
       <div className="flex items-center justify-center mb-6">
@@ -70,35 +70,33 @@ const OrderTracking = () => {
       {order && (
         <div className="bg-gray-50 p-4 rounded mt-4 shadow">
           <h2 className="text-lg font-semibold mb-2 text-[#7d0492]">Order Summary</h2>
-           {/* Order Status Tracker */}
+          {/* Order Status Tracker */}
           <div className="flex justify-between items-center my-6 px-2">
             {["Placed", "Pending", "Shipped", "Delivered"].map((step, idx) => {
               const activeStep = getStatusStep(order.status);
               const isActive = idx <= activeStep;
               return (
                 <div key={step} className="flex-1 flex flex-col items-center relative">
-  {/* Circle with Tick if Active */}
-  <div
-    className={`w-6 h-6 rounded-full z-10 flex items-center justify-center font-bold text-xs ${
-      isActive ? "bg-green-600 text-white" : "bg-gray-300"
-    }`}
-  >
-    {isActive && "✓"}
-  </div>
+                  {/* Circle with Tick if Active */}
+                  <div
+                    className={`w-6 h-6 rounded-full z-10 flex items-center justify-center font-bold text-xs ${isActive ? "bg-green-600 text-white" : "bg-gray-300"
+                      }`}
+                  >
+                    {isActive && "✓"}
+                  </div>
 
-  {/* Label */}
-  <p className="mt-1 text-xs text-center">{step}</p>
+                  {/* Label */}
+                  <p className="mt-1 text-xs text-center">{step}</p>
 
-  {/* Line */}
-  {idx !== 4 && (
-    <div
-      className={`absolute top-3 left-1/2 w-full h-1 -translate-x-1/2 ${
-        isActive ? "bg-green-600" : "bg-gray-300"
-      }`}
-      style={{ zIndex: 0, width: "100%", height: "2px" }}
-    ></div>
-  )}
-</div>
+                  {/* Line */}
+                  {idx !== 4 && (
+                    <div
+                      className={`absolute top-3 left-1/2 w-full h-1 -translate-x-1/2 ${isActive ? "bg-green-600" : "bg-gray-300"
+                        }`}
+                      style={{ zIndex: 0, width: "100%", height: "2px" }}
+                    ></div>
+                  )}
+                </div>
 
               );
             })}
@@ -162,4 +160,4 @@ const OrderTracking = () => {
   );
 };
 
-export default OrderTracking;
+export default OrderTracking;

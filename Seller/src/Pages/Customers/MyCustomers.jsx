@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { LuSearch, LuUsers, LuMail, LuPhone, LuDownload } from "react-icons/lu";
 import { exportToExcel, CUSTOMER_EXPORT_COLUMNS } from "../../utils/exportUtils";
@@ -8,14 +8,11 @@ function MyCustomers() {
   const [customers, setCustomers] = useState([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller/customers/my-customers`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller/customers/my-customers");
         if (res.data.success) setCustomers(res.data.customers);
       } catch (err) {
         console.error(err);
@@ -24,10 +21,10 @@ function MyCustomers() {
       }
     };
     fetchData();
-  }, [stoken]);
+  }, []);
 
-  const filtered = customers.filter(c => 
-    c.name?.toLowerCase().includes(filter.toLowerCase()) || 
+  const filtered = customers.filter(c =>
+    c.name?.toLowerCase().includes(filter.toLowerCase()) ||
     c.email?.toLowerCase().includes(filter.toLowerCase())
   );
 
@@ -40,7 +37,7 @@ function MyCustomers() {
           <p className="text-sm text-gray-500 mt-1">People who have purchased from your store</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => exportToExcel(customers, 'customers', CUSTOMER_EXPORT_COLUMNS)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-all"
           >
@@ -49,9 +46,9 @@ function MyCustomers() {
           </button>
           <div className="relative w-full md:w-64">
             <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Search customers..." 
+            <input
+              type="text"
+              placeholder="Search customers..."
               className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               onChange={(e) => setFilter(e.target.value)}
             />

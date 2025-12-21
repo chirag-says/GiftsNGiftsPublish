@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, TextField } from "@mui/material";
 import { MdShowChart, MdDevices, MdPublic, MdTimer } from "react-icons/md";
@@ -7,7 +7,7 @@ import { FiRefreshCw, FiDownload, FiMonitor, FiSmartphone, FiTablet } from "reac
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar } from 'recharts';
 
 function TrafficReports() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [traffic, setTraffic] = useState([]);
     const [summary, setSummary] = useState({
@@ -24,7 +24,7 @@ function TrafficReports() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/traffic`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/reports/traffic');
             if (data.success) {
                 setTraffic(data.traffic || []);
                 setSummary(data.summary || summary);

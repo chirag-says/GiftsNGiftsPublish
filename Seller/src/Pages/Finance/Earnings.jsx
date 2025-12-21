@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { LuWallet, LuClock, LuArrowUpRight, LuHistory, LuPackage } from "react-icons/lu";
 
 function Earnings() {
   const [data, setData] = useState({ totalEarnings: 0, transactions: [] });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller/finance/earnings`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller/finance/earnings");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -76,7 +73,7 @@ function Earnings() {
           <LuHistory className="text-gray-500 w-5 h-5" />
           <h3 className="font-semibold text-gray-700">Transaction History</h3>
         </div>
-        
+
         {loading ? (
           <div className="py-16 text-center">
             <div className="inline-flex items-center gap-2 text-gray-500">
@@ -119,11 +116,10 @@ function Earnings() {
                       <span className="font-semibold text-emerald-600">+{formatINR(txn.amount)}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        txn.status === 'Delivered' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${txn.status === 'Delivered'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                           : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}>
+                        }`}>
                         {txn.status}
                       </span>
                     </td>

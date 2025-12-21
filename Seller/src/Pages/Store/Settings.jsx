@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuStore, LuSave, LuCamera, LuSettings, LuInfo } from "react-icons/lu";
 import { MdBusiness, MdVerified, MdBeachAccess, MdCheckCircle, MdPending, MdError, MdUpload, MdSchedule } from "react-icons/md";
 import { FiFileText, FiCreditCard, FiMapPin, FiShield, FiCamera, FiCalendar, FiAlertCircle, FiBell, FiUser } from "react-icons/fi";
@@ -12,7 +12,7 @@ function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(null);
-  const stoken = localStorage.getItem("stoken");
+
 
   // Check if we came from GST page with a specific tab request
   useEffect(() => {
@@ -86,10 +86,10 @@ function Settings() {
       setLoading(true);
       try {
         const [settingsRes, businessRes, verificationRes, holidayRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/settings`, { headers: { stoken } }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`, { headers: { stoken } }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/verification`, { headers: { stoken } }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/holiday-mode`, { headers: { stoken } })
+          api.get('/api/seller-panel/store/settings'),
+          api.get('/api/seller-panel/store/business-info'),
+          api.get('/api/seller-panel/store/verification'),
+          api.get('/api/seller-panel/store/holiday-mode')
         ]);
 
         if (settingsRes.data.success && settingsRes.data.data) {
@@ -120,14 +120,12 @@ function Settings() {
       }
     };
     fetchAllData();
-  }, [stoken]);
+  }, []);
 
   const handleSaveGeneral = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/settings`, generalSettings, {
-        headers: { stoken }
-      });
+      const res = await api.post('/api/seller-panel/store/settings', generalSettings);
       if (res.data.success) toast.success("Store settings saved!");
     } catch (err) {
       console.error(err);
@@ -162,9 +160,8 @@ function Settings() {
 
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`,
-        { businessInfo },
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/store/business-info',
+        { businessInfo }
       );
       if (res.data.success) toast.success("Business info saved!");
     } catch (err) {
@@ -178,14 +175,14 @@ function Settings() {
   const handleSavePreferences = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/holiday-mode`, {
+      const res = await api.post('/api/seller-panel/store/holiday-mode', {
         isEnabled: preferences.holidayMode,
         startDate: preferences.holidayStartDate,
         endDate: preferences.holidayEndDate,
         message: preferences.holidayMessage,
         autoReplyEnabled: preferences.autoReplyEnabled,
         autoReplyMessage: preferences.autoReplyMessage
-      }, { headers: { stoken } });
+      });
       if (res.data.success) toast.success("Preferences saved!");
     } catch (err) {
       console.error(err);
@@ -209,10 +206,10 @@ function Settings() {
       formData.append('documentType', docType);
 
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/verification`,
+        const res = await api.post(
+          '/api/seller-panel/store/verification',
           formData,
-          { headers: { stoken, 'Content-Type': 'multipart/form-data' } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
         if (res.data.success) {
           toast.success("Document uploaded successfully!");

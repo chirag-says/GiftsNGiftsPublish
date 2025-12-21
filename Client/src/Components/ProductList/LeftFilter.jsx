@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { Collapse } from 'react-collapse';
 import { Checkbox, FormControlLabel, Slider, Button } from '@mui/material';
 import { FaAngleUp, FaAngleDown } from 'react-icons/fa';
@@ -18,9 +18,7 @@ function LeftFilter({ onApplyFilters }) {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/getcategories`
-        );
+        const response = await api.get('/api/getcategories');
         setCategory(response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);

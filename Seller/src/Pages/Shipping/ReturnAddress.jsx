@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdEdit, MdSave, MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { FiMapPin, FiHome, FiCheck } from "react-icons/fi";
 
@@ -19,7 +19,7 @@ function ReturnAddress() {
     landmark: "",
     isDefault: false
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchAddresses();
@@ -28,9 +28,7 @@ function ReturnAddress() {
   const fetchAddresses = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/return-address`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/shipping/return-address');
       if (res.data.success) {
         setAddresses(res.data.data || []);
         if (res.data.data?.length > 0) {
@@ -47,9 +45,7 @@ function ReturnAddress() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/return-address`, formData, {
-        headers: { stoken }
-      });
+      await api.post('/api/seller-panel/shipping/return-address', formData);
       fetchAddresses();
       setEditing(false);
     } catch (err) {
@@ -59,9 +55,7 @@ function ReturnAddress() {
 
   const handleSetDefault = async (id) => {
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/return-address/${id}/default`, {}, {
-        headers: { stoken }
-      });
+      await api.post(`/api/seller-panel/shipping/return-address/${id}/default`, {});
       fetchAddresses();
     } catch (err) {
       alert("Failed to set default");
@@ -86,7 +80,7 @@ function ReturnAddress() {
           <p className="text-sm text-gray-500">Manage your return and pickup addresses</p>
         </div>
         {!editing && addresses.length > 0 && (
-          <button 
+          <button
             onClick={() => setEditing(true)}
             className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
           >
@@ -260,11 +254,10 @@ function ReturnAddress() {
         /* Display Addresses */
         <div className="space-y-4">
           {addresses.map((addr, i) => (
-            <div 
-              key={i} 
-              className={`bg-white border rounded-xl p-6 ${
-                addr.isDefault ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
-              }`}
+            <div
+              key={i}
+              className={`bg-white border rounded-xl p-6 ${addr.isDefault ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                }`}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -281,7 +274,7 @@ function ReturnAddress() {
                     <p className="text-sm text-gray-500">{addr.phone}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => { setFormData(addr); setEditing(true); }}
                   className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                 >
@@ -306,7 +299,7 @@ function ReturnAddress() {
               </div>
 
               {!addr.isDefault && (
-                <button 
+                <button
                   onClick={() => handleSetDefault(addr._id)}
                   className="w-full mt-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2"
                 >
@@ -316,8 +309,8 @@ function ReturnAddress() {
             </div>
           ))}
 
-          <button 
-            onClick={() => { 
+          <button
+            onClick={() => {
               setFormData({
                 name: "",
                 phone: "",
@@ -329,8 +322,8 @@ function ReturnAddress() {
                 pincode: "",
                 landmark: "",
                 isDefault: false
-              }); 
-              setEditing(true); 
+              });
+              setEditing(true);
             }}
             className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 flex items-center justify-center gap-2"
           >

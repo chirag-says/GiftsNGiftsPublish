@@ -1,24 +1,21 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdLoyalty, MdStars, MdCardGiftcard, MdTrendingUp } from "react-icons/md";
 import { FiGift, FiAward, FiUsers } from "react-icons/fi";
 
 function LoyaltyProgram() {
-  const [data, setData] = useState({ 
-    totalMembers: 0, 
-    tierBreakdown: [], 
-    rewardsRedeemed: 0, 
-    totalPointsIssued: 0 
+  const [data, setData] = useState({
+    totalMembers: 0,
+    tierBreakdown: [],
+    rewardsRedeemed: 0,
+    totalPointsIssued: 0
   });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/customers/loyalty-program`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/customers/loyalty-program");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -30,7 +27,7 @@ function LoyaltyProgram() {
   }, []);
 
   const getTierColor = (tier) => {
-    switch(tier) {
+    switch (tier) {
       case "Platinum": return "from-gray-600 to-gray-800";
       case "Gold": return "from-yellow-500 to-amber-600";
       case "Silver": return "from-gray-400 to-gray-500";
@@ -39,7 +36,7 @@ function LoyaltyProgram() {
   };
 
   const getTierIcon = (tier) => {
-    switch(tier) {
+    switch (tier) {
       case "Platinum": return "💎";
       case "Gold": return "🥇";
       case "Silver": return "🥈";
@@ -86,8 +83,8 @@ function LoyaltyProgram() {
             <span className="text-sm font-medium">Conversion Rate</span>
           </div>
           <h3 className="text-2xl font-bold">
-            {data.totalMembers > 0 
-              ? ((data.rewardsRedeemed / data.totalMembers) * 100).toFixed(1) 
+            {data.totalMembers > 0
+              ? ((data.rewardsRedeemed / data.totalMembers) * 100).toFixed(1)
               : 0}%
           </h3>
         </div>
@@ -111,7 +108,7 @@ function LoyaltyProgram() {
                 <p className="text-3xl font-bold mt-1">{tier.count}</p>
                 <p className="text-sm opacity-75 mt-1">Members</p>
                 <div className="mt-3 h-2 bg-white/20 rounded-full">
-                  <div 
+                  <div
                     className="h-full bg-white rounded-full"
                     style={{ width: `${data.totalMembers > 0 ? (tier.count / data.totalMembers) * 100 : 0}%` }}
                   ></div>
@@ -184,7 +181,7 @@ function LoyaltyProgram() {
               <MdLoyalty className="text-6xl text-purple-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-purple-800">Start Building Customer Loyalty</h3>
               <p className="text-purple-600 mt-2 max-w-lg mx-auto">
-                Customers who purchase from you will automatically be enrolled in the loyalty program. 
+                Customers who purchase from you will automatically be enrolled in the loyalty program.
                 Watch your customer base grow and track their engagement here.
               </p>
             </div>

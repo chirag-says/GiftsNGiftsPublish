@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdCardGiftcard } from "react-icons/md";
 import { FiGift, FiImage, FiCheck } from "react-icons/fi";
 
@@ -19,7 +19,7 @@ function GiftWrapping() {
     description: "",
     isActive: true
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -36,9 +36,7 @@ function GiftWrapping() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/gift-wrapping`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/gift-wrapping');
       if (res.data.success) {
         setWrapOptions(res.data.data.options || []);
         setSettings(res.data.data.settings || settings);
@@ -54,13 +52,9 @@ function GiftWrapping() {
     e.preventDefault();
     try {
       if (editingWrap) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/gift-wrapping/${editingWrap._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/personalization/gift-wrapping/${editingWrap._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/gift-wrapping`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/personalization/gift-wrapping', formData);
       }
       fetchData();
       setShowModal(false);
@@ -73,9 +67,7 @@ function GiftWrapping() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this gift wrap option?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/gift-wrapping/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/gift-wrapping/${id}`);
       fetchData();
     } catch (err) {
       alert("Failed to delete");
@@ -84,9 +76,7 @@ function GiftWrapping() {
 
   const handleSaveSettings = async () => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/gift-wrapping/settings`, settings, {
-        headers: { stoken }
-      });
+      await api.put('/api/seller-panel/personalization/gift-wrapping/settings', settings);
       alert("Settings saved!");
     } catch (err) {
       alert("Failed to save settings");
@@ -124,7 +114,7 @@ function GiftWrapping() {
           <h1 className="text-2xl font-bold text-gray-800">Gift Wrapping</h1>
           <p className="text-sm text-gray-500">Offer gift wrapping options for your products</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -141,7 +131,7 @@ function GiftWrapping() {
           {/* Settings */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-4">🎁 Gift Wrapping Settings</h3>
-            
+
             <div className="space-y-4">
               <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
                 <div>
@@ -187,7 +177,7 @@ function GiftWrapping() {
               <FiGift className="text-5xl text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-700">No Gift Wrap Styles</h3>
               <p className="text-gray-500 mt-2 mb-4">Add different wrapping options for customers</p>
-              <button 
+              <button
                 onClick={() => setShowModal(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
               >
@@ -197,11 +187,10 @@ function GiftWrapping() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {wrapOptions.map((wrap, i) => (
-                <div 
-                  key={i} 
-                  className={`bg-white border rounded-xl overflow-hidden transition-all ${
-                    wrap.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
-                  }`}
+                <div
+                  key={i}
+                  className={`bg-white border rounded-xl overflow-hidden transition-all ${wrap.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
+                    }`}
                 >
                   {/* Image */}
                   <div className="h-40 bg-gradient-to-br from-pink-100 to-purple-100 relative">
@@ -212,7 +201,7 @@ function GiftWrapping() {
                         <MdCardGiftcard className="text-6xl text-pink-300" />
                       </div>
                     )}
-                    
+
                     {!wrap.isActive && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <span className="bg-white px-3 py-1 rounded-full text-sm font-medium">Inactive</span>
@@ -234,13 +223,13 @@ function GiftWrapping() {
                     )}
 
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => openEditModal(wrap)}
                         className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1"
                       >
                         <MdEdit /> Edit
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(wrap._id)}
                         className="py-2 px-3 border border-red-200 rounded-lg text-sm text-red-600 hover:bg-red-50"
                       >
@@ -275,7 +264,7 @@ function GiftWrapping() {
                 {editingWrap ? 'Edit Wrap Style' : 'Add Wrap Style'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>

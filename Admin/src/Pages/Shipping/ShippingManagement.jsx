@@ -2,12 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Tab, Tabs, Box, Button, TextField, Switch, FormControlLabel, Card, CardContent, Divider, Alert } from '@mui/material';
 import { MdLocalShipping, MdMap, MdSettings, MdSave, MdTrackChanges, MdAttachMoney, MdInventory } from 'react-icons/md';
-import axios from 'axios';
+import api from "../../utils/api";
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 
 const ShippingManagement = () => {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -35,25 +35,23 @@ const ShippingManagement = () => {
         fetchData();
     }, [tabValue]);
 
-    const getAuthToken = () => atoken || localStorage.getItem('atoken');
-
     const fetchData = async () => {
         setLoading(true);
-        const token = getAuthToken();
-        if (!token) return;
+        // const token = getAuthToken(); // No longer needed
+        // if (!token) return;
 
         try {
             if (tabValue === 0) {
-                const { data } = await axios.get(`${backendurl}/api/admin/shipping/partners`, { headers: { Authorization: `Bearer ${token}` } });
+                const { data } = await api.get('/api/admin/shipping/partners');
                 if (data.success) setPartners(data.data.partners);
             }
             else if (tabValue === 1) {
-                const { data } = await axios.get(`${backendurl}/api/admin/shipping/rates`, { headers: { Authorization: `Bearer ${token}` } });
+                const { data } = await api.get('/api/admin/shipping/rates');
                 if (data.success) setRates(data.data);
             }
             else {
                 // For all other tabs (Tracking, COD, Bulk, General), fetch full settings
-                const { data } = await axios.get(`${backendurl}/api/admin/shipping/all-settings`, { headers: { Authorization: `Bearer ${token}` } });
+                const { data } = await api.get('/api/admin/shipping/all-settings');
                 if (data.success) {
                     // Merge fetched data with default state structure to avoid undefined errors
                     setSettings(prev => ({ ...prev, ...data.data }));
@@ -76,8 +74,7 @@ const ShippingManagement = () => {
 
     const savePartners = async () => {
         try {
-            const token = getAuthToken();
-            await axios.post(`${backendurl}/api/admin/shipping/partners`, { deliveryPartners: partners }, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post('/api/admin/shipping/partners', { deliveryPartners: partners });
             toast.success("Partners updated!");
         } catch (error) {
             toast.error("Update failed");
@@ -86,8 +83,7 @@ const ShippingManagement = () => {
 
     const saveRates = async () => {
         try {
-            const token = getAuthToken();
-            await axios.post(`${backendurl}/api/admin/shipping/rates`, rates, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post('/api/admin/shipping/rates', rates);
             toast.success("Rates updated!");
         } catch (error) {
             toast.error("Update failed");
@@ -96,8 +92,7 @@ const ShippingManagement = () => {
 
     const saveSettings = async () => {
         try {
-            const token = getAuthToken();
-            await axios.post(`${backendurl}/api/admin/shipping/all-settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post('/api/admin/shipping/all-settings', settings);
             toast.success("Configuration updated!");
         } catch (error) {
             toast.error("Update failed");

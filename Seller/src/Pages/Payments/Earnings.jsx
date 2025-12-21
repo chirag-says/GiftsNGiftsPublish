@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAccountBalanceWallet, MdTrendingUp, MdDownload } from "react-icons/md";
 import { FiDollarSign, FiClock, FiCheckCircle } from "react-icons/fi";
 import { exportToExcel, EARNINGS_EXPORT_COLUMNS } from "../../utils/exportUtils";
@@ -16,7 +16,7 @@ function Earnings() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("all");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -30,9 +30,7 @@ function Earnings() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/earnings?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/finance/earnings?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -161,8 +159,8 @@ function Earnings() {
                 {data.recentTransactions?.map((tx, i) => (
                   <div key={i} className="p-4 flex items-center gap-4 hover:bg-gray-50">
                     <div className={`p-3 rounded-xl ${tx.type === 'order' ? 'bg-green-100' :
-                        tx.type === 'refund' ? 'bg-red-100' :
-                          'bg-blue-100'
+                      tx.type === 'refund' ? 'bg-red-100' :
+                        'bg-blue-100'
                       }`}>
                       <FiDollarSign className={
                         tx.type === 'order' ? 'text-green-600' :

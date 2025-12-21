@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdSchedule, MdAdd, MdEdit, MdDelete, MdSave, MdClose } from "react-icons/md";
 import { FiCalendar, FiClock, FiMapPin } from "react-icons/fi";
 
 function PickupSchedule() {
-  const [data, setData] = useState({ 
-    scheduledPickups: [], 
+  const [data, setData] = useState({
+    scheduledPickups: [],
     pickupSettings: {
       defaultTime: "10:00",
       workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -15,7 +15,7 @@ function PickupSchedule() {
   const [editing, setEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [newPickup, setNewPickup] = useState({ date: "", time: "", courier: "" });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchData();
@@ -23,9 +23,7 @@ function PickupSchedule() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/pickup-schedule`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/shipping/pickup-schedule');
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -36,9 +34,8 @@ function PickupSchedule() {
 
   const handleSaveSettings = async () => {
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/pickup-schedule`, 
-        data.pickupSettings,
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/shipping/pickup-schedule',
+        data.pickupSettings
       );
       if (res.data.success) {
         setEditing(false);
@@ -53,9 +50,8 @@ function PickupSchedule() {
   const handleSchedulePickup = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/schedule-pickup`,
-        newPickup,
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/shipping/schedule-pickup',
+        newPickup
       );
       if (res.data.success) {
         setShowModal(false);
@@ -83,7 +79,7 @@ function PickupSchedule() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Completed": return "bg-green-100 text-green-700";
       case "Scheduled": return "bg-blue-100 text-blue-700";
       case "Cancelled": return "bg-red-100 text-red-700";
@@ -150,9 +146,9 @@ function PickupSchedule() {
                 <input
                   type="time"
                   value={data.pickupSettings?.defaultTime || "10:00"}
-                  onChange={(e) => setData(prev => ({ 
-                    ...prev, 
-                    pickupSettings: { ...prev.pickupSettings, defaultTime: e.target.value } 
+                  onChange={(e) => setData(prev => ({
+                    ...prev,
+                    pickupSettings: { ...prev.pickupSettings, defaultTime: e.target.value }
                   }))}
                   disabled={!editing}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
@@ -167,11 +163,10 @@ function PickupSchedule() {
                       key={i}
                       onClick={() => editing && toggleDay(day)}
                       disabled={!editing}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                        data.pickupSettings?.workingDays?.includes(day)
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${data.pickupSettings?.workingDays?.includes(day)
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 text-gray-600'
-                      } ${!editing && 'cursor-not-allowed'}`}
+                        } ${!editing && 'cursor-not-allowed'}`}
                     >
                       {day.slice(0, 3)}
                     </button>
@@ -261,7 +256,7 @@ function PickupSchedule() {
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">Schedule New Pickup</h3>
             </div>
-            
+
             <form onSubmit={handleSchedulePickup} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Date</label>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import Rating from "@mui/material/Rating";
 import TextField from "@mui/material/TextField";
 import Avatar from "@mui/material/Avatar";
@@ -234,7 +234,7 @@ function ProductDetail() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 
   // Check wishlist status
   useEffect(() => {
@@ -256,9 +256,9 @@ function ProductDetail() {
     setLoading(true);
 
     Promise.all([
-      axios.get(`${backendUrl}/api/products/${productId}`),
-      axios.get(`${backendUrl}/api/product/reviews/${productId}`),
-      axios.get(`${backendUrl}/api/product/related/${productId}`)
+      api.get(`/api/products/${productId}`),
+      api.get(`/api/product/reviews/${productId}`),
+      api.get(`/api/product/related/${productId}`)
     ]).then(([productRes, reviewsRes, relatedRes]) => {
       setProduct(productRes.data);
       if (reviewsRes.data.success) {
@@ -274,22 +274,22 @@ function ProductDetail() {
       setLoading(false);
     });
 
-  }, [productId, backendUrl]);
+  }, [productId, userData]);
 
   // Check if user can review
   useEffect(() => {
     if (productId) {
       const userId = userData?._id;
-      axios.get(`${backendUrl}/api/product/can-review`, {
+      api.get(`/api/product/can-review`, {
         params: { productId, userId }
       })
         .then((res) => setCanReview(res.data))
         .catch((err) => console.error("Error checking review eligibility", err));
     }
-  }, [productId, userData, backendUrl]);
+  }, [productId, userData]);
 
   const fetchReviews = () => {
-    axios.get(`${backendUrl}/api/product/reviews/${productId}`)
+    api.get(`/api/product/reviews/${productId}`)
       .then((res) => {
         if (res.data.success) {
           setReviews(res.data.reviews || []);
@@ -315,7 +315,7 @@ function ProductDetail() {
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post(`${backendUrl}/api/product/review`, {
+      const res = await api.post(`/api/product/review`, {
         productId,
         userId: userData?._id,
         userName: userData?.name || "Anonymous",
@@ -351,11 +351,10 @@ function ProductDetail() {
       const method = isWishlisted ? "delete" : "post";
       setIsWishlisted(!isWishlisted);
 
-      await axios({
+      await api({
         method,
-        url: `${backendUrl}/api/auth/wishlist`,
-        data: { productId: product._id },
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        url: `/api/auth/wishlist`,
+        data: { productId: product._id }
       });
 
       toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
@@ -380,10 +379,9 @@ function ProductDetail() {
     setIsAddingToCart(true);
 
     try {
-      await axios.post(
-        `${backendUrl}/api/auth/Cart`,
-        { productId: product._id, quantity },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      await api.post(
+        `/api/auth/Cart`,
+        { productId: product._id, quantity }
       );
       toast.success("Added to cart!");
       if (fetchCart) fetchCart();

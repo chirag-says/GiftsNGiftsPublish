@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 
 function ChatCustomers() {
   const [chats, setChats] = useState([]);
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/communication/chat-customers`)
+    api.get('/api/communication/chat-customers')
       .then(res => setChats(res.data.data))
       .catch(console.error);
   }, []);

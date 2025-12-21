@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiPackage } from "react-icons/fi";
-import axios from 'axios';
+import api from "../../utils/api";
 
 export default function DashBordBox() {
   const [stats, setStats] = useState({
@@ -13,11 +13,7 @@ export default function DashBordBox() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller/dashboard-stats`, {
-          headers: {
-            stoken: localStorage.getItem("stoken")
-          }
-        });
+        const { data } = await api.get("/api/seller/dashboard-stats");
         if (data.success) {
           setStats(data.stats);
         }
@@ -87,7 +83,7 @@ export default function DashBordBox() {
       {cards.map((item, index) => {
         const Icon = item.icon;
         return (
-          <div 
+          <div
             key={index}
             className="bg-white p-6 rounded-xl border border-gray-200 shadow-soft
                       hover:shadow-card-hover hover:border-gray-300
@@ -100,19 +96,19 @@ export default function DashBordBox() {
               </div>
               <span className={`
                 text-xs font-medium px-2 py-1 rounded-full
-                ${item.trendUp 
-                  ? 'bg-emerald-50 text-emerald-700' 
+                ${item.trendUp
+                  ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-red-50 text-red-700'}
               `}>
                 {item.trend}
               </span>
             </div>
-            
+
             {/* Label */}
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
               {item.label}
             </p>
-            
+
             {/* Amount */}
             <h3 className="text-2xl font-bold text-gray-900">
               {item.amount}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 export const useCatalogMeta = () => {
   const [categories, setCategories] = useState([]);
@@ -14,8 +14,8 @@ export const useCatalogMeta = () => {
       try {
         setLoading(true);
         const [categoriesRes, subcategoriesRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getsubcategories`),
+          api.get("/api/getcategories"),
+          api.get("/api/getsubcategories"),
         ]);
 
         if (!isMounted) return;

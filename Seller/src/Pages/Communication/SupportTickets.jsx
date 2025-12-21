@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 
 function SupportTickets() {
   const [tickets, setTickets] = useState([]);
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/communication/support-tickets`)
+    api.get('/api/communication/support-tickets')
       .then(res => setTickets(res.data.data))
       .catch(console.error);
   }, []);

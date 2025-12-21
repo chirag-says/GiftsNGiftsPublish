@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdCategory, MdSearch } from "react-icons/md";
 import { FiPackage, FiGrid } from "react-icons/fi";
 
@@ -7,7 +7,7 @@ function MyCategories() {
   const [data, setData] = useState({ categories: [], totalProducts: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -20,9 +20,7 @@ function MyCategories() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/categories/my-categories`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/categories/my-categories');
         if (res.data.success) {
           setData(res.data.data);
         }

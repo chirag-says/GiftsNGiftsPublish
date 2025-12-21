@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuStar, LuSearch, LuThumbsUp, LuMessageCircle, LuImage, LuDownload } from "react-icons/lu";
 import { exportToExcel, REVIEW_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
@@ -15,7 +15,7 @@ function MyReviews() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchReviews();
@@ -24,9 +24,7 @@ function MyReviews() {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews?rating=${filter}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/reviews?rating=${filter}`);
       if (res.data.success) {
         setReviews(res.data.data.reviews || []);
         setStats(res.data.data.stats || stats);
@@ -134,8 +132,8 @@ function MyReviews() {
                   key={rating}
                   onClick={() => setFilter(rating)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === rating
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                     }`}
                 >
                   {rating === "all" ? "All" : `${rating}★`}

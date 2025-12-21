@@ -1,27 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 import { normalizeProductRecord } from "../utils/productStatus.js";
 
 export const useSellerProducts = () => {
   const [rawProducts, setRawProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const stoken = localStorage.getItem("stoken");
+  // const stoken = localStorage.getItem("stoken");
 
   const fetchProducts = useCallback(async () => {
-    if (!stoken) {
-      setRawProducts([]);
-      setError("Please sign in to view products.");
-      setLoading(false);
-      return;
-    }
+    // If we rely on cookies, we might assume the user is logged in or the API will return 401
+    // We don't check for stoken in localStorage anymore.
 
     try {
       setLoading(true);
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getproducts`,
-        { headers: { stoken } }
-      );
+      const { data } = await api.get("/api/product/getproducts");
 
       if (Array.isArray(data?.data)) {
         setRawProducts(data.data);
@@ -37,7 +30,7 @@ export const useSellerProducts = () => {
     } finally {
       setLoading(false);
     }
-  }, [stoken]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();

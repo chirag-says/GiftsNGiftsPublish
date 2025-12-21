@@ -6,12 +6,12 @@ import MenuItem from "@mui/material/MenuItem";
 import { Divider } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { Admincontext } from "../context/admincontext";
-import axios from "axios";
+import api from "../../utils/api";
 
 function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const { backendurl, atoken, setatoken } = useContext(Admincontext);
+  const { atoken, setatoken } = useContext(Admincontext);
   const navigate = useNavigate();
   const [sellerProfile, setSellerProfile] = useState({ name: "", nickName: "" });
   const authToken = atoken || localStorage.getItem("stoken") || "";
@@ -26,9 +26,7 @@ function Header() {
     let ignore = false;
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get(`${backendurl}/api/seller/profile`, {
-          headers: { stoken: authToken }
-        });
+        const { data } = await api.get("/api/seller/profile");
         if (!ignore && data.success) {
           setSellerProfile({
             name: data.seller?.name || "",
@@ -44,7 +42,7 @@ function Header() {
     return () => {
       ignore = true;
     };
-  }, [authToken, backendurl]);
+  }, [authToken]);
 
   const handleClick = (event) => {
     if (authToken) setAnchorEl(event.currentTarget);
@@ -175,7 +173,7 @@ function Header() {
         </div>
 
         <Divider className="!my-2" />
-        
+
         <Link to="/seller-profile">
           <MenuItem className="!mx-2 !rounded-lg !py-2.5 hover:!bg-gray-50">
             <div className="flex items-center gap-3">

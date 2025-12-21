@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdLocalOffer, MdAdd, MdEdit, MdDelete, MdSearch } from "react-icons/md";
 import { FiPercent, FiCalendar, FiTag } from "react-icons/fi";
 
@@ -18,7 +18,7 @@ function MyPromotions() {
     validUntil: "",
     description: ""
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -34,9 +34,7 @@ function MyPromotions() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/promotions`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/marketing/promotions');
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -48,9 +46,7 @@ function MyPromotions() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons`, formData, {
-        headers: { stoken }
-      });
+      const res = await api.post('/api/seller-panel/marketing/coupons', formData);
       if (res.data.success) {
         setShowModal(false);
         setFormData({
@@ -75,9 +71,7 @@ function MyPromotions() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
     try {
-      const res = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons/${id}`, {
-        headers: { stoken }
-      });
+      const res = await api.delete(`/api/seller-panel/marketing/coupons/${id}`);
       if (res.data.success) {
         fetchData();
         alert("Coupon deleted successfully!");
@@ -88,12 +82,12 @@ function MyPromotions() {
     }
   };
 
-  const filteredPromotions = data.promotions?.filter(p => 
+  const filteredPromotions = data.promotions?.filter(p =>
     p.code?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Active": return "bg-green-100 text-green-700";
       case "Expired": return "bg-red-100 text-red-700";
       case "Scheduled": return "bg-blue-100 text-blue-700";
@@ -177,7 +171,7 @@ function MyPromotions() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center">
                   <FiPercent className="text-2xl text-blue-600" />
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-gray-800">{promo.code}</h4>
@@ -186,14 +180,14 @@ function MyPromotions() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    {promo.discountType === "percentage" 
+                    {promo.discountType === "percentage"
                       ? `${promo.discountValue}% off`
                       : `${formatINR(promo.discountValue)} off`}
                     {promo.minPurchase && ` • Min. ${formatINR(promo.minPurchase)}`}
                   </p>
                   <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
-                      <FiCalendar /> 
+                      <FiCalendar />
                       {new Date(promo.validFrom).toLocaleDateString()} - {new Date(promo.validUntil).toLocaleDateString()}
                     </span>
                     <span>Used: {promo.usedCount}/{promo.maxUses || '∞'}</span>
@@ -204,7 +198,7 @@ function MyPromotions() {
                   <button className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">
                     <MdEdit />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(promo._id)}
                     className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
                   >
@@ -224,7 +218,7 @@ function MyPromotions() {
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">Create Coupon</h3>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>

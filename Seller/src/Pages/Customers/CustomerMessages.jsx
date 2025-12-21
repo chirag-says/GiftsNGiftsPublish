@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdMessage, MdSend, MdSearch } from "react-icons/md";
 import { FiMessageCircle, FiMail, FiPhone } from "react-icons/fi";
 
@@ -7,14 +7,11 @@ function CustomerMessages() {
   const [data, setData] = useState({ conversations: [], totalCustomers: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/customers/messages`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/customers/messages");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -25,13 +22,13 @@ function CustomerMessages() {
     fetchData();
   }, []);
 
-  const filteredConversations = data.conversations.filter(conv => 
+  const filteredConversations = data.conversations.filter(conv =>
     conv.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Delivered": return "bg-green-100 text-green-700";
       case "Shipped": return "bg-blue-100 text-blue-700";
       case "Processing": return "bg-yellow-100 text-yellow-700";
@@ -101,7 +98,7 @@ function CustomerMessages() {
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {conv.customerName.charAt(0).toUpperCase()}
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-gray-800">{conv.customerName}</h4>
@@ -139,7 +136,7 @@ function CustomerMessages() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
         <h4 className="font-semibold text-blue-800 mb-2">📬 Direct Messaging Coming Soon</h4>
         <p className="text-sm text-blue-700">
-          We're working on a built-in messaging system so you can communicate directly with customers 
+          We're working on a built-in messaging system so you can communicate directly with customers
           without leaving the platform. For now, you can reach out via email.
         </p>
       </div>

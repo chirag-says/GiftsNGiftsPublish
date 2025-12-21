@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 import { FiBell, FiAlertTriangle, FiCheckCircle, FiRefreshCcw } from 'react-icons/fi';
 
 const severityPalette = {
@@ -29,22 +29,18 @@ function Notifications() {
   const [loading, setLoading] = useState(false);
   const [markingId, setMarkingId] = useState('');
   const [error, setError] = useState('');
-  const stoken = localStorage.getItem('stoken');
+
 
   const fetchNotifications = async () => {
     try {
-      if (!stoken) {
-        setError('Please log in again to view notifications.');
-        return;
-      }
+      // Auth check handled by interceptors
 
       setLoading(true);
       setError('');
 
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/notifications`,
+      const { data } = await api.get(
+        '/api/seller/notifications',
         {
-          headers: { stoken },
           params: { status: filter }
         }
       );
@@ -63,17 +59,16 @@ function Notifications() {
 
   useEffect(() => {
     fetchNotifications();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const handleMarkRead = async (id) => {
     if (!id || markingId === id) return;
     try {
       setMarkingId(id);
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/notifications/${id}/read`,
-        {},
-        { headers: { stoken } }
+      await api.put(
+        `/api/seller/notifications/${id}/read`,
+        {}
       );
       setNotifications((prev) => prev.map((item) => item._id === id ? { ...item, isRead: true, readAt: new Date().toISOString() } : item));
       setStats((prev) => ({ ...prev, unread: Math.max(0, (prev.unread || 0) - 1) }));

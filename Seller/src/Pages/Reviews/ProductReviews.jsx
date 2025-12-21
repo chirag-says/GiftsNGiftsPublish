@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdTrendingUp, MdTrendingDown, MdSearch } from "react-icons/md";
 import { FiImage, FiMessageCircle, FiEye } from "react-icons/fi";
 
@@ -10,7 +10,7 @@ function ProductReviews() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("reviews");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchProductReviews();
@@ -19,9 +19,7 @@ function ProductReviews() {
   const fetchProductReviews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/by-product?sort=${sortBy}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/reviews/by-product?sort=${sortBy}`);
       if (res.data.success) setProducts(res.data.data || []);
     } catch (err) {
       console.error(err);

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress } from "@mui/material";
 import { MdPeople, MdPersonAdd, MdRepeat, MdLocationOn } from "react-icons/md";
@@ -7,7 +7,7 @@ import { FiRefreshCw, FiDownload, FiUsers } from "react-icons/fi";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 function CustomerInsights() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [insights, setInsights] = useState({
         totalCustomers: 0,
@@ -25,7 +25,7 @@ function CustomerInsights() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/customer-insights`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/reports/customer-insights');
             if (data.success) setInsights(data.insights || insights);
         } catch (e) {
             console.error("Error fetching customer insights:", e);

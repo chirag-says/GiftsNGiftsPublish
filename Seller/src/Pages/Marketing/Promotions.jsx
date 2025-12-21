@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuTicket, LuPercent, LuPlus, LuTrash2, LuPencil, LuCopy, LuCheck, LuX, LuSearch, LuFilter } from "react-icons/lu";
 import { MdOutlineDiscount, MdCheckCircle, MdSchedule, MdError } from "react-icons/md";
 import { FiTag, FiCalendar, FiPackage } from "react-icons/fi";
@@ -8,7 +7,6 @@ function Promotions() {
   const [activeTab, setActiveTab] = useState("coupons");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const stoken = localStorage.getItem("stoken");
 
   // Coupons State
   const [coupons, setCoupons] = useState([]);
@@ -51,9 +49,8 @@ function Promotions() {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons`,
-        { headers: { stoken } }
+      const res = await api.get(
+        "/api/seller-panel/marketing/coupons"
       );
       if (res.data.success) {
         setCoupons(res.data.data.coupons || []);
@@ -69,9 +66,8 @@ function Promotions() {
   const fetchDiscounts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/discounts`,
-        { headers: { stoken } }
+      const res = await api.get(
+        "/api/seller-panel/marketing/discounts"
       );
       if (res.data.success) {
         setProducts(res.data.data.products || []);
@@ -92,16 +88,14 @@ function Promotions() {
 
     setSaving(true);
     try {
-      const endpoint = editingCoupon
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons`
-        : `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons`;
+      const endpoint = "/api/seller-panel/marketing/coupons";
 
       const method = editingCoupon ? 'put' : 'post';
-      const payload = editingCoupon 
+      const payload = editingCoupon
         ? { ...couponForm, couponId: editingCoupon._id }
         : couponForm;
 
-      await axios[method](endpoint, payload, { headers: { stoken } });
+      await api[method](endpoint, payload);
 
       setShowCouponModal(false);
       setEditingCoupon(null);
@@ -119,9 +113,8 @@ function Promotions() {
     if (!confirm("Are you sure you want to delete this coupon?")) return;
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons/${couponId}`,
-        { headers: { stoken } }
+      await api.delete(
+        `/api/seller-panel/marketing/coupons/${couponId}`
       );
       fetchCoupons();
     } catch (err) {
@@ -131,10 +124,9 @@ function Promotions() {
 
   const handleToggleCoupon = async (couponId) => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/coupons/toggle`,
-        { couponId },
-        { headers: { stoken } }
+      await api.post(
+        "/api/seller-panel/marketing/coupons/toggle",
+        { couponId }
       );
       fetchCoupons();
     } catch (err) {
@@ -144,10 +136,9 @@ function Promotions() {
 
   const handleUpdateProductDiscount = async (productId, discount) => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/discounts`,
-        { productId, discount },
-        { headers: { stoken } }
+      await api.post(
+        "/api/seller-panel/marketing/discounts",
+        { productId, discount }
       );
       fetchDiscounts();
     } catch (err) {
@@ -163,14 +154,13 @@ function Promotions() {
 
     setSaving(true);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/discounts/bulk`,
-        { 
-          productIds: selectedProducts, 
-          discount: bulkDiscount, 
-          action 
-        },
-        { headers: { stoken } }
+      await api.post(
+        "/api/seller-panel/marketing/discounts/bulk",
+        {
+          productIds: selectedProducts,
+          discount: bulkDiscount,
+          action
+        }
       );
       setSelectedProducts([]);
       setShowBulkModal(false);
@@ -272,11 +262,10 @@ function Promotions() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                   ? "border-indigo-500 text-indigo-600 bg-indigo-50/50"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <tab.icon className="text-lg" />
               {tab.label}
@@ -360,11 +349,10 @@ function Promotions() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleToggleCoupon(coupon._id)}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                coupon.isActive
+                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${coupon.isActive
                                   ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                                   : "bg-green-100 text-green-700 hover:bg-green-200"
-                              }`}
+                                }`}
                             >
                               {coupon.isActive ? "Deactivate" : "Activate"}
                             </button>
@@ -447,11 +435,10 @@ function Promotions() {
               {/* Products Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredProducts.map((product) => (
-                  <div 
-                    key={product._id} 
-                    className={`bg-white border rounded-xl overflow-hidden hover:shadow-sm transition-all ${
-                      selectedProducts.includes(product._id) ? "border-indigo-500 ring-2 ring-indigo-200" : "border-gray-200"
-                    }`}
+                  <div
+                    key={product._id}
+                    className={`bg-white border rounded-xl overflow-hidden hover:shadow-sm transition-all ${selectedProducts.includes(product._id) ? "border-indigo-500 ring-2 ring-indigo-200" : "border-gray-200"
+                      }`}
                   >
                     <div className="flex p-4 gap-4">
                       <div className="relative">

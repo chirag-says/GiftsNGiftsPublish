@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdAccountBalance, MdAdd, MdCheck, MdClose, MdAccessTime } from "react-icons/md";
 import { FiClock } from "react-icons/fi";
@@ -11,13 +11,10 @@ function PayoutRequests() {
   const [requestAmount, setRequestAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [submitting, setSubmitting] = useState(false);
-  const stoken = localStorage.getItem("stoken");
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/payouts`, {
-        headers: { stoken }
-      });
+      const res = await api.get("/api/seller-panel/finance/payouts");
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -31,13 +28,12 @@ function PayoutRequests() {
   const handleRequestPayout = async (e) => {
     e.preventDefault();
     if (!requestAmount || parseFloat(requestAmount) <= 0) return;
-    
+
     setSubmitting(true);
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/payouts`,
-        { amount: parseFloat(requestAmount), paymentMethod },
-        { headers: { stoken } }
+      const res = await api.post(
+        "/api/seller-panel/finance/payouts",
+        { amount: parseFloat(requestAmount), paymentMethod }
       );
       if (res.data.success) {
         setShowModal(false);
@@ -52,7 +48,7 @@ function PayoutRequests() {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case "Completed": return <MdCheck className="text-green-500" />;
       case "Processing": return <FiClock className="text-blue-500" />;
       case "Pending": return <MdAccessTime className="text-yellow-500" />;
@@ -62,7 +58,7 @@ function PayoutRequests() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Completed": return "bg-green-100 text-green-700";
       case "Processing": return "bg-blue-100 text-blue-700";
       case "Pending": return "bg-yellow-100 text-yellow-700";
@@ -119,7 +115,7 @@ function PayoutRequests() {
         <div className="p-5 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Payout History</h3>
         </div>
-        
+
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
@@ -179,7 +175,7 @@ function PayoutRequests() {
                 <MdClose className="text-xl" />
               </button>
             </div>
-            
+
             <form onSubmit={handleRequestPayout} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Available Balance</label>

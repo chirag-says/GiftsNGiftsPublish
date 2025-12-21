@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import {
   Tabs, Tab, Box, Button, TextField, Chip, Card, CardContent,
@@ -93,7 +93,7 @@ const EmptyState = ({ message }) => (
 // --- Main Component ---
 
 function Finance() {
-  const { atoken, backendurl } = useContext(Admincontext);
+  const { } = useContext(Admincontext);
   const [value, setValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false); // For gateway keys
@@ -117,7 +117,7 @@ function Finance() {
   const fetchData = async (tabIndex) => {
     setLoading(true);
     try {
-      const config = { headers: { token: atoken } };
+      const config = {};
       let endpoint = '';
 
       switch (tabIndex) {
@@ -131,7 +131,7 @@ function Finance() {
       }
 
       if (endpoint) {
-        const res = await axios.get(`${backendurl}/api/admin${endpoint}`, config);
+        const res = await api.get(`/api/admin${endpoint}`, config);
         if (res.data.success) {
           setData(prev => ({
             ...prev,
@@ -158,9 +158,8 @@ function Finance() {
 
   const handlePayoutAction = async (id, status) => {
     try {
-      const res = await axios.post(`${backendurl}/api/admin/finance/payout-action`,
-        { payoutId: id, status },
-        { headers: { token: atoken } }
+      const res = await api.post('/api/admin/finance/payout-action',
+        { payoutId: id, status }
       );
       if (res.data.success) {
         toast.success(`Payout ${status} successfully`);
@@ -207,7 +206,7 @@ function Finance() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
-      
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
@@ -219,9 +218,9 @@ function Finance() {
             <p className="text-sm text-gray-500">Overview of earnings, payouts, and settlements</p>
           </div>
         </div>
-        <Button 
-          variant="outlined" 
-          startIcon={<MdRefresh />} 
+        <Button
+          variant="outlined"
+          startIcon={<MdRefresh />}
           onClick={() => fetchData(value)}
           disabled={loading}
           sx={{ borderRadius: '8px', textTransform: 'none' }}
@@ -286,37 +285,37 @@ function Finance() {
                 <MdPendingActions className="text-orange-500" size={24} />
                 <h3 className="font-bold text-gray-800">Pending Requests</h3>
               </div>
-              
-              {loading ? <Skeleton height={200} variant="rectangular" className="rounded-xl"/> : 
-               data.payouts.pending.length === 0 ? (
-                <Card variant="outlined" className="bg-gray-50 border-dashed">
+
+              {loading ? <Skeleton height={200} variant="rectangular" className="rounded-xl" /> :
+                data.payouts.pending.length === 0 ? (
+                  <Card variant="outlined" className="bg-gray-50 border-dashed">
                     <CardContent className="text-center py-8 text-gray-400">
-                        <MdCheckCircle size={40} className="mx-auto mb-2 opacity-50 text-green-500" />
-                        No pending requests
-                    </CardContent>
-                </Card>
-               ) : (
-                data.payouts.pending.map((p) => (
-                  <Card key={p._id} elevation={3} className="border border-orange-100">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <Typography variant="h6" className="font-bold text-gray-900">{formatCurrency(p.amount)}</Typography>
-                          <Typography variant="body2" className="text-gray-600 font-medium">{p.sellerId?.name}</Typography>
-                        </div>
-                        <Chip label="Pending" color="warning" size="small" />
-                      </div>
-                      <Typography variant="caption" className="text-gray-400 block mb-4">
-                        Requested: {formatDate(p.requestedAt)}
-                      </Typography>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="contained" color="success" size="small" onClick={() => handlePayoutAction(p._id, 'Completed')}>Approve</Button>
-                        <Button variant="outlined" color="error" size="small" onClick={() => handlePayoutAction(p._id, 'Cancelled')}>Reject</Button>
-                      </div>
+                      <MdCheckCircle size={40} className="mx-auto mb-2 opacity-50 text-green-500" />
+                      No pending requests
                     </CardContent>
                   </Card>
-                ))
-              )}
+                ) : (
+                  data.payouts.pending.map((p) => (
+                    <Card key={p._id} elevation={3} className="border border-orange-100">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <Typography variant="h6" className="font-bold text-gray-900">{formatCurrency(p.amount)}</Typography>
+                            <Typography variant="body2" className="text-gray-600 font-medium">{p.sellerId?.name}</Typography>
+                          </div>
+                          <Chip label="Pending" color="warning" size="small" />
+                        </div>
+                        <Typography variant="caption" className="text-gray-400 block mb-4">
+                          Requested: {formatDate(p.requestedAt)}
+                        </Typography>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="contained" color="success" size="small" onClick={() => handlePayoutAction(p._id, 'Completed')}>Approve</Button>
+                          <Button variant="outlined" color="error" size="small" onClick={() => handlePayoutAction(p._id, 'Cancelled')}>Reject</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
             </div>
 
             {/* History Column */}
@@ -384,14 +383,14 @@ function Finance() {
         {value === 3 && (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-              <StatCard 
+              <StatCard
                 title="Total Platform GMV"
                 value={formatCurrency(data.commission.totalGMV || 0)}
                 subtext="Gross Merchandise Value"
                 icon={<MdOutlineReceiptLong size={32} />}
                 gradient="bg-gradient-to-br from-gray-800 to-gray-900"
               />
-              <StatCard 
+              <StatCard
                 title="Platform Earnings"
                 value={formatCurrency(data.commission.totalCommission || 0)}
                 subtext={`Based on ${data.commission.rate || '10%'} fee`}
@@ -430,7 +429,7 @@ function Finance() {
                     variant="outlined"
                     type={showSecrets ? "text" : "password"}
                     value={data.gateway.key}
-                    onChange={(e) => setData({...data, gateway: { ...data.gateway, key: e.target.value }})}
+                    onChange={(e) => setData({ ...data, gateway: { ...data.gateway, key: e.target.value } })}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -447,7 +446,7 @@ function Finance() {
                     variant="outlined"
                     type={showSecrets ? "text" : "password"}
                     value={data.gateway.secret}
-                    onChange={(e) => setData({...data, gateway: { ...data.gateway, secret: e.target.value }})}
+                    onChange={(e) => setData({ ...data, gateway: { ...data.gateway, secret: e.target.value } })}
                   />
                   <div className="flex justify-between items-center pt-4">
                     <Typography variant="caption" color="error">
@@ -467,22 +466,22 @@ function Finance() {
         {value === 6 && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard 
-                title="Total Revenue" 
-                value={formatCurrency(data.stats.totalRevenue || 0)} 
-                icon={<MdAttachMoney size={24}/>}
+              <StatCard
+                title="Total Revenue"
+                value={formatCurrency(data.stats.totalRevenue || 0)}
+                icon={<MdAttachMoney size={24} />}
                 gradient="bg-blue-600"
               />
-              <StatCard 
-                title="Total Payouts" 
-                value={formatCurrency(data.stats.totalPayouts || 0)} 
-                icon={<MdOutlineReceiptLong size={24}/>}
+              <StatCard
+                title="Total Payouts"
+                value={formatCurrency(data.stats.totalPayouts || 0)}
+                icon={<MdOutlineReceiptLong size={24} />}
                 gradient="bg-orange-500"
               />
-              <StatCard 
-                title="Net Profit (Est.)" 
-                value={formatCurrency(data.stats.netProfit || 0)} 
-                icon={<MdCheckCircle size={24}/>}
+              <StatCard
+                title="Net Profit (Est.)"
+                value={formatCurrency(data.stats.netProfit || 0)}
+                icon={<MdCheckCircle size={24} />}
                 gradient="bg-green-600"
               />
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuPlus, LuTrash2, LuPencil, LuPlay, LuPause, LuCopy, LuExternalLink, LuShare2, LuQrCode } from "react-icons/lu";
 import { MdCampaign, MdOutlineBarChart, MdAdsClick, MdTrendingUp, MdOutlineVisibility } from "react-icons/md";
 import { FiDollarSign, FiTarget, FiTool, FiShare, FiMessageCircle } from "react-icons/fi";
@@ -9,7 +9,6 @@ function CampaignsTools() {
   const [activeTab, setActiveTab] = useState("campaigns");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const stoken = localStorage.getItem("stoken");
 
   // Budget & Performance State
   const [budgetData, setBudgetData] = useState({
@@ -55,9 +54,8 @@ function CampaignsTools() {
 
   const fetchBudgetData = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/budget`,
-        { headers: { stoken } }
+      const res = await api.get(
+        "/api/seller-panel/marketing/budget"
       );
       if (res.data.success) {
         setBudgetData(res.data.data);
@@ -70,9 +68,8 @@ function CampaignsTools() {
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/campaigns`,
-        { headers: { stoken } }
+      const res = await api.get(
+        "/api/seller-panel/marketing/campaigns"
       );
       if (res.data.success) {
         setCampaigns(res.data.data || []);
@@ -87,9 +84,8 @@ function CampaignsTools() {
   const fetchTools = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/tools`,
-        { headers: { stoken } }
+      const res = await api.get(
+        "/api/seller-panel/marketing/tools"
       );
       if (res.data.success) {
         setToolsData(res.data.data);
@@ -109,13 +105,13 @@ function CampaignsTools() {
 
     setSaving(true);
     try {
-      const endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/campaigns`;
+      const endpoint = "/api/seller-panel/marketing/campaigns";
       const method = editingCampaign ? 'put' : 'post';
-      const payload = editingCampaign 
+      const payload = editingCampaign
         ? { ...campaignForm, campaignId: editingCampaign._id }
         : campaignForm;
 
-      await axios[method](endpoint, payload, { headers: { stoken } });
+      await api[method](endpoint, payload);
 
       setShowCampaignModal(false);
       setEditingCampaign(null);
@@ -134,9 +130,8 @@ function CampaignsTools() {
     if (!confirm("Are you sure you want to delete this campaign?")) return;
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/campaigns/${campaignId}`,
-        { headers: { stoken } }
+      await api.delete(
+        `/api/seller-panel/marketing/campaigns/${campaignId}`
       );
       fetchCampaigns();
       fetchBudgetData();
@@ -147,10 +142,9 @@ function CampaignsTools() {
 
   const handleToggleCampaign = async (campaignId, newStatus) => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/campaigns/toggle`,
-        { campaignId, status: newStatus },
-        { headers: { stoken } }
+      await api.post(
+        "/api/seller-panel/marketing/campaigns/toggle",
+        { campaignId, status: newStatus }
       );
       fetchCampaigns();
       fetchBudgetData();
@@ -292,11 +286,10 @@ function CampaignsTools() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                   ? "border-indigo-500 text-indigo-600 bg-indigo-50/50"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <tab.icon className="text-lg" />
               {tab.label}
@@ -442,11 +435,10 @@ function CampaignsTools() {
                       />
                       <button
                         onClick={() => copyToClipboard(toolsData.storeUrl, "storeUrl")}
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                          copiedText === "storeUrl" 
-                            ? "bg-green-100 text-green-700" 
+                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${copiedText === "storeUrl"
+                            ? "bg-green-100 text-green-700"
                             : "bg-indigo-600 text-white hover:bg-indigo-700"
-                        }`}
+                          }`}
                       >
                         {copiedText === "storeUrl" ? (
                           <>✓ Copied</>
@@ -496,11 +488,10 @@ function CampaignsTools() {
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{template.template}</p>
                         <button
                           onClick={() => copyToClipboard(template.template, template.platform)}
-                          className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-                            copiedText === template.platform
+                          className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${copiedText === template.platform
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
+                            }`}
                         >
                           {copiedText === template.platform ? "✓ Copied!" : "Copy Template"}
                         </button>
@@ -524,11 +515,10 @@ function CampaignsTools() {
                         <p className="text-sm text-gray-500 mb-3">{coupon.shareText}</p>
                         <button
                           onClick={() => copyToClipboard(coupon.shareText, `coupon-${index}`)}
-                          className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-                            copiedText === `coupon-${index}`
+                          className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${copiedText === `coupon-${index}`
                               ? "bg-green-100 text-green-700"
                               : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                          }`}
+                            }`}
                         >
                           {copiedText === `coupon-${index}` ? "✓ Copied!" : "Copy Share Text"}
                         </button>
@@ -601,8 +591,8 @@ function CampaignsTools() {
                   <input
                     type="number"
                     value={campaignForm.budget.total}
-                    onChange={(e) => setCampaignForm({ 
-                      ...campaignForm, 
+                    onChange={(e) => setCampaignForm({
+                      ...campaignForm,
                       budget: { ...campaignForm.budget, total: parseInt(e.target.value) || 0 }
                     })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -613,8 +603,8 @@ function CampaignsTools() {
                   <input
                     type="number"
                     value={campaignForm.budget.daily}
-                    onChange={(e) => setCampaignForm({ 
-                      ...campaignForm, 
+                    onChange={(e) => setCampaignForm({
+                      ...campaignForm,
                       budget: { ...campaignForm.budget, daily: parseInt(e.target.value) || 0 }
                     })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -627,8 +617,8 @@ function CampaignsTools() {
                   <input
                     type="date"
                     value={campaignForm.schedule.startDate}
-                    onChange={(e) => setCampaignForm({ 
-                      ...campaignForm, 
+                    onChange={(e) => setCampaignForm({
+                      ...campaignForm,
                       schedule: { ...campaignForm.schedule, startDate: e.target.value }
                     })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -639,8 +629,8 @@ function CampaignsTools() {
                   <input
                     type="date"
                     value={campaignForm.schedule.endDate}
-                    onChange={(e) => setCampaignForm({ 
-                      ...campaignForm, 
+                    onChange={(e) => setCampaignForm({
+                      ...campaignForm,
                       schedule: { ...campaignForm.schedule, endDate: e.target.value }
                     })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -651,8 +641,8 @@ function CampaignsTools() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
                 <select
                   value={campaignForm.targeting.audience}
-                  onChange={(e) => setCampaignForm({ 
-                    ...campaignForm, 
+                  onChange={(e) => setCampaignForm({
+                    ...campaignForm,
                     targeting: { ...campaignForm.targeting, audience: e.target.value }
                   })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"

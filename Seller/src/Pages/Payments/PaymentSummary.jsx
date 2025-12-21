@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdOutlineReceiptLong, MdTrendingUp, MdAccountBalance, MdPayments } from "react-icons/md";
 import { FiArrowRight, FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
@@ -14,7 +14,6 @@ function PaymentSummary() {
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -27,9 +26,7 @@ function PaymentSummary() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/payment-summary`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/finance/payment-summary");
         if (res.data.success) setSummary(res.data.data);
       } catch (err) {
         console.error(err);
@@ -41,7 +38,7 @@ function PaymentSummary() {
   }, []);
 
   const QuickAction = ({ icon: Icon, title, desc, link, color }) => (
-    <a 
+    <a
       href={link}
       className={`flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group`}
     >
@@ -111,28 +108,28 @@ function PaymentSummary() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <QuickAction 
+            <QuickAction
               icon={MdPayments}
               title="Request Payout"
               desc="Withdraw available balance"
               link="/seller/payments/payout-requests"
               color="bg-green-500"
             />
-            <QuickAction 
+            <QuickAction
               icon={MdAccountBalance}
               title="Bank Details"
               desc="Manage payment methods"
               link="/seller/payments/bank-details"
               color="bg-blue-500"
             />
-            <QuickAction 
+            <QuickAction
               icon={MdOutlineReceiptLong}
               title="View Transactions"
               desc="Complete transaction history"
               link="/seller/payments/transaction-history"
               color="bg-purple-500"
             />
-            <QuickAction 
+            <QuickAction
               icon={MdTrendingUp}
               title="Commission Details"
               desc="View platform fees"
@@ -144,7 +141,7 @@ function PaymentSummary() {
           {/* Monthly Breakdown */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-4">Monthly Payment Breakdown</h3>
-            
+
             {summary.monthlyStats?.length === 0 ? (
               <div className="text-center text-gray-500 py-8">No data available</div>
             ) : (
@@ -190,11 +187,10 @@ function PaymentSummary() {
               <div className="divide-y divide-gray-100">
                 {summary.recentActivity?.map((activity, i) => (
                   <div key={i} className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                    <div className={`p-2 rounded-lg ${
-                      activity.type === 'credit' ? 'bg-green-100' :
-                      activity.type === 'debit' ? 'bg-red-100' :
-                      'bg-blue-100'
-                    }`}>
+                    <div className={`p-2 rounded-lg ${activity.type === 'credit' ? 'bg-green-100' :
+                        activity.type === 'debit' ? 'bg-red-100' :
+                          'bg-blue-100'
+                      }`}>
                       {activity.type === 'credit' ? (
                         <FiCheckCircle className="text-green-600" />
                       ) : activity.type === 'debit' ? (
@@ -203,7 +199,7 @@ function PaymentSummary() {
                         <FiClock className="text-blue-600" />
                       )}
                     </div>
-                    
+
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-800">{activity.description}</h4>
                       <p className="text-sm text-gray-500">
@@ -211,9 +207,8 @@ function PaymentSummary() {
                       </p>
                     </div>
 
-                    <span className={`font-semibold ${
-                      activity.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <span className={`font-semibold ${activity.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {activity.type === 'credit' ? '+' : '-'}{formatINR(activity.amount)}
                     </span>
                   </div>

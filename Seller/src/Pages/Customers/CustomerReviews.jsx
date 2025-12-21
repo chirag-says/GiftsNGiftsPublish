@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdStarBorder, MdStarHalf, MdFilterList } from "react-icons/md";
 import { FiMessageSquare } from "react-icons/fi";
 
@@ -8,15 +8,14 @@ function CustomerReviews() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [ratingFilter, setRatingFilter] = useState("");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/customers/reviews?page=${page}&rating=${ratingFilter}`,
-          { headers: { stoken } }
+        const res = await api.get(
+          `/api/seller-panel/customers/reviews?page=${page}&rating=${ratingFilter}`
         );
         if (res.data.success) setData(res.data.data);
       } catch (err) {
@@ -90,7 +89,7 @@ function CustomerReviews() {
                     <MdStar className="text-yellow-400" />
                   </div>
                   <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-yellow-400 rounded-full transition-all"
                       style={{ width: `${percentage}%` }}
                     ></div>
@@ -107,9 +106,8 @@ function CustomerReviews() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setRatingFilter("")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            !ratingFilter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!ratingFilter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
         >
           All
         </button>
@@ -117,9 +115,8 @@ function CustomerReviews() {
           <button
             key={r}
             onClick={() => setRatingFilter(r.toString())}
-            className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              ratingFilter === r.toString() ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ratingFilter === r.toString() ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
           >
             {r} <MdStar className={ratingFilter === r.toString() ? 'text-white' : 'text-yellow-400'} />
           </button>
@@ -142,8 +139,8 @@ function CustomerReviews() {
             <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 {review.productId?.images?.[0]?.url && (
-                  <img 
-                    src={review.productId.images[0].url} 
+                  <img
+                    src={review.productId.images[0].url}
                     alt={review.productId.title}
                     className="w-16 h-16 rounded-lg object-cover"
                   />

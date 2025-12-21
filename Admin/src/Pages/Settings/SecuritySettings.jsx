@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Switch, FormControlLabel, LinearProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip } from "@mui/material";
 import { MdSecurity, MdLock, MdTimer, MdBlock } from "react-icons/md";
 import { FiRefreshCw, FiSave, FiShield } from "react-icons/fi";
 
 function SecuritySettings() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState("");
@@ -41,7 +41,7 @@ function SecuritySettings() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/security`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/security');
             if (data.success && data.settings) {
                 setSecuritySettings(prev => ({ ...prev, ...data.settings }));
             }
@@ -55,7 +55,7 @@ function SecuritySettings() {
     const saveSettings = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/security`, securitySettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/security', securitySettings);
             if (data.success) {
                 setSuccess("Security settings saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);

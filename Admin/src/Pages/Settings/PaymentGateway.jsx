@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Switch, TextField, Chip, LinearProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel } from "@mui/material";
 import { MdPayment, MdEdit } from "react-icons/md";
 import { FiRefreshCw, FiSave } from "react-icons/fi";
 
 function PaymentGateway() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [paymentGateways, setPaymentGateways] = useState([]);
@@ -33,7 +33,7 @@ function PaymentGateway() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/payment-gateways`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/payment-gateways');
             if (data.success) setPaymentGateways(data.gateways || []);
         } catch (e) {
             console.error("Error fetching payment gateways:", e);
@@ -44,7 +44,7 @@ function PaymentGateway() {
 
     const toggleGateway = async (gateway, isActive) => {
         try {
-            await axios.put(`${backendurl}/api/admin/settings/payment-gateway/${gateway}/toggle`, { isActive }, { headers: { token: atoken } });
+            await api.put(`/api/admin/settings/payment-gateway/${gateway}/toggle`, { isActive });
             fetchData();
             setSuccess(`${gateway} ${isActive ? 'enabled' : 'disabled'} successfully!`);
             setTimeout(() => setSuccess(""), 3000);
@@ -68,7 +68,7 @@ function PaymentGateway() {
 
     const saveGatewayConfig = async () => {
         try {
-            await axios.put(`${backendurl}/api/admin/settings/payment-gateway/${selectedGateway.gateway}`, gatewayForm, { headers: { token: atoken } });
+            await api.put(`/api/admin/settings/payment-gateway/${selectedGateway.gateway}`, gatewayForm);
             fetchData();
             setOpenDialog(false);
             setSuccess("Gateway configuration saved!");

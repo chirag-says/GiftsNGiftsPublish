@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../utils/api";
 import React, { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
 import { AppContext } from "../context/Appcontext.jsx";
@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
 
 function EmailVerify() {
-  axios.defaults.withCredentials = true;
+
 
   const { backendurl, isLoggedin, userData, getuserData } =
     useContext(AppContext);
@@ -38,49 +38,49 @@ function EmailVerify() {
   };
 
   // Handle OTP verification
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const otpArray = inputRefs.current.map((input) => input?.value.trim());
-    const otp = otpArray.join("");
+    try {
+      const otpArray = inputRefs.current.map((input) => input?.value.trim());
+      const otp = otpArray.join("");
 
-    if (!/^\d{6}$/.test(otp)) {
-      toast.error("Please enter a valid 6-digit OTP.");
-      return;
+      if (!/^\d{6}$/.test(otp)) {
+        toast.error("Please enter a valid 6-digit OTP.");
+        return;
+      }
+
+      if (!userData?._id) {
+        toast.error("User ID not found. Please log in again.");
+        return;
+      }
+
+      const { data } = await api.post(`/api/auth/verify-Account`, {
+        userId: userData._id,
+        otp,
+      });
+
+      if (data.success) {
+        toast.success(data.message || "Email verified successfully!");
+        getuserData();
+        navigate("/");
+      } else {
+        toast.error(data.message || "OTP verification failed.");
+      }
+    } catch (error) {
+      const message = error?.response?.data?.message || "OTP verification failed due to a server error.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-
-    if (!userData?._id) {
-      toast.error("User ID not found. Please log in again.");
-      return;
-    }
-
-    const { data } = await axios.post(`${backendurl}/api/auth/verify-Account`, {
-      userId: userData._id,
-      otp,
-    });
-
-    if (data.success) {
-      toast.success(data.message || "Email verified successfully!");
-      getuserData();
-      navigate("/");
-    } else {
-      toast.error(data.message || "OTP verification failed.");
-    }
-  } catch (error) {
-    const message = error?.response?.data?.message || "OTP verification failed due to a server error.";
-    toast.error(message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Resend OTP function
   const resendOtp = async () => {
     try {
-      const { data } = await axios.post(
-        `${backendurl}/api/auth/send-verify-otp`,
+      const { data } = await api.post(
+        `/api/auth/send-verify-otp`,
         {
           email: userData?.email, // Ensure email is available
         }

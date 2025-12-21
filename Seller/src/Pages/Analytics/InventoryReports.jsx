@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdInventory, MdWarning, MdCheckCircle, MdDownload } from "react-icons/md";
 import { FiPackage, FiAlertTriangle, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 
@@ -15,7 +15,7 @@ function InventoryReports() {
     slowMovingProducts: []
   });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -28,9 +28,7 @@ function InventoryReports() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/inventory`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/analytics/inventory');
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -43,8 +41,7 @@ function InventoryReports() {
 
   const handleExport = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/export?type=inventory`, {
-        headers: { stoken },
+      const res = await api.get('/api/seller-panel/analytics/export?type=inventory', {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -76,7 +73,7 @@ function InventoryReports() {
           <h1 className="text-2xl font-bold text-gray-800">Inventory Reports</h1>
           <p className="text-sm text-gray-500">Monitor your stock levels and product performance</p>
         </div>
-        <button 
+        <button
           onClick={handleExport}
           className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
         >
@@ -131,15 +128,15 @@ function InventoryReports() {
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Stock Distribution</h3>
         <div className="h-4 bg-gray-100 rounded-full overflow-hidden flex">
-          <div 
+          <div
             className="bg-green-500 h-full"
             style={{ width: `${data.totalProducts ? (data.inStock / data.totalProducts) * 100 : 0}%` }}
           ></div>
-          <div 
+          <div
             className="bg-yellow-500 h-full"
             style={{ width: `${data.totalProducts ? (data.lowStock / data.totalProducts) * 100 : 0}%` }}
           ></div>
-          <div 
+          <div
             className="bg-red-500 h-full"
             style={{ width: `${data.totalProducts ? (data.outOfStock / data.totalProducts) * 100 : 0}%` }}
           ></div>
@@ -203,7 +200,7 @@ function InventoryReports() {
             <FiTrendingUp className="text-green-500 text-xl" />
             <h3 className="font-semibold text-gray-800">Fast Moving Products</h3>
           </div>
-          
+
           {data.topMovingProducts?.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No data available</div>
           ) : (
@@ -232,7 +229,7 @@ function InventoryReports() {
             <FiTrendingDown className="text-red-500 text-xl" />
             <h3 className="font-semibold text-gray-800">Slow Moving Products</h3>
           </div>
-          
+
           {data.slowMovingProducts?.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No data available</div>
           ) : (

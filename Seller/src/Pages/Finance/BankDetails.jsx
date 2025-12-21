@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAccountBalance, MdSave, MdEdit, MdCheck, MdCloudUpload, MdImage } from "react-icons/md";
 import { FiCreditCard } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -19,15 +19,13 @@ function BankDetails() {
     upiId: "",
     cancelledChequeUrl: ""
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Try enhanced endpoint first, fallback to regular
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/bank-details-enhanced`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/finance/bank-details-enhanced');
         if (res.data.success && res.data.data) {
           setData(res.data.data);
           setForm(res.data.data);
@@ -35,9 +33,7 @@ function BankDetails() {
       } catch (err) {
         // Fallback to regular endpoint
         try {
-          const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/bank-details`, {
-            headers: { stoken }
-          });
+          const res = await api.get('/api/seller-panel/finance/bank-details');
           if (res.data.success && res.data.data) {
             setData(res.data.data);
             setForm(res.data.data);
@@ -79,10 +75,9 @@ function BankDetails() {
 
     setSaving(true);
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/bank-details-enhanced`,
-        form,
-        { headers: { stoken } }
+      const res = await api.post(
+        '/api/seller-panel/finance/bank-details-enhanced',
+        form
       );
       if (res.data.success) {
         setData(res.data.data);
@@ -121,10 +116,10 @@ function BankDetails() {
     formData.append('documentType', 'cancelledCheque');
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/verification`,
+      const res = await api.post(
+        '/api/seller-panel/store/verification',
         formData,
-        { headers: { stoken, 'Content-Type': 'multipart/form-data' } }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
       if (res.data.success && res.data.url) {

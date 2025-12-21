@@ -11,30 +11,27 @@ import { Admincontext } from "../context/admincontext";
 function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const { atoken, setatoken } = useContext(Admincontext);
+  const { isAuthenticated, logout } = useContext(Admincontext);
   const navigate = useNavigate();
   const name = localStorage.getItem("adminName") || "Admin";
 
   const handleClick = (event) => {
-    if (atoken) setAnchorEl(event.currentTarget);
+    if (isAuthenticated) setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("atoken");
-    localStorage.removeItem("adminName");
-    localStorage.removeItem("name");
-    setatoken("");
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
       <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-[95px] flex items-center justify-between">
-        
+
         {/* --- Left: Logo Section --- */}
         <Link to="/" className="flex pl-20 justify-center items-center gap-3 group text-decoration-none cursor-pointer">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform duration-300">
@@ -46,9 +43,9 @@ function Header() {
         </Link>
 
         {/* --- Right: Actions Section --- */}
-        {atoken && (
+        {isAuthenticated && (
           <div className="flex items-center gap-2 sm:gap-4">
-            
+
             {/* Notification Bell (Visual Only) */}
             <IconButton className="!text-gray-500 hover:!bg-gray-50 !hidden sm:!inline-flex">
               <Badge color="error" variant="dot">
@@ -59,7 +56,7 @@ function Header() {
             <Divider orientation="vertical" flexItem className="!hidden sm:!block !mx-1 !h-6 !self-center" />
 
             {/* User Profile Trigger */}
-            <div 
+            <div
               onClick={handleClick}
               className="flex items-center gap-3 cursor-pointer p-1.5 pr-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
             >
@@ -67,7 +64,7 @@ function Header() {
               <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white flex items-center justify-center text-sm font-bold shadow-md ring-2 ring-white">
                 {name[0]?.toUpperCase()}
               </div>
-              
+
               {/* Name & Role (Hidden on mobile) */}
               <div className="hidden md:flex flex-col items-start">
                 <span className="text-sm font-semibold text-gray-700 leading-none">{name}</span>
@@ -133,7 +130,7 @@ function Header() {
           </MenuItem>
 
           <Divider className="!my-2 !mx-4" />
-          
+
           <MenuItem
             onClick={handleLogout}
             className="!py-2.5 !px-6 !text-red-500 hover:!bg-red-50 hover:!text-red-600 !mx-2 !rounded-lg !transition-all"

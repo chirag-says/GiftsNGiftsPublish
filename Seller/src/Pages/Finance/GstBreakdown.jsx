@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdReceipt, MdTrendingUp, MdTrendingDown, MdPending, MdCheckCircle, MdWarning } from "react-icons/md";
 import { FiAlertCircle, FiInfo } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -19,7 +19,7 @@ function GstBreakdown() {
         hasGstNumber: false
     });
     const [loading, setLoading] = useState(true);
-    const stoken = localStorage.getItem("stoken");
+
 
     const formatINR = (amount) => {
         return new Intl.NumberFormat('en-IN', {
@@ -32,9 +32,7 @@ function GstBreakdown() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/gst-breakdown`, {
-                    headers: { stoken }
-                });
+                const res = await api.get('/api/seller-panel/finance/gst-breakdown');
                 if (res.data.success) {
                     setData(res.data.data);
                 }

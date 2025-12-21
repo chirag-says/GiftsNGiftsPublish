@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdLightbulb, MdAdd, MdSearch } from "react-icons/md";
 import { FiTrendingUp, FiStar, FiTarget, FiGrid, FiZap } from "react-icons/fi";
 import { MyContext } from "../../App.jsx";
@@ -15,7 +15,7 @@ function OpportunityExplorer() {
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchData();
@@ -25,13 +25,11 @@ function OpportunityExplorer() {
     setLoading(true);
     try {
       // Fetch all categories for browse tab
-      const categoriesRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`);
+      const categoriesRes = await api.get('/api/getcategories');
       setCategories(categoriesRes.data || []);
 
       // Fetch suggestions data
-      const suggestionsRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/categories/suggestions`, {
-        headers: { stoken }
-      });
+      const suggestionsRes = await api.get('/api/seller-panel/categories/suggestions');
       if (suggestionsRes.data.success) {
         setSuggestions(suggestionsRes.data.data);
       }

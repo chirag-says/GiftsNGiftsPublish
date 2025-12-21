@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 const buildRatingBreakdown = (reviews = []) => {
   const buckets = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -25,8 +25,8 @@ export const useProductReviews = (productId) => {
 
     try {
       setLoading(true);
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/reviews/${productId}`
+      const { data } = await api.get(
+        `/api/product/reviews/${productId}`
       );
       setReviews(Array.isArray(data) ? data : []);
       setError(null);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdMail } from "react-icons/md";
 import { FiImage, FiCheck } from "react-icons/fi";
 
@@ -16,7 +16,7 @@ function GreetingCards() {
     image: "",
     isActive: true
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -33,9 +33,7 @@ function GreetingCards() {
   const fetchCards = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/greeting-cards`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/greeting-cards');
       if (res.data.success) {
         setCards(res.data.data.cards || []);
         setCategories(res.data.data.categories || ["Birthday", "Anniversary", "Thank You", "Congratulations", "Get Well", "Holiday"]);
@@ -51,13 +49,9 @@ function GreetingCards() {
     e.preventDefault();
     try {
       if (editingCard) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/greeting-cards/${editingCard._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/personalization/greeting-cards/${editingCard._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/greeting-cards`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/personalization/greeting-cards', formData);
       }
       fetchCards();
       setShowModal(false);
@@ -70,9 +64,7 @@ function GreetingCards() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this greeting card?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/greeting-cards/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/greeting-cards/${id}`);
       fetchCards();
     } catch (err) {
       alert("Failed to delete");
@@ -127,7 +119,7 @@ function GreetingCards() {
           <h1 className="text-2xl font-bold text-gray-800">Greeting Cards</h1>
           <p className="text-sm text-gray-500">Offer greeting cards for special occasions</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -144,7 +136,7 @@ function GreetingCards() {
           <MdMail className="text-5xl text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700">No Greeting Cards</h3>
           <p className="text-gray-500 mt-2 mb-4">Add cards for birthdays, anniversaries, and more</p>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
           >
@@ -172,11 +164,10 @@ function GreetingCards() {
               <h3 className="font-semibold text-gray-800 text-lg">{category}</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {groupedCards[category].map((card, i) => (
-                  <div 
-                    key={i} 
-                    className={`bg-white border rounded-xl overflow-hidden transition-all ${
-                      card.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
-                    }`}
+                  <div
+                    key={i}
+                    className={`bg-white border rounded-xl overflow-hidden transition-all ${card.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
+                      }`}
                   >
                     {/* Card Image */}
                     <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 to-purple-100 relative">
@@ -187,7 +178,7 @@ function GreetingCards() {
                           <MdMail className="text-5xl text-blue-300" />
                         </div>
                       )}
-                      
+
                       {!card.isActive && (
                         <div className="absolute top-2 right-2 bg-gray-800/80 text-white text-xs px-2 py-1 rounded">
                           Inactive
@@ -208,13 +199,13 @@ function GreetingCards() {
                       </div>
 
                       <div className="flex gap-1 mt-3">
-                        <button 
+                        <button
                           onClick={() => openEditModal(card)}
                           className="flex-1 py-1.5 bg-gray-100 rounded-lg text-sm text-gray-600 hover:bg-gray-200 flex items-center justify-center gap-1"
                         >
                           <MdEdit className="text-sm" /> Edit
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(card._id)}
                           className="py-1.5 px-2 bg-red-50 rounded-lg text-sm text-red-600 hover:bg-red-100"
                         >
@@ -250,7 +241,7 @@ function GreetingCards() {
                 {editingCard ? 'Edit Greeting Card' : 'Add Greeting Card'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Card Name</label>

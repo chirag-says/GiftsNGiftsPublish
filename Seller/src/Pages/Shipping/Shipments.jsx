@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   LuSearch, LuRefreshCw, LuPackage, LuTruck, LuCheck, LuClock,
   LuMapPin, LuFilter, LuChevronDown, LuExternalLink, LuPhone, LuCalendar, LuDownload
@@ -13,7 +13,7 @@ function Shipments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -45,12 +45,9 @@ function Shipments() {
   const fetchShipments = async (showLoader = true) => {
     if (showLoader) setLoading(true);
     else setRefreshing(true);
-    
+
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/shipments`,
-        { headers: { stoken } }
-      );
+      const res = await api.get('/api/seller-panel/shipping/shipments');
       if (res.data.success) {
         setData(res.data.data);
       }
@@ -64,39 +61,39 @@ function Shipments() {
 
   const getStatusConfig = (status) => {
     const configs = {
-      "Pending": { 
-        color: "bg-gray-100 text-gray-700", 
-        icon: LuClock, 
+      "Pending": {
+        color: "bg-gray-100 text-gray-700",
+        icon: LuClock,
         iconColor: "text-gray-500",
         bgColor: "bg-gray-50"
       },
-      "Processing": { 
-        color: "bg-amber-100 text-amber-700", 
-        icon: LuPackage, 
+      "Processing": {
+        color: "bg-amber-100 text-amber-700",
+        icon: LuPackage,
         iconColor: "text-amber-500",
         bgColor: "bg-amber-50"
       },
-      "Shipped": { 
-        color: "bg-blue-100 text-blue-700", 
-        icon: LuTruck, 
+      "Shipped": {
+        color: "bg-blue-100 text-blue-700",
+        icon: LuTruck,
         iconColor: "text-blue-500",
         bgColor: "bg-blue-50"
       },
-      "Out for Delivery": { 
-        color: "bg-purple-100 text-purple-700", 
-        icon: LuTruck, 
+      "Out for Delivery": {
+        color: "bg-purple-100 text-purple-700",
+        icon: LuTruck,
         iconColor: "text-purple-500",
         bgColor: "bg-purple-50"
       },
-      "Delivered": { 
-        color: "bg-green-100 text-green-700", 
-        icon: LuCheck, 
+      "Delivered": {
+        color: "bg-green-100 text-green-700",
+        icon: LuCheck,
         iconColor: "text-green-500",
         bgColor: "bg-green-50"
       },
-      "Cancelled": { 
-        color: "bg-red-100 text-red-700", 
-        icon: LuPackage, 
+      "Cancelled": {
+        color: "bg-red-100 text-red-700",
+        icon: LuPackage,
         iconColor: "text-red-500",
         bgColor: "bg-red-50"
       }
@@ -113,13 +110,13 @@ function Shipments() {
   ];
 
   const filteredOrders = data.orders?.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.orderId?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.trackingNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   }) || [];
 
@@ -231,16 +228,14 @@ function Shipments() {
               <button
                 key={tab.id}
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                  statusFilter === tab.id
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${statusFilter === tab.id
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {tab.label}
-                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
-                  statusFilter === tab.id ? "bg-white/20" : "bg-gray-200"
-                }`}>
+                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${statusFilter === tab.id ? "bg-white/20" : "bg-gray-200"
+                  }`}>
                   {tab.count}
                 </span>
               </button>
@@ -258,8 +253,8 @@ function Shipments() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">No Shipments Found</h3>
             <p className="text-gray-500">
-              {searchQuery 
-                ? "Try adjusting your search or filters" 
+              {searchQuery
+                ? "Try adjusting your search or filters"
                 : "Orders ready for shipping will appear here"}
             </p>
           </div>
@@ -268,7 +263,7 @@ function Shipments() {
             {filteredOrders.map((order, i) => {
               const statusConfig = getStatusConfig(order.status);
               const StatusIcon = statusConfig.icon;
-              
+
               return (
                 <div key={i} className="p-5 hover:bg-gray-50 transition-colors">
                   <div className="flex flex-col lg:flex-row lg:items-start gap-4">

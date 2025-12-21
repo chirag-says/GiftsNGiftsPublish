@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuDownload, LuTrendingUp, LuTrendingDown, LuWallet, LuInfo } from "react-icons/lu";
 
 function RevenueAnalytics() {
@@ -13,7 +13,7 @@ function RevenueAnalytics() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("6months");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -27,9 +27,7 @@ function RevenueAnalytics() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/revenue?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/analytics/revenue?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -119,7 +117,7 @@ function RevenueAnalytics() {
           {/* Revenue Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-6">Monthly Revenue Trend</h3>
-            
+
             {data.monthlyData?.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No revenue data available
@@ -130,7 +128,7 @@ function RevenueAnalytics() {
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
                     <div className="w-full flex flex-col items-center">
                       <span className="text-xs text-gray-600 mb-1">{formatINR(month.revenue)}</span>
-                      <div 
+                      <div
                         className="w-full bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-t-lg transition-all hover:from-emerald-600 hover:to-emerald-500"
                         style={{ height: `${(month.revenue / maxRevenue) * 200}px`, minHeight: '20px' }}
                       ></div>
@@ -147,7 +145,7 @@ function RevenueAnalytics() {
             {/* Top Categories */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Revenue by Category</h3>
-              
+
               {data.topCategories?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8 text-sm">No category data available</p>
               ) : (
@@ -159,13 +157,12 @@ function RevenueAnalytics() {
                         <span className="text-gray-600">{formatINR(cat.revenue)}</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all ${
-                            i === 0 ? 'bg-emerald-500' :
-                            i === 1 ? 'bg-indigo-500' :
-                            i === 2 ? 'bg-purple-500' :
-                            'bg-gray-400'
-                          }`}
+                        <div
+                          className={`h-full rounded-full transition-all ${i === 0 ? 'bg-emerald-500' :
+                              i === 1 ? 'bg-indigo-500' :
+                                i === 2 ? 'bg-purple-500' :
+                                  'bg-gray-400'
+                            }`}
                           style={{ width: `${(cat.revenue / data.totalRevenue) * 100}%` }}
                         ></div>
                       </div>
@@ -178,7 +175,7 @@ function RevenueAnalytics() {
             {/* Payment Methods */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Payment Methods</h3>
-              
+
               {data.revenueByPaymentMethod?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8 text-sm">No payment data available</p>
               ) : (
@@ -186,12 +183,11 @@ function RevenueAnalytics() {
                   {data.revenueByPaymentMethod?.map((method, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex items-center gap-3">
-                        <div className={`w-2.5 h-2.5 rounded-full ${
-                          method.method === 'UPI' ? 'bg-purple-500' :
-                          method.method === 'Card' ? 'bg-indigo-500' :
-                          method.method === 'COD' ? 'bg-amber-500' :
-                          'bg-gray-400'
-                        }`}></div>
+                        <div className={`w-2.5 h-2.5 rounded-full ${method.method === 'UPI' ? 'bg-purple-500' :
+                            method.method === 'Card' ? 'bg-indigo-500' :
+                              method.method === 'COD' ? 'bg-amber-500' :
+                                'bg-gray-400'
+                          }`}></div>
                         <span className="font-medium text-gray-900 text-sm">{method.method}</span>
                       </div>
                       <div className="text-right">

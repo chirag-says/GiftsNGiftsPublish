@@ -1,27 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 import { computeOrderStats } from "../utils/orderMetrics";
 
 export const useSellerOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const stoken = localStorage.getItem("stoken");
+  // const stoken = localStorage.getItem("stoken"); // Removed
 
   const fetchOrders = useCallback(async () => {
-    if (!stoken) {
-      setOrders([]);
-      setError("Please sign in to view orders.");
-      setLoading(false);
-      return;
-    }
+    // If we rely on cookies, we might assume the user is logged in or the API will return 401
+    // We don't check for stoken in localStorage anymore.
 
     try {
       setLoading(true);
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/orders`,
-        { headers: { stoken } }
-      );
+      const { data } = await api.get("/api/seller/orders");
 
       if (data.success) {
         setOrders(data.filteredOrders || []);
@@ -32,11 +25,12 @@ export const useSellerOrders = () => {
       }
     } catch (err) {
       console.error("Error fetching orders:", err);
+      // The api interceptor might handle 401 redirects, but we can set error here too
       setError("Error fetching orders.");
     } finally {
       setLoading(false);
     }
-  }, [stoken]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();

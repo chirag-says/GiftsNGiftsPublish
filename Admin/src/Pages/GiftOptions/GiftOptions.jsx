@@ -2,12 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Tab, Tabs, Box, Button, TextField, IconButton, Card, CardContent } from '@mui/material';
 import { MdAdd, MdDelete, MdEdit, MdCardGiftcard, MdOutlineMail, MdInventory2, MdOutlineMessage, MdBusinessCenter, MdLocalShipping } from 'react-icons/md';
-import axios from 'axios';
+import api from '../../utils/api';
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 
 const GiftOptions = () => {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { backendurl } = useContext(Admincontext);
     const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [items, setItems] = useState([]);
@@ -38,27 +38,15 @@ const GiftOptions = () => {
         fetchItems();
     }, [tabValue]);
 
-    const getAuthToken = () => {
-        return atoken || localStorage.getItem('atoken');
-    };
-
     const fetchItems = async () => {
         setLoading(true);
         try {
-            const token = getAuthToken();
-            if (!token) {
-                // return;
-            }
-
-            const { data } = await axios.get(`${backendurl}/api/gift-options/all?type=${currentType}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get(`/api/gift-options/all?type=${currentType}`);
             if (data.success) {
                 setItems(data.options);
             }
         } catch (error) {
             console.error("Error fetching gift options:", error);
-            // toast.error("Failed to load options");
         } finally {
             setLoading(false);
         }
@@ -66,7 +54,6 @@ const GiftOptions = () => {
 
     const handeSubmit = async (e) => {
         e.preventDefault();
-        const token = getAuthToken();
 
         const data = new FormData();
         data.append('name', formData.name);
@@ -79,13 +66,13 @@ const GiftOptions = () => {
 
         try {
             if (editingId) {
-                await axios.put(`${backendurl}/api/gift-options/update/${editingId}`, data, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                await api.put(`/api/gift-options/update/${editingId}`, data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 toast.success("Updated successfully!");
             } else {
-                await axios.post(`${backendurl}/api/gift-options/add`, data, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                await api.post('/api/gift-options/add', data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 toast.success("Added successfully!");
             }
@@ -101,11 +88,8 @@ const GiftOptions = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure?")) return;
-        const token = getAuthToken();
         try {
-            await axios.delete(`${backendurl}/api/gift-options/delete/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/api/gift-options/delete/${id}`);
             toast.success("Deleted!");
             fetchItems();
         } catch (error) {

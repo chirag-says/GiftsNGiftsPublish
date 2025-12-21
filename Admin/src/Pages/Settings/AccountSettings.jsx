@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 import { Admincontext } from '../../Components/context/admincontext';
 import { toast } from 'react-toastify';
 import { FiSave, FiShield, FiUser } from 'react-icons/fi';
@@ -21,8 +21,8 @@ const Card = ({ title, icon, children, subtitle }) => (
 );
 
 function AccountSettings() {
-  const { backendurl, atoken } = useContext(Admincontext);
-  const token = useMemo(() => atoken || localStorage.getItem('atoken') || '', [atoken]);
+  const { backendurl } = useContext(Admincontext);
+  // const token = useMemo(() => atoken || localStorage.getItem('atoken') || '', [atoken]); // No longer needed
 
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
   const [securityForm, setSecurityForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -32,14 +32,13 @@ function AccountSettings() {
   const [savingSecurity, setSavingSecurity] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    // if (!token) return;
     const controller = new AbortController();
 
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`${backendurl}/api/admin/account/profile`, {
-          headers: { token },
+        const { data } = await api.get('/api/admin/account/profile', {
           signal: controller.signal
         });
         if (data.success) {
@@ -56,7 +55,7 @@ function AccountSettings() {
           }
         }
       } catch (error) {
-        if (!axios.isCancel(error)) {
+        if (error.name !== 'CanceledError' && !error.message?.includes('canceled')) {
           console.error('Profile fetch failed', error);
           toast.error(error.response?.data?.message || 'Failed to load profile');
         }
@@ -75,13 +74,11 @@ function AccountSettings() {
 
   const handleProfileSave = async (event) => {
     event.preventDefault();
-    if (!token) return toast.error('Session expired. Please login again.');
+    // if (!token) return toast.error('Session expired. Please login again.');
 
     try {
       setSavingProfile(true);
-      const { data } = await axios.put(`${backendurl}/api/admin/account/profile`, profileForm, {
-        headers: { token }
-      });
+      const { data } = await api.put('/api/admin/account/profile', profileForm);
       if (data.success) {
         toast.success('Profile updated');
         if (data.admin?.name) {
@@ -97,7 +94,7 @@ function AccountSettings() {
 
   const handleSecuritySave = async (event) => {
     event.preventDefault();
-    if (!token) return toast.error('Session expired. Please login again.');
+    // if (!token) return toast.error('Session expired. Please login again.');
 
     if (!securityForm.newPassword) {
       return toast.error('Enter a new password to continue');
@@ -115,9 +112,7 @@ function AccountSettings() {
         currentPassword: securityForm.currentPassword,
         newPassword: securityForm.newPassword
       };
-      const { data } = await axios.put(`${backendurl}/api/admin/account/profile`, payload, {
-        headers: { token }
-      });
+      const { data } = await api.put('/api/admin/account/profile', payload);
       if (data.success) {
         toast.success('Password updated');
         setSecurityForm({ currentPassword: '', newPassword: '', confirmPassword: '' });

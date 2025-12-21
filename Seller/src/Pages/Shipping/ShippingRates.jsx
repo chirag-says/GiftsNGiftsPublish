@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdLocalShipping } from "react-icons/md";
 import { FiMapPin, FiDollarSign, FiPackage } from "react-icons/fi";
 
@@ -18,7 +18,7 @@ function ShippingRates() {
     freeShippingThreshold: 0,
     estimatedDays: { min: 1, max: 3 }
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -36,14 +36,10 @@ function ShippingRates() {
     setLoading(true);
     try {
       const [ratesRes, zonesRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/rates`, {
-          headers: { stoken }
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/zones`, {
-          headers: { stoken }
-        })
+        api.get('/api/seller-panel/shipping/rates'),
+        api.get('/api/seller-panel/shipping/zones')
       ]);
-      
+
       if (ratesRes.data.success) setRates(ratesRes.data.data || []);
       if (zonesRes.data.success) setZones(zonesRes.data.data || []);
     } catch (err) {
@@ -57,13 +53,9 @@ function ShippingRates() {
     e.preventDefault();
     try {
       if (editingRate) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/rates/${editingRate._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/shipping/rates/${editingRate._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/rates`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/shipping/rates', formData);
       }
       fetchData();
       setShowModal(false);
@@ -76,9 +68,7 @@ function ShippingRates() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this shipping rate?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/rates/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/shipping/rates/${id}`);
       fetchData();
     } catch (err) {
       alert("Failed to delete rate");
@@ -120,7 +110,7 @@ function ShippingRates() {
           <h1 className="text-2xl font-bold text-gray-800">Shipping Rates</h1>
           <p className="text-sm text-gray-500">Configure shipping costs for different zones and weights</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -137,7 +127,7 @@ function ShippingRates() {
           <MdLocalShipping className="text-5xl text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700">No Shipping Rates</h3>
           <p className="text-gray-500 mt-2 mb-4">Create shipping rates for your products</p>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
           >
@@ -161,13 +151,13 @@ function ShippingRates() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <button 
+                    <button
                       onClick={() => openEditModal(rate)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                     >
                       <MdEdit />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDelete(rate._id)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                     >
@@ -242,7 +232,7 @@ function ShippingRates() {
                 {editingRate ? 'Edit Shipping Rate' : 'Add Shipping Rate'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Zone</label>
@@ -325,9 +315,9 @@ function ShippingRates() {
                   <input
                     type="number"
                     value={formData.estimatedDays.min}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      estimatedDays: { ...formData.estimatedDays, min: parseInt(e.target.value) } 
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      estimatedDays: { ...formData.estimatedDays, min: parseInt(e.target.value) }
                     })}
                     className="w-full p-3 border border-gray-200 rounded-xl"
                   />
@@ -337,9 +327,9 @@ function ShippingRates() {
                   <input
                     type="number"
                     value={formData.estimatedDays.max}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      estimatedDays: { ...formData.estimatedDays, max: parseInt(e.target.value) } 
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      estimatedDays: { ...formData.estimatedDays, max: parseInt(e.target.value) }
                     })}
                     className="w-full p-3 border border-gray-200 rounded-xl"
                   />

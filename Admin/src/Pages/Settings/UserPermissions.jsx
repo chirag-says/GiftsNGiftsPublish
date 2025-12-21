@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Chip, LinearProgress, Alert, Accordion, AccordionSummary, AccordionDetails, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Switch, FormControlLabel } from "@mui/material";
 import { MdPeople, MdExpandMore, MdDelete, MdCheck, MdClose } from "react-icons/md";
 import { FiRefreshCw, FiPlus, FiShield } from "react-icons/fi";
 
 function UserPermissions() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
@@ -34,7 +34,7 @@ function UserPermissions() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/roles`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/roles');
             if (data.success) setRoles(data.roles || []);
         } catch (e) {
             console.error("Error fetching roles:", e);
@@ -46,7 +46,7 @@ function UserPermissions() {
     const createRole = async () => {
         if (!newRole.roleName) return;
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/role`, newRole, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/role', newRole);
             if (data.success) {
                 fetchData();
                 setOpenDialog(false);
@@ -62,7 +62,7 @@ function UserPermissions() {
     const deleteRole = async (id) => {
         if (!window.confirm("Are you sure you want to delete this role?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/settings/role/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/settings/role/${id}`);
             fetchData();
             setSuccess("Role deleted!");
             setTimeout(() => setSuccess(""), 3000);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdHistory, MdFilterList, MdSearch, MdDownload } from "react-icons/md";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -10,15 +10,13 @@ function TransactionHistory() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/transactions?page=${page}&status=${statusFilter}`,
-          { headers: { stoken } }
+        const res = await api.get(
+          `/api/seller-panel/finance/transactions?page=${page}&status=${statusFilter}`
         );
         if (res.data.success) setData(res.data.data);
       } catch (err) {
@@ -30,13 +28,13 @@ function TransactionHistory() {
     fetchData();
   }, [page, statusFilter]);
 
-  const filteredTransactions = data.transactions.filter(txn => 
+  const filteredTransactions = data.transactions.filter(txn =>
     txn.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
     txn.orderId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Delivered": case "Completed": return "bg-green-100 text-green-700";
       case "Shipped": return "bg-blue-100 text-blue-700";
       case "Processing": return "bg-yellow-100 text-yellow-700";

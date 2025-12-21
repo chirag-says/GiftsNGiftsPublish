@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdUpload, MdDownload, MdCheckCircle, MdError, MdInfo } from "react-icons/md";
 import { FiFile, FiUploadCloud, FiDownload } from "react-icons/fi";
 
@@ -8,7 +8,7 @@ function BulkPersonalization() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchJobs();
@@ -17,9 +17,7 @@ function BulkPersonalization() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/bulk-jobs`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/bulk-jobs');
       if (res.data.success) setJobs(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -39,9 +37,8 @@ function BulkPersonalization() {
     setUploadProgress(0);
 
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/bulk-upload`, formData, {
-        headers: { 
-          stoken,
+      await api.post('/api/seller-panel/personalization/bulk-upload', formData, {
+        headers: {
           'Content-Type': 'multipart/form-data'
         },
         onUploadProgress: (progressEvent) => {
@@ -105,7 +102,7 @@ function BulkPersonalization() {
                   </div>
                   <p className="text-gray-700">Uploading... {uploadProgress}%</p>
                   <div className="w-full max-w-xs mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-blue-600 transition-all"
                       style={{ width: `${uploadProgress}%` }}
                     ></div>
@@ -142,7 +139,7 @@ function BulkPersonalization() {
                   <p className="text-sm text-gray-500">Use our template for correct formatting</p>
                 </div>
               </div>
-              <a 
+              <a
                 href="/templates/personalization-template.csv"
                 download
                 className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-white flex items-center gap-2 text-gray-700"
@@ -155,7 +152,7 @@ function BulkPersonalization() {
           {/* CSV Format Guide */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
             <h4 className="font-semibold text-blue-800 mb-4">📋 CSV Format Guide</h4>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -245,7 +242,7 @@ function BulkPersonalization() {
                     </span>
 
                     {job.errorFile && (
-                      <a 
+                      <a
                         href={job.errorFile}
                         download
                         className="px-3 py-1.5 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50"

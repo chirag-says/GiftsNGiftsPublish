@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
@@ -16,7 +16,7 @@ function Feedback() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/feedback`, form);
+      await api.post('/api/feedback', form);
       toast.success('Feedback submitted successfully!');
       setForm({ name: '', email: '', message: '' });
       setTimeout(() => navigate('/'), 2000); // Redirect after toast
@@ -37,7 +37,7 @@ function Feedback() {
         className="absolute top-2   !text-black right-1 text-gray-500 hover:text-red-600 !text-[20px] focus:outline-none"
         title="Close"
       >
-        <IoMdClose/>
+        <IoMdClose />
       </button>
 
       <h2 className="text-[25px] mb-6 text-center ">Feedback Form</h2>

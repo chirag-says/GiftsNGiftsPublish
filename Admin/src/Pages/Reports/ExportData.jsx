@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { MdDownload, MdDelete, MdAdd, MdCloudDownload, MdInventory, MdPeople, MdShoppingCart, MdStorefront } from "react-icons/md";
 import { FiRefreshCw, FiDownload, FiFile } from "react-icons/fi";
 
 function ExportData() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [success, setSuccess] = useState("");
@@ -21,7 +21,7 @@ function ExportData() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/exports`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/reports/exports');
             if (data.success) setExports(data.logs || []);
         } catch (e) {
             console.error("Error fetching exports:", e);
@@ -33,7 +33,7 @@ function ExportData() {
     const createExport = async () => {
         setExporting(true);
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/reports/export`, exportForm, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/reports/export', exportForm);
             if (data.success) {
                 setSuccess(`Export created! ${data.export.recordCount} records exported.`);
                 fetchData();
@@ -93,7 +93,7 @@ function ExportData() {
     const deleteExport = async (id) => {
         if (!window.confirm("Are you sure you want to delete this export log?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/reports/export/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/reports/export/${id}`);
             fetchData();
         } catch (e) {
             alert("Failed to delete export");
@@ -160,9 +160,9 @@ function ExportData() {
                     <Card key={type.value} className="hover:shadow-lg transition-all cursor-pointer" onClick={() => { setExportForm({ exportType: type.value, format: 'csv' }); setOpenDialog(true); }}>
                         <CardContent className="text-center">
                             <div className={`w-14 h-14 mx-auto mb-3 rounded-xl flex items-center justify-center text-2xl ${type.value === 'orders' ? 'bg-blue-100 text-blue-600' :
-                                    type.value === 'products' ? 'bg-green-100 text-green-600' :
-                                        type.value === 'customers' ? 'bg-purple-100 text-purple-600' :
-                                            'bg-orange-100 text-orange-600'
+                                type.value === 'products' ? 'bg-green-100 text-green-600' :
+                                    type.value === 'customers' ? 'bg-purple-100 text-purple-600' :
+                                        'bg-orange-100 text-orange-600'
                                 }`}>
                                 {type.icon}
                             </div>

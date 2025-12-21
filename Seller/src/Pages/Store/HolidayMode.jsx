@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdBeachAccess, MdSave, MdClose, MdSchedule } from "react-icons/md";
 import { FiCalendar, FiAlertCircle } from "react-icons/fi";
 
@@ -14,14 +14,12 @@ function HolidayMode() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/holiday-mode`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/store/holiday-mode');
         if (res.data.success && res.data.data?.holidayMode) {
           const hm = res.data.data.holidayMode;
           setSettings({
@@ -45,9 +43,8 @@ function HolidayMode() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/holiday-mode`, 
-        { holidayMode: settings }, 
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/store/holiday-mode',
+        { holidayMode: settings }
       );
       if (res.data.success) {
         alert("Holiday mode settings saved!");
@@ -102,7 +99,7 @@ function HolidayMode() {
                 Holiday Mode is {settings.isEnabled ? "Active" : "Inactive"}
               </h3>
               <p className="text-sm text-gray-500">
-                {settings.isEnabled 
+                {settings.isEnabled
                   ? "Your store is currently paused. Customers cannot place orders."
                   : "Your store is open and accepting orders."}
               </p>

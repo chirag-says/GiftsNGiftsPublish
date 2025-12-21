@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuTruck, LuPenLine, LuSave, LuX, LuPackage, LuMapPin, LuInfo } from "react-icons/lu";
 
 function ShippingSettings() {
@@ -14,7 +14,7 @@ function ShippingSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -27,9 +27,7 @@ function ShippingSettings() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/settings`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/shipping/settings');
         if (res.data.success && res.data.data) {
           setSettings(res.data.data);
         }
@@ -45,9 +43,7 @@ function ShippingSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/settings`, settings, {
-        headers: { stoken }
-      });
+      const res = await api.post('/api/seller-panel/shipping/settings', settings);
       if (res.data.success) {
         setEditing(false);
         alert("Shipping settings saved!");
@@ -232,7 +228,7 @@ function ShippingSettings() {
                 <option value="1">1 Day</option>
                 <option value="1-2">1-2 Days</option>
                 <option value="2-3">2-3 Days</option>
-              <option value="3-5">3-5 Days</option>
+                <option value="3-5">3-5 Days</option>
               </select>
               <p className="text-xs text-gray-400 mt-1">Time to pack and hand over to courier</p>
             </div>

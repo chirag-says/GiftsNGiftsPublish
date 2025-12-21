@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { FaRegHeart, FaHeart, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { ShoppingCart as Cart } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../../utils/api";
 import { AppContext } from "../../context/Appcontext";
 import { toast } from "react-toastify";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
@@ -16,7 +16,7 @@ const RightComponent = ({ product }) => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 
   useEffect(() => {
     const inWishlist = wishlistItems?.some((item) => item._id === product._id);
@@ -26,7 +26,7 @@ const RightComponent = ({ product }) => {
   // Fetch review stats
   useEffect(() => {
     if (product?._id) {
-      axios.get(`${backendUrl}/api/product/reviews/${product._id}`)
+      api.get(`/api/product/reviews/${product._id}`)
         .then((res) => {
           if (res.data.stats) {
             setReviewStats(res.data.stats);
@@ -34,7 +34,7 @@ const RightComponent = ({ product }) => {
         })
         .catch((err) => console.error("Error fetching review stats", err));
     }
-  }, [product._id, backendUrl]);
+  }, [product._id]);
 
   const handleToggleWishlist = async () => {
     if (!isLoggedin) {
@@ -49,13 +49,10 @@ const RightComponent = ({ product }) => {
 
       setIsWishlisted((prev) => !prev); // Optimistic update
 
-      const response = await axios({
+      const response = await api({
         method,
-        url,
+        url: '/api/auth/wishlist',
         data,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
 
       if (response.data.success) {
@@ -83,16 +80,11 @@ const RightComponent = ({ product }) => {
     setIsAddingToCart(true);
 
     try {
-      const response = await axios.post(
-        `${backendUrl}/api/auth/Cart`,
+      const response = await api.post(
+        '/api/auth/Cart',
         {
           productId: product._id,
           quantity: quantity,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
 
@@ -122,16 +114,11 @@ const RightComponent = ({ product }) => {
 
     // Add to cart then navigate to checkout
     try {
-      await axios.post(
-        `${backendUrl}/api/auth/Cart`,
+      await api.post(
+        '/api/auth/Cart',
         {
           productId: product._id,
           quantity: quantity,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
       navigate("/checkout");
@@ -217,10 +204,10 @@ const RightComponent = ({ product }) => {
       {/* Availability */}
       <div className="flex items-center gap-3">
         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${product.availability === "In Stock"
-            ? "bg-green-100 text-green-700"
-            : product.availability === "Low Stock"
-              ? "bg-yellow-100 text-yellow-700"
-              : "bg-red-100 text-red-700"
+          ? "bg-green-100 text-green-700"
+          : product.availability === "Low Stock"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-red-100 text-red-700"
           }`}>
           • {product.availability || "In Stock"}
         </span>
@@ -301,8 +288,8 @@ const RightComponent = ({ product }) => {
         <button
           onClick={handleToggleWishlist}
           className={`p-3 rounded-lg border-2 transition-all ${isWishlisted
-              ? "bg-red-50 border-red-200 text-red-500"
-              : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300"
+            ? "bg-red-50 border-red-200 text-red-500"
+            : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300"
             }`}
           title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
         >

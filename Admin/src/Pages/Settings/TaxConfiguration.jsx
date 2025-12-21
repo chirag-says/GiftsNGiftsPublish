@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Switch, FormControlLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, LinearProgress, Alert, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -7,7 +7,7 @@ import { BiReceipt } from "react-icons/bi";
 import { FiRefreshCw, FiSave, FiPlus } from "react-icons/fi";
 
 function TaxConfiguration() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState("");
@@ -26,7 +26,7 @@ function TaxConfiguration() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/tax-config`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/tax-config');
             if (data.success && data.config) {
                 setTaxConfig(prev => ({ ...prev, ...data.config }));
             }
@@ -40,7 +40,7 @@ function TaxConfiguration() {
     const saveConfig = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/tax-config`, taxConfig, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/tax-config', taxConfig);
             if (data.success) {
                 setSuccess("Tax configuration saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);

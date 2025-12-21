@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdSend, MdSearch, MdReply } from "react-icons/md";
 import { FiClock, FiCheck, FiAlertCircle } from "react-icons/fi";
 
@@ -10,7 +10,7 @@ function RespondToReviews() {
   const [responseText, setResponseText] = useState("");
   const [filter, setFilter] = useState("pending");
   const [submitting, setSubmitting] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchReviews();
@@ -19,9 +19,7 @@ function RespondToReviews() {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/respond-list?status=${filter}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/reviews/respond-list?status=${filter}`);
       if (res.data.success) setReviews(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -32,12 +30,11 @@ function RespondToReviews() {
 
   const handleSubmitResponse = async (reviewId) => {
     if (!responseText.trim()) return;
-    
+
     setSubmitting(true);
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/${reviewId}/respond`, 
-        { response: responseText },
-        { headers: { stoken } }
+      await api.post(`/api/seller-panel/reviews/${reviewId}/respond`,
+        { response: responseText }
       );
       fetchReviews();
       setResponding(null);
@@ -94,11 +91,10 @@ function RespondToReviews() {
               <button
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
-                className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all ${
-                  filter === tab.value 
-                    ? "bg-blue-600 text-white" 
+                className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all ${filter === tab.value
+                    ? "bg-blue-600 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {tab.icon && <tab.icon />}
                 {tab.label}
@@ -116,9 +112,8 @@ function RespondToReviews() {
           ) : (
             <div className="space-y-4">
               {reviews.map((review, i) => (
-                <div key={i} className={`bg-white border rounded-xl overflow-hidden ${
-                  review.rating <= 2 ? 'border-red-200' : 'border-gray-200'
-                }`}>
+                <div key={i} className={`bg-white border rounded-xl overflow-hidden ${review.rating <= 2 ? 'border-red-200' : 'border-gray-200'
+                  }`}>
                   {/* Review Header */}
                   <div className={`p-5 ${review.rating <= 2 ? 'bg-red-50' : ''}`}>
                     <div className="flex items-start justify-between mb-3">

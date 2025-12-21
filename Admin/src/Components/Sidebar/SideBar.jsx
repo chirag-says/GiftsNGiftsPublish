@@ -10,16 +10,18 @@ import { CiLogout } from "react-icons/ci";
 import { MdInventory, MdCampaign, MdAnalytics, MdOutlinePayments, MdCategory, MdNotifications, MdSettings, MdSecurity } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 
+import { Admincontext } from "../context/admincontext";
+
 function SideBar() {
+  const { logout } = useContext(Admincontext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem("atoken"); // Clear Admin Token
-    localStorage.removeItem("stoken"); // Clear Seller Token just in case
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
     setSidebarOpen(false);
   };

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import {
     Button, Card, CardContent, LinearProgress, Table, TableBody, TableCell,
@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { toast } from "react-toastify";
 
 function VendorPerformance() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [vendors, setVendors] = useState([]);
 
@@ -32,9 +32,7 @@ function VendorPerformance() {
     const fetchVendors = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/vendor-performance`, {
-                headers: { token: atoken }
-            });
+            const { data } = await api.get('/api/admin/reports/vendor-performance');
             if (data.success) setVendors(data.vendors || []);
         } catch (e) {
             console.error("Error fetching vendors:", e);
@@ -67,9 +65,8 @@ function VendorPerformance() {
                 params.endDate = customDateTo;
             }
 
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/seller-sales`, {
-                params,
-                headers: { token: atoken }
+            const { data } = await api.get('/api/admin/reports/seller-sales', {
+                params
             });
 
             if (data.success) {

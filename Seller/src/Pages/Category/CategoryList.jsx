@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import Tooltip from "@mui/material/Tooltip";
 import { LuTrash2 } from "react-icons/lu";
 import { Button, TextField, IconButton } from "@mui/material";
@@ -20,7 +20,7 @@ function CategoryList() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`);
+      const response = await api.get("/api/getcategories");
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories", error);
@@ -30,7 +30,7 @@ function CategoryList() {
   const handleDeleteCategory = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/deletecategory/${id}`);
+        await api.delete(`/api/deletecategory/${id}`);
         fetchCategories();
       } catch (error) {
         console.error("Error deleting category", error);
@@ -52,7 +52,7 @@ function CategoryList() {
     formData.append("image", file);
 
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/updatecategory/${id}`, formData, {
+      await api.put(`/api/updatecategory/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       fetchCategories();
@@ -78,7 +78,7 @@ function CategoryList() {
         alert("Category name cannot be empty");
         return;
       }
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/updatecategory/${id}`, {
+      await api.put(`/api/updatecategory/${id}`, {
         categoryname: editName.trim(),
       });
       cancelEdit();

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdLocalOffer } from "react-icons/md";
 import { FiPlus, FiPackage, FiDollarSign } from "react-icons/fi";
 
@@ -15,7 +15,7 @@ function AddOnServices() {
     type: "product",
     isActive: true
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -32,9 +32,7 @@ function AddOnServices() {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/add-ons`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/add-ons');
       if (res.data.success) setServices(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -47,13 +45,9 @@ function AddOnServices() {
     e.preventDefault();
     try {
       if (editingService) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/add-ons/${editingService._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/personalization/add-ons/${editingService._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/add-ons`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/personalization/add-ons', formData);
       }
       fetchServices();
       setShowModal(false);
@@ -66,9 +60,7 @@ function AddOnServices() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this add-on service?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/add-ons/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/add-ons/${id}`);
       fetchServices();
     } catch (err) {
       alert("Failed to delete");
@@ -77,9 +69,8 @@ function AddOnServices() {
 
   const handleToggle = async (id, isActive) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/add-ons/${id}/toggle`, 
-        { isActive: !isActive },
-        { headers: { stoken } }
+      await api.patch(`/api/seller-panel/personalization/add-ons/${id}/toggle`,
+        { isActive: !isActive }
       );
       fetchServices();
     } catch (err) {
@@ -129,7 +120,7 @@ function AddOnServices() {
           <h1 className="text-2xl font-bold text-gray-800">Add-On Services</h1>
           <p className="text-sm text-gray-500">Offer additional products and services with orders</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -146,7 +137,7 @@ function AddOnServices() {
           <FiPlus className="text-5xl text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700">No Add-On Services</h3>
           <p className="text-gray-500 mt-2 mb-4">Create add-ons like extended warranty, installation, or extra items</p>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
           >
@@ -176,11 +167,10 @@ function AddOnServices() {
             {services.map((service, i) => {
               const typeInfo = getTypeInfo(service.type);
               return (
-                <div 
-                  key={i} 
-                  className={`bg-white border rounded-xl p-5 transition-all ${
-                    service.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
-                  }`}
+                <div
+                  key={i}
+                  className={`bg-white border rounded-xl p-5 transition-all ${service.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -194,13 +184,11 @@ function AddOnServices() {
                     </div>
                     <button
                       onClick={() => handleToggle(service._id, service.isActive)}
-                      className={`w-12 h-6 rounded-full transition-all ${
-                        service.isActive ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
+                      className={`w-12 h-6 rounded-full transition-all ${service.isActive ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
                     >
-                      <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                        service.isActive ? 'translate-x-6' : 'translate-x-0.5'
-                      }`}></div>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${service.isActive ? 'translate-x-6' : 'translate-x-0.5'
+                        }`}></div>
                     </button>
                   </div>
 
@@ -217,13 +205,13 @@ function AddOnServices() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => openEditModal(service)}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <MdEdit />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(service._id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                       >
@@ -264,7 +252,7 @@ function AddOnServices() {
                 {editingService ? 'Edit Add-On' : 'Add Add-On Service'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
@@ -286,11 +274,10 @@ function AddOnServices() {
                       key={type.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, type: type.value })}
-                      className={`p-3 border rounded-xl flex items-center gap-2 transition-all ${
-                        formData.type === type.value 
-                          ? 'border-blue-500 bg-blue-50' 
+                      className={`p-3 border rounded-xl flex items-center gap-2 transition-all ${formData.type === type.value
+                          ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       <type.icon className={formData.type === type.value ? 'text-blue-600' : 'text-gray-400'} />
                       <span className={`text-sm ${formData.type === type.value ? 'text-blue-700' : 'text-gray-600'}`}>

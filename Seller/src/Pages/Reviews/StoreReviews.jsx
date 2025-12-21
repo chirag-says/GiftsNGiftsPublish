@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdStorefront, MdTrendingUp, MdVerified } from "react-icons/md";
 import { FiMessageCircle, FiClock, FiThumbsUp } from "react-icons/fi";
 
@@ -17,7 +17,7 @@ function StoreReviews() {
   });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchStoreReviews();
@@ -26,9 +26,7 @@ function StoreReviews() {
   const fetchStoreReviews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/store?filter=${filter}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/reviews/store?filter=${filter}`);
       if (res.data.success) {
         setReviews(res.data.data.reviews || []);
         setStoreStats(res.data.data.stats || storeStats);
@@ -161,8 +159,8 @@ function StoreReviews() {
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
                 className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${filter === tab.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
               >
                 {tab.label}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdStar, MdMail, MdSchedule, MdCheck } from "react-icons/md";
 import { FiSend, FiClock, FiPackage, FiRefreshCw } from "react-icons/fi";
 
@@ -18,7 +18,7 @@ function ReviewRequests() {
   });
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(null);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchData();
@@ -27,9 +27,7 @@ function ReviewRequests() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/requests`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/reviews/requests');
       if (res.data.success) {
         setOrders(res.data.data.orders || []);
         setSettings(res.data.data.settings || settings);
@@ -45,9 +43,7 @@ function ReviewRequests() {
   const handleSendRequest = async (orderId) => {
     setSending(orderId);
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/requests/${orderId}/send`, {}, {
-        headers: { stoken }
-      });
+      await api.post(`/api/seller-panel/reviews/requests/${orderId}/send`, {});
       fetchData();
     } catch (err) {
       alert("Failed to send request");
@@ -58,9 +54,7 @@ function ReviewRequests() {
 
   const handleSaveSettings = async () => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/reviews/requests/settings`, settings, {
-        headers: { stoken }
-      });
+      await api.put('/api/seller-panel/reviews/requests/settings', settings);
       alert("Settings saved!");
     } catch (err) {
       alert("Failed to save settings");
@@ -111,7 +105,7 @@ function ReviewRequests() {
           {/* Auto-Request Settings */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-4">⚡ Automation Settings</h3>
-            
+
             <div className="space-y-4">
               <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
                 <div>

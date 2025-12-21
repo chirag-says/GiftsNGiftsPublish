@@ -3,7 +3,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Autoplay } from "swiper/modules";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../../../utils/api";
 
 const NavCatSlider = () => {
   const [categories, setCategories] = useState([]);
@@ -17,8 +17,8 @@ const NavCatSlider = () => {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/getcategories`
+      const response = await api.get(
+        '/api/getcategories'
       );
       const categoryArray = Array.isArray(response.data)
         ? response.data

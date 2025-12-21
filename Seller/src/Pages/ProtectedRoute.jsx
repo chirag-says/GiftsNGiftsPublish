@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { Admincontext } from '../Components/context/admincontext';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading, atoken } = useContext(Admincontext);
+  const { isAuthenticated, loading } = useContext(Admincontext);
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -14,8 +14,8 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // Check both cookie (isAuthenticated) and localStorage (atoken) for auth
-  if (!isAuthenticated && !atoken) {
+  // Check cookie (isAuthenticated) for auth
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

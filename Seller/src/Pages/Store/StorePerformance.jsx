@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdTrendingUp, MdShoppingCart, MdVisibility, MdStar, MdAttachMoney } from "react-icons/md";
 import { FiPackage, FiTrendingUp, FiTrendingDown, FiUsers } from "react-icons/fi";
 
@@ -21,7 +21,7 @@ function StorePerformance() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30days");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -34,9 +34,7 @@ function StorePerformance() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/performance?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/store/performance?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -148,7 +146,7 @@ function StorePerformance() {
             </div>
           </div>
           <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-blue-500 rounded-full"
               style={{ width: `${Math.min(data.conversionRate * 10, 100)}%` }}
             ></div>

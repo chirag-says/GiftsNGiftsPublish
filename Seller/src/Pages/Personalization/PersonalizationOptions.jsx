@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdToggleOn, MdToggleOff } from "react-icons/md";
 import { FiGift, FiEdit3, FiImage, FiSettings } from "react-icons/fi";
 
@@ -17,7 +17,7 @@ function PersonalizationOptions() {
     maxLength: 50,
     options: []
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -34,9 +34,7 @@ function PersonalizationOptions() {
   const fetchOptions = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/options`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/options');
       if (res.data.success) setOptions(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -49,13 +47,9 @@ function PersonalizationOptions() {
     e.preventDefault();
     try {
       if (editingOption) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/options/${editingOption._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/personalization/options/${editingOption._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/options`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/personalization/options', formData);
       }
       fetchOptions();
       setShowModal(false);
@@ -67,9 +61,8 @@ function PersonalizationOptions() {
 
   const handleToggle = async (id, isActive) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/options/${id}/toggle`, 
-        { isActive: !isActive },
-        { headers: { stoken } }
+      await api.patch(`/api/seller-panel/personalization/options/${id}/toggle`,
+        { isActive: !isActive }
       );
       fetchOptions();
     } catch (err) {
@@ -80,9 +73,7 @@ function PersonalizationOptions() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this personalization option?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/options/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/options/${id}`);
       fetchOptions();
     } catch (err) {
       alert("Failed to delete option");
@@ -134,7 +125,7 @@ function PersonalizationOptions() {
           <h1 className="text-2xl font-bold text-gray-800">Personalization Options</h1>
           <p className="text-sm text-gray-500">Create custom personalization options for your products</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -151,7 +142,7 @@ function PersonalizationOptions() {
           <FiGift className="text-5xl text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700">No Personalization Options</h3>
           <p className="text-gray-500 mt-2 mb-4">Create options like custom text, images, or gift wrapping</p>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
           >
@@ -163,11 +154,10 @@ function PersonalizationOptions() {
           {options.map((option, i) => {
             const Icon = getTypeIcon(option.type);
             return (
-              <div 
-                key={i} 
-                className={`bg-white border rounded-xl p-5 transition-all ${
-                  option.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
-                }`}
+              <div
+                key={i}
+                className={`bg-white border rounded-xl p-5 transition-all ${option.isActive ? 'border-gray-200 hover:shadow-md' : 'border-gray-200 opacity-60'
+                  }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -176,18 +166,17 @@ function PersonalizationOptions() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-800">{option.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        option.type === 'text' ? 'bg-purple-100 text-purple-600' :
-                        option.type === 'image' ? 'bg-green-100 text-green-600' :
-                        option.type === 'select' ? 'bg-blue-100 text-blue-600' :
-                        'bg-orange-100 text-orange-600'
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${option.type === 'text' ? 'bg-purple-100 text-purple-600' :
+                          option.type === 'image' ? 'bg-green-100 text-green-600' :
+                            option.type === 'select' ? 'bg-blue-100 text-blue-600' :
+                              'bg-orange-100 text-orange-600'
+                        }`}>
                         {option.type}
                       </span>
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     onClick={() => handleToggle(option._id, option.isActive)}
                     className="text-2xl"
                   >
@@ -210,7 +199,7 @@ function PersonalizationOptions() {
                       {option.price > 0 ? formatINR(option.price) : 'Free'}
                     </p>
                   </div>
-                  
+
                   {option.type === 'text' && (
                     <div className="text-right">
                       <span className="text-sm text-gray-500">Max Length</span>
@@ -227,13 +216,13 @@ function PersonalizationOptions() {
                 </div>
 
                 <div className="flex gap-2 mt-3">
-                  <button 
+                  <button
                     onClick={() => openEditModal(option)}
                     className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1"
                   >
                     <MdEdit /> Edit
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(option._id)}
                     className="py-2 px-3 border border-red-200 rounded-lg text-sm text-red-600 hover:bg-red-50"
                   >
@@ -255,7 +244,7 @@ function PersonalizationOptions() {
                 {editingOption ? 'Edit Option' : 'Add Personalization Option'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Option Name</label>
@@ -327,9 +316,9 @@ function PersonalizationOptions() {
                   <input
                     type="text"
                     value={formData.options?.join(', ') || ''}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      options: e.target.value.split(',').map(o => o.trim()).filter(o => o) 
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      options: e.target.value.split(',').map(o => o.trim()).filter(o => o)
                     })}
                     className="w-full p-3 border border-gray-200 rounded-xl"
                     placeholder="Red, Blue, Green"

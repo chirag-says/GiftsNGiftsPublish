@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdVisibility, MdDevices, MdLocationOn, MdDownload } from "react-icons/md";
 import { FiUsers, FiMonitor, FiSmartphone, FiGlobe } from "react-icons/fi";
 
@@ -16,15 +16,13 @@ function TrafficInsights() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30days");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/traffic?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/analytics/traffic?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -42,7 +40,7 @@ function TrafficInsights() {
   };
 
   const getDeviceIcon = (device) => {
-    switch(device?.toLowerCase()) {
+    switch (device?.toLowerCase()) {
       case 'mobile': return <FiSmartphone className="text-blue-500" />;
       case 'desktop': return <FiMonitor className="text-purple-500" />;
       default: return <MdDevices className="text-gray-500" />;
@@ -114,7 +112,7 @@ function TrafficInsights() {
               <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <FiGlobe className="text-blue-500" /> Traffic Sources
               </h3>
-              
+
               {data.trafficSources?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No traffic data available</p>
               ) : (
@@ -126,14 +124,13 @@ function TrafficInsights() {
                         <span className="text-gray-600">{source.visits?.toLocaleString()} ({source.percentage}%)</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${
-                            source.source === 'Direct' ? 'bg-blue-500' :
-                            source.source === 'Search' ? 'bg-green-500' :
-                            source.source === 'Social' ? 'bg-purple-500' :
-                            source.source === 'Referral' ? 'bg-orange-500' :
-                            'bg-gray-400'
-                          }`}
+                        <div
+                          className={`h-full rounded-full ${source.source === 'Direct' ? 'bg-blue-500' :
+                              source.source === 'Search' ? 'bg-green-500' :
+                                source.source === 'Social' ? 'bg-purple-500' :
+                                  source.source === 'Referral' ? 'bg-orange-500' :
+                                    'bg-gray-400'
+                            }`}
                           style={{ width: `${source.percentage}%` }}
                         ></div>
                       </div>
@@ -148,7 +145,7 @@ function TrafficInsights() {
               <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <MdDevices className="text-purple-500" /> Devices
               </h3>
-              
+
               {data.deviceBreakdown?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No device data available</p>
               ) : (
@@ -161,7 +158,7 @@ function TrafficInsights() {
                       <div className="flex-1">
                         <p className="font-medium text-gray-700">{device.device}</p>
                         <div className="h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-blue-500 rounded-full"
                             style={{ width: `${device.percentage}%` }}
                           ></div>
@@ -183,7 +180,7 @@ function TrafficInsights() {
             <div className="p-5 border-b border-gray-200">
               <h3 className="font-semibold text-gray-800">Top Viewed Pages</h3>
             </div>
-            
+
             {data.topPages?.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No page data available</div>
             ) : (
@@ -217,7 +214,7 @@ function TrafficInsights() {
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <MdLocationOn className="text-red-500" /> Top Locations
             </h3>
-            
+
             {data.locationData?.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No location data available</p>
             ) : (

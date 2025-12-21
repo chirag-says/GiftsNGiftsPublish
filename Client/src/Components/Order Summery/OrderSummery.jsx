@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/Appcontext.jsx";
 import CartItems from "../Cart Page/CartItems.jsx";
 import Totalprice from "../Cart Page/Totalprice.jsx";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import { Button, Divider, Paper } from "@mui/material";
 import { HiOutlineLocationMarker, HiOutlineShieldCheck, HiOutlineShoppingBag } from "react-icons/hi";
@@ -10,7 +10,7 @@ import { HiOutlineLocationMarker, HiOutlineShieldCheck, HiOutlineShoppingBag } f
 function OrderSummery() {
   const navigate = useNavigate();
   const { cartItems, setCartItems, fetchCart, clearCartAfterOrder } = useContext(AppContext);
-  const token = localStorage.getItem("token");
+
   const [address, setAddress] = useState(null);
 
   useEffect(() => {
@@ -21,9 +21,7 @@ function OrderSummery() {
 
   const handleRemove = async (cartItemId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/auth/delete/${cartItemId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/auth/delete/${cartItemId}`);
       setCartItems((prev) => prev.filter((item) => item.product._id !== cartItemId));
     } catch (err) {
       console.error("Error removing item:", err);
@@ -32,10 +30,9 @@ function OrderSummery() {
 
   const handleUpdateQuantity = async (productId, newQty) => {
     try {
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/update-quantity`,
-        { productId, quantity: newQty },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put(
+        '/api/auth/update-quantity',
+        { productId, quantity: newQty }
       );
       setCartItems((prevItems) =>
         prevItems.map((item) =>
@@ -80,8 +77,8 @@ function OrderSummery() {
     const totalAmount = cartItems.reduce((t, i) => t + i.product.price * i.quantity, 0);
 
     try {
-      const { data: { key } } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getkey`);
-      const { data: { order } } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/checkout`, {
+      const { data: { key } } = await api.get('/api/getkey');
+      const { data: { order } } = await api.post('/api/checkout', {
         amount: totalAmount,
       });
 
@@ -95,10 +92,9 @@ function OrderSummery() {
         handler: async function (response) {
           try {
             const orderData = { ...buildOrderPayload(), paymentId: response.razorpay_payment_id };
-            const res = await axios.post(
-              `${import.meta.env.VITE_BACKEND_URL}/api/client/place-order`,
-              orderData,
-              { headers: { Authorization: `Bearer ${token}` } }
+            const res = await api.post(
+              '/api/client/place-order',
+              orderData
             );
 
             if (res.data.success) {
@@ -134,15 +130,15 @@ function OrderSummery() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content */}
           <div className="lg:w-[70%] space-y-6">
-            
+
             {/* 1. Delivery Address Card */}
             <Paper elevation={0} className="border border-gray-200 p-6 rounded-xl">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="flex items-center gap-2 font-bold text-gray-700">
                   <HiOutlineLocationMarker className="text-[#7d0492]" /> Delivery Address
                 </h3>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   onClick={() => navigate("/addaddress")}
                   className="!text-[#7d0492] !font-bold"
                 >
@@ -168,7 +164,7 @@ function OrderSummery() {
                   <HiOutlineShoppingBag className="text-[#7d0492]" /> Items in your Order ({cartItems.length})
                 </h3>
               </div>
-              
+
               <div className="max-h-[500px] overflow-y-auto bg-white">
                 {cartItems.length > 0 ? (
                   cartItems.map((item) => (
@@ -189,15 +185,15 @@ function OrderSummery() {
 
             {/* Bottom Pay Button for Mobile (Hidden on LG) */}
             <div className="lg:hidden">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={checkoutHandler}
-                  disabled={cartItems.length === 0 || !address}
-                  className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-lg"
-                >
-                  Confirm and Pay
-                </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={checkoutHandler}
+                disabled={cartItems.length === 0 || !address}
+                className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-lg"
+              >
+                Confirm and Pay
+              </Button>
             </div>
           </div>
 
@@ -205,7 +201,7 @@ function OrderSummery() {
           <div className="lg:w-[30%]">
             <div className="sticky top-28 space-y-4">
               <Totalprice />
-              
+
               <div className="hidden lg:block">
                 <Button
                   fullWidth

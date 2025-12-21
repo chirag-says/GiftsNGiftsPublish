@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdLightbulb, MdTrendingUp, MdAdd } from "react-icons/md";
 import { FiTrendingUp, FiStar, FiTarget } from "react-icons/fi";
 
 function CategorySuggestions() {
-  const [data, setData] = useState({ 
-    suggestions: [], 
-    trendingCategories: [], 
-    untappedCategories: [] 
+  const [data, setData] = useState({
+    suggestions: [],
+    trendingCategories: [],
+    untappedCategories: []
   });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/categories/suggestions`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/categories/suggestions');
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -53,7 +51,7 @@ function CategorySuggestions() {
             <p className="text-sm opacity-90 mb-4">
               Based on your sales history and market trends, here are categories that could boost your sales.
             </p>
-            
+
             {data.suggestions?.length === 0 ? (
               <p className="text-white/75">Keep selling to get personalized recommendations!</p>
             ) : (
@@ -83,22 +81,21 @@ function CategorySuggestions() {
               <FiTrendingUp className="text-green-500 text-xl" />
               <h3 className="font-semibold text-gray-800">Trending Categories</h3>
             </div>
-            
+
             {data.trendingCategories?.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No trending data available</div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {data.trendingCategories?.map((cat, i) => (
                   <div key={i} className="p-5 flex items-center gap-4 hover:bg-gray-50">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      i === 0 ? 'bg-yellow-100 text-yellow-600' :
-                      i === 1 ? 'bg-gray-100 text-gray-600' :
-                      i === 2 ? 'bg-orange-100 text-orange-600' :
-                      'bg-blue-100 text-blue-600'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-600' :
+                        i === 1 ? 'bg-gray-100 text-gray-600' :
+                          i === 2 ? 'bg-orange-100 text-orange-600' :
+                            'bg-blue-100 text-blue-600'
+                      }`}>
                       <span className="text-lg font-bold">#{i + 1}</span>
                     </div>
-                    
+
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-800">{cat.name}</h4>
                       <p className="text-sm text-gray-500 mt-0.5">
@@ -129,7 +126,7 @@ function CategorySuggestions() {
               <FiTarget className="text-purple-500 text-xl" />
               <h3 className="font-semibold text-gray-800">Low Competition Categories</h3>
             </div>
-            
+
             {data.untappedCategories?.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No suggestions available</div>
             ) : (
@@ -138,22 +135,21 @@ function CategorySuggestions() {
                   <div key={i} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-semibold text-gray-800">{cat.name}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        cat.competition === 'Low' ? 'bg-green-100 text-green-700' :
-                        cat.competition === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${cat.competition === 'Low' ? 'bg-green-100 text-green-700' :
+                          cat.competition === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                        }`}>
                         {cat.competition} Competition
                       </span>
                     </div>
-                    
+
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-500">Demand</span>
                         <div className="flex gap-0.5">
                           {[...Array(5)].map((_, j) => (
-                            <div 
-                              key={j} 
+                            <div
+                              key={j}
                               className={`w-4 h-2 rounded ${j < cat.demandLevel ? 'bg-green-500' : 'bg-gray-200'}`}
                             ></div>
                           ))}

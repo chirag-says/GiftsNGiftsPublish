@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { HiOutlineCube, HiOutlineExclamationCircle, HiOutlineSave, HiOfficeBuilding } from "react-icons/hi";
 import { FiSearch, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
@@ -10,8 +10,8 @@ import { Tabs, Tab, Box, Button, TextField, Dialog, DialogTitle, DialogContent, 
 import { toast } from 'react-toastify';
 
 function Inventory() {
-    const { backendurl, atoken } = useContext(Admincontext);
-    const token = atoken || localStorage.getItem('atoken');
+    const { } = useContext(Admincontext);
+    // const token = atoken || localStorage.getItem('atoken'); // No longer needed
 
     const [tabValue, setTabValue] = useState(0);
     const location = useLocation();
@@ -40,7 +40,7 @@ function Inventory() {
     // --- 1. Fetch Inventory ---
     const fetchInventory = async () => {
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/inventory`, { headers: { token } });
+            const { data } = await api.get('/api/admin/inventory');
             if (data.success) {
                 setInventory(data.inventory);
                 setFilteredInventory(data.inventory);
@@ -58,7 +58,7 @@ function Inventory() {
     // --- 2. Fetch Warehouses ---
     const fetchWarehouses = async () => {
         try {
-            const { data } = await axios.get(`${backendurl}/api/inventory-hub/warehouse/all`, { headers: { Authorization: `Bearer ${token}` } });
+            const { data } = await api.get('/api/inventory-hub/warehouse/all');
             if (data.success) setWarehouses(data.warehouses);
         } catch (error) {
             console.error("Error fetching warehouses", error);
@@ -83,9 +83,8 @@ function Inventory() {
         if (!newStockVal) return;
 
         try {
-            await axios.post(`${backendurl}/api/admin/inventory/update`,
-                { productId: id, newStock: newStockVal },
-                { headers: { token } }
+            await api.post('/api/admin/inventory/update',
+                { productId: id, newStock: newStockVal }
             );
             toast.success("Stock Updated");
             fetchInventory();
@@ -103,10 +102,10 @@ function Inventory() {
     const handleWarehouseSubmit = async () => {
         try {
             if (editingWarehouseId) {
-                await axios.put(`${backendurl}/api/inventory-hub/warehouse/update/${editingWarehouseId}`, warehouseForm, { headers: { Authorization: `Bearer ${token}` } });
+                await api.put(`/api/inventory-hub/warehouse/update/${editingWarehouseId}`, warehouseForm);
                 toast.success("Warehouse Updated");
             } else {
-                await axios.post(`${backendurl}/api/inventory-hub/warehouse/add`, warehouseForm, { headers: { Authorization: `Bearer ${token}` } });
+                await api.post('/api/inventory-hub/warehouse/add', warehouseForm);
                 toast.success("Warehouse Added");
             }
             setOpenWarehouseModal(false);
@@ -121,7 +120,7 @@ function Inventory() {
     const deleteWarehouse = async (id) => {
         if (!window.confirm("Delete this warehouse?")) return;
         try {
-            await axios.delete(`${backendurl}/api/inventory-hub/warehouse/delete/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await api.delete(`/api/inventory-hub/warehouse/delete/${id}`);
             toast.success("Warehouse Deleted");
             fetchWarehouses();
         } catch (error) {
@@ -144,7 +143,7 @@ function Inventory() {
 
         try {
             // Use the BULK endpoint I created
-            await axios.post(`${backendurl}/api/inventory-hub/bulk-update`, { updates }, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post('/api/inventory-hub/bulk-update', { updates });
             toast.success(`Updated ${updates.length} products`);
             setEditStock({});
             fetchInventory();

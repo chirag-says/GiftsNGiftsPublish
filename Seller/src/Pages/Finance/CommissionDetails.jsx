@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdPercent, MdInfo, MdTrendingUp } from "react-icons/md";
 import { FiDollarSign } from "react-icons/fi";
@@ -7,14 +7,11 @@ import { FiDollarSign } from "react-icons/fi";
 function CommissionDetails() {
   const [data, setData] = useState({ commissionRate: 10, totalSales: 0, totalCommission: 0, netEarnings: 0, commissionBreakdown: [] });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/commission`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/finance/commission");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -75,7 +72,7 @@ function CommissionDetails() {
         <div>
           <h4 className="font-semibold text-blue-800 mb-1">How Commission Works</h4>
           <p className="text-sm text-blue-700">
-            A {data.commissionRate}% platform fee is deducted from each completed order. This covers payment processing, 
+            A {data.commissionRate}% platform fee is deducted from each completed order. This covers payment processing,
             customer support, and platform maintenance. Your net earnings (after commission) are available for payout.
           </p>
         </div>
@@ -86,7 +83,7 @@ function CommissionDetails() {
         <div className="p-5 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Recent Order Commissions</h3>
         </div>
-        
+
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>

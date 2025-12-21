@@ -1,6 +1,6 @@
 // UploadImageBox.js or ImageUpload.js
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdOutlineCloudUpload } from "react-icons/md";
 
 const UploadImageBox = ({ onUploadComplete }) => {
@@ -24,7 +24,7 @@ const UploadImageBox = ({ onUploadComplete }) => {
     images.forEach((img) => formData.append("images", img));
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/uploads`, formData, {
+      const response = await api.post('/uploads', formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

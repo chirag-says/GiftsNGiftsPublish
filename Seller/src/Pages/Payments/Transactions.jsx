@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdHistory, MdFilterList, MdSearch, MdDownload, MdReceipt } from "react-icons/md";
 import { FiChevronLeft, FiChevronRight, FiDownload } from "react-icons/fi";
@@ -11,15 +11,13 @@ function Transactions() {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/transactions?page=${page}&type=${typeFilter}`,
-          { headers: { stoken } }
+        const res = await api.get(
+          `/api/seller-panel/finance/transactions?page=${page}&type=${typeFilter}`
         );
         if (res.data.success) {
           setData(res.data.data);

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Chip, LinearProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel } from "@mui/material";
 import { MdMessage, MdDelete, MdEdit, MdEmail, MdSms, MdNotifications } from "react-icons/md";
@@ -7,7 +7,7 @@ import { FiRefreshCw, FiPlus } from "react-icons/fi";
 import { HiOutlineTemplate } from "react-icons/hi";
 
 function MessageTemplates() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
@@ -24,7 +24,7 @@ function MessageTemplates() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/message-templates`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/message-templates');
             if (data.success) setTemplates(data.templates || []);
         } catch (e) {
             console.error("Error fetching templates:", e);
@@ -56,10 +56,10 @@ function MessageTemplates() {
         if (!form.name || !form.body) return;
         try {
             if (editTemplate) {
-                await axios.put(`${backendurl}/api/admin/settings/message-template/${editTemplate._id}`, form, { headers: { token: atoken } });
+                await api.put(`/api/admin/settings/message-template/${editTemplate._id}`, form);
                 setSuccess("Template updated!");
             } else {
-                await axios.post(`${backendurl}/api/admin/settings/message-template`, form, { headers: { token: atoken } });
+                await api.post('/api/admin/settings/message-template', form);
                 setSuccess("Template created!");
             }
             fetchData();
@@ -73,7 +73,7 @@ function MessageTemplates() {
     const deleteTemplate = async (id) => {
         if (!window.confirm("Are you sure you want to delete this template?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/settings/message-template/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/settings/message-template/${id}`);
             fetchData();
             setSuccess("Template deleted!");
             setTimeout(() => setSuccess(""), 3000);

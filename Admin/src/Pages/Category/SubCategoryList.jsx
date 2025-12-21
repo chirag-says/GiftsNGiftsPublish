@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import Tooltip from "@mui/material/Tooltip";
 import { LuTrash2 } from "react-icons/lu";
 import { Button, TextField, IconButton } from "@mui/material";
@@ -22,7 +22,7 @@ function SubCategoryList() {
 
   const fetchSubcategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getsubcategories`);
+      const response = await api.get('/api/getsubcategories');
       const data = response.data;
 
       const grouped = data.reduce((acc, item) => {
@@ -46,7 +46,7 @@ function SubCategoryList() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/deletesubcategory/${id}`);
+      await api.delete(`/api/deletesubcategory/${id}`);
       fetchSubcategories();
     } catch (error) {
       console.error("Error deleting subcategory:", error);
@@ -65,7 +65,7 @@ function SubCategoryList() {
 
   const handleSave = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/updatesubcategory/${id}`, {
+      await api.put(`/api/updatesubcategory/${id}`, {
         subcategory: editValue,
       });
       setEditingId(null);
@@ -145,7 +145,7 @@ function SubCategoryList() {
                           <>
                             <Tooltip title="Save">
                               <IconButton onClick={() => handleSave(subcat._id)}>
-                                <MdSaveAlt  className="text-black" />
+                                <MdSaveAlt className="text-black" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Cancel">

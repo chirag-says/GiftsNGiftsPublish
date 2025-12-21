@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdSave } from "react-icons/md";
 import { FiDollarSign, FiPercent, FiTag } from "react-icons/fi";
 
@@ -20,7 +20,7 @@ function CustomPricing() {
     },
     isActive: true
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -37,9 +37,7 @@ function CustomPricing() {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/pricing-rules`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/pricing-rules');
       if (res.data.success) setRules(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -52,13 +50,9 @@ function CustomPricing() {
     e.preventDefault();
     try {
       if (editingRule) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/pricing-rules/${editingRule._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/personalization/pricing-rules/${editingRule._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/pricing-rules`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/personalization/pricing-rules', formData);
       }
       fetchRules();
       setShowModal(false);
@@ -71,9 +65,7 @@ function CustomPricing() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this pricing rule?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/pricing-rules/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/pricing-rules/${id}`);
       fetchRules();
     } catch (err) {
       alert("Failed to delete");
@@ -82,9 +74,8 @@ function CustomPricing() {
 
   const handleToggle = async (id, isActive) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/pricing-rules/${id}/toggle`, 
-        { isActive: !isActive },
-        { headers: { stoken } }
+      await api.patch(`/api/seller-panel/personalization/pricing-rules/${id}/toggle`,
+        { isActive: !isActive }
       );
       fetchRules();
     } catch (err) {
@@ -139,7 +130,7 @@ function CustomPricing() {
           <h1 className="text-2xl font-bold text-gray-800">Custom Pricing Rules</h1>
           <p className="text-sm text-gray-500">Set special pricing for personalization options</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -174,7 +165,7 @@ function CustomPricing() {
               <FiDollarSign className="text-5xl text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-700">No Pricing Rules</h3>
               <p className="text-gray-500 mt-2 mb-4">Create custom pricing rules for personalization</p>
-              <button 
+              <button
                 onClick={() => setShowModal(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
               >
@@ -201,11 +192,10 @@ function CustomPricing() {
                         <span className="font-medium text-gray-800">{rule.name}</span>
                       </td>
                       <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
-                          rule.type === 'fixed' ? 'bg-green-100 text-green-700' :
-                          rule.type === 'percentage' ? 'bg-blue-100 text-blue-700' :
-                          'bg-purple-100 text-purple-700'
-                        }`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${rule.type === 'fixed' ? 'bg-green-100 text-green-700' :
+                            rule.type === 'percentage' ? 'bg-blue-100 text-blue-700' :
+                              'bg-purple-100 text-purple-700'
+                          }`}>
                           {rule.type === 'fixed' && <FiDollarSign />}
                           {rule.type === 'percentage' && <FiPercent />}
                           {rule.type === 'tiered' && <FiTag />}
@@ -233,24 +223,22 @@ function CustomPricing() {
                       <td className="p-4">
                         <button
                           onClick={() => handleToggle(rule._id, rule.isActive)}
-                          className={`w-12 h-6 rounded-full transition-all ${
-                            rule.isActive ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
+                          className={`w-12 h-6 rounded-full transition-all ${rule.isActive ? 'bg-green-500' : 'bg-gray-300'
+                            }`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                            rule.isActive ? 'translate-x-6' : 'translate-x-0.5'
-                          }`}></div>
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${rule.isActive ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}></div>
                         </button>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
-                          <button 
+                          <button
                             onClick={() => openEditModal(rule)}
                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                           >
                             <MdEdit />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(rule._id)}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                           >
@@ -295,7 +283,7 @@ function CustomPricing() {
                 {editingRule ? 'Edit Pricing Rule' : 'Add Pricing Rule'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Rule Name</label>
@@ -317,18 +305,15 @@ function CustomPricing() {
                       key={type.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, type: type.value })}
-                      className={`p-3 border rounded-xl text-center transition-all ${
-                        formData.type === type.value 
-                          ? 'border-blue-500 bg-blue-50' 
+                      className={`p-3 border rounded-xl text-center transition-all ${formData.type === type.value
+                          ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
-                      <type.icon className={`text-xl mx-auto mb-1 ${
-                        formData.type === type.value ? 'text-blue-600' : 'text-gray-400'
-                      }`} />
-                      <span className={`text-xs ${
-                        formData.type === type.value ? 'text-blue-700' : 'text-gray-600'
-                      }`}>
+                      <type.icon className={`text-xl mx-auto mb-1 ${formData.type === type.value ? 'text-blue-600' : 'text-gray-400'
+                        }`} />
+                      <span className={`text-xs ${formData.type === type.value ? 'text-blue-700' : 'text-gray-600'
+                        }`}>
                         {type.label}
                       </span>
                     </button>
@@ -357,9 +342,9 @@ function CustomPricing() {
                   <input
                     type="number"
                     value={formData.conditions.minQuantity}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      conditions: { ...formData.conditions, minQuantity: parseInt(e.target.value) || 1 } 
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      conditions: { ...formData.conditions, minQuantity: parseInt(e.target.value) || 1 }
                     })}
                     className="w-full p-3 border border-gray-200 rounded-xl"
                     min="1"
@@ -370,9 +355,9 @@ function CustomPricing() {
                   <input
                     type="number"
                     value={formData.conditions.maxQuantity}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      conditions: { ...formData.conditions, maxQuantity: parseInt(e.target.value) || 0 } 
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      conditions: { ...formData.conditions, maxQuantity: parseInt(e.target.value) || 0 }
                     })}
                     className="w-full p-3 border border-gray-200 rounded-xl"
                     min="0"

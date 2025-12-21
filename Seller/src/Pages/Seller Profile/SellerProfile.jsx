@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import axios from "axios";
+import api from "../../utils/api";
 import { FaUserEdit, FaMapMarkerAlt, FaEnvelope, FaPhone, FaUpload, FaTimes, FaPhoneSquareAlt } from "react-icons/fa";
 import { RiStore2Fill } from "react-icons/ri";
 
@@ -10,14 +10,11 @@ function SellerProfile() {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
 
-  const stoken = localStorage.getItem("stoken");
+
 
   const getProfile = async () => {
     try {
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/profile`,
-        { headers: { stoken: stoken } }
-      );
+      const { data } = await api.get("/api/seller/profile");
 
       if (data.success) {
         setProfile(data.seller);
@@ -79,12 +76,11 @@ function SellerProfile() {
     if (imageFile) formData.append("image", imageFile);
 
     try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/updateprofile`,
+      const { data } = await api.post(
+        "/api/seller/updateprofile",
         formData,
         {
           headers: {
-            stoken,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -129,8 +125,8 @@ function SellerProfile() {
         required={required}
         disabled={disabled}
         className={`block w-full rounded-lg border py-2.5 px-4 text-gray-900 shadow-sm transition duration-150 sm:text-sm ${disabled
-            ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
-            : 'bg-white border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50'
+          ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
+          : 'bg-white border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50'
           }`}
       />
     </div>

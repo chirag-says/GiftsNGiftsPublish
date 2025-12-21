@@ -1,46 +1,46 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Admincontext } from "../../Components/context/admincontext";
-import axios from "axios";
-import { 
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid 
+import api from "../../utils/api";
+import {
+    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import { FiDownload, FiTrendingUp, FiUsers, FiActivity, FiPieChart } from "react-icons/fi";
 import { toast } from "react-toastify";
 
 const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-4 shadow-xl border border-gray-100 rounded-lg">
-        <p className="font-bold text-gray-700 mb-1">{label}</p>
-        <p className="text-indigo-600 font-semibold text-sm">
-          Revenue: ₹{payload[0].value.toLocaleString()}
-        </p>
-        <p className="text-gray-500 text-xs">
-          Orders: {payload[0].payload.Orders}
-        </p>
-      </div>
-    );
-  }
-  return null;
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-4 shadow-xl border border-gray-100 rounded-lg">
+                <p className="font-bold text-gray-700 mb-1">{label}</p>
+                <p className="text-indigo-600 font-semibold text-sm">
+                    Revenue: ₹{payload[0].value.toLocaleString()}
+                </p>
+                <p className="text-gray-500 text-xs">
+                    Orders: {payload[0].payload.Orders}
+                </p>
+            </div>
+        );
+    }
+    return null;
 };
 
 function Analytics() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [chartData, setChartData] = useState([]);
     const [summary, setSummary] = useState({ totalRev: 0, totalOrders: 0 });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data } = await axios.get(`${backendurl}/api/admin/analytics/advanced`, { headers: { token: atoken } });
-                if(data.success) {
+                const { data } = await api.get('/api/admin/analytics/advanced');
+                if (data.success) {
                     const formatted = data.revenueData.map(item => ({
                         name: `Month ${item._id}`,
                         Revenue: item.totalRevenue,
                         Orders: item.count
                     }));
                     setChartData(formatted);
-                    
+
                     const totalRev = formatted.reduce((acc, curr) => acc + curr.Revenue, 0);
                     const totalOrders = formatted.reduce((acc, curr) => acc + curr.Orders, 0);
                     setSummary({ totalRev, totalOrders });
@@ -50,16 +50,15 @@ function Analytics() {
             }
         };
         fetchData();
-    }, [backendurl, atoken]);
+    }, []);
 
     // Handle Excel Download
     const handleDownload = async () => {
         try {
-            const response = await axios.get(`${backendurl}/api/admin/analytics/export`, {
-                headers: { token: atoken },
+            const response = await api.get('/api/admin/analytics/export', {
                 responseType: 'blob', // Important for files
             });
-            
+
             // Create a link to download the file
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
@@ -77,14 +76,14 @@ function Analytics() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-            
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Business Analytics</h2>
                     <p className="text-gray-500 text-sm">Deep dive into your store's performance</p>
                 </div>
-                <button 
+                <button
                     onClick={handleDownload}
                     className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
                 >
@@ -132,12 +131,12 @@ function Analytics() {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Main Area Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                            <FiTrendingUp className="text-indigo-500"/> Revenue Growth
+                            <FiTrendingUp className="text-indigo-500" /> Revenue Growth
                         </h3>
                     </div>
                     <div className="h-[350px] w-full">
@@ -145,21 +144,21 @@ function Analytics() {
                             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
                                 <CartesianGrid vertical={false} stroke="#f3f4f6" strokeDasharray="4 4" />
                                 <Tooltip content={<CustomTooltip />} />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="Revenue" 
-                                    stroke="#6366f1" 
+                                <Area
+                                    type="monotone"
+                                    dataKey="Revenue"
+                                    stroke="#6366f1"
                                     strokeWidth={3}
-                                    fillOpacity={1} 
-                                    fill="url(#colorRevenue)" 
+                                    fillOpacity={1}
+                                    fill="url(#colorRevenue)"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -169,7 +168,7 @@ function Analytics() {
                 {/* Side Traffic Card */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                     <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
-                        <FiPieChart className="text-orange-500"/> Traffic Sources
+                        <FiPieChart className="text-orange-500" /> Traffic Sources
                     </h3>
                     <div className="flex-1 space-y-6">
                         {[
@@ -184,8 +183,8 @@ function Analytics() {
                                     <span className="font-bold text-gray-800">{item.val}%</span>
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                    <div 
-                                        className={`h-full rounded-full ${item.color}`} 
+                                    <div
+                                        className={`h-full rounded-full ${item.color}`}
                                         style={{ width: `${item.val}%` }}
                                     ></div>
                                 </div>

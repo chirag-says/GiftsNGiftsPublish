@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, LinearProgress, Avatar, Chip } from "@mui/material";
 import { MdInventory, MdVisibility, MdShoppingCart, MdTrendingUp, MdCategory, MdStar } from "react-icons/md";
@@ -7,7 +7,7 @@ import { FiRefreshCw, FiDownload, FiPackage, FiPercent } from "react-icons/fi";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 
 function ProductAnalytics() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState([]);
 
@@ -18,7 +18,7 @@ function ProductAnalytics() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/product-analytics`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/reports/product-analytics');
             if (data.success) setProducts(data.products || []);
         } catch (e) {
             console.error("Error fetching product analytics:", e);

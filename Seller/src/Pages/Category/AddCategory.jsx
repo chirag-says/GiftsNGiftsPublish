@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { MdOutlineCloudUpload } from "react-icons/md";
 import { Button } from "@mui/material";
-import axios from "axios";
+import api from "../../utils/api";
 
 function AddCategory({ onClose }) {
-  const stoken = localStorage.getItem("stoken") || "null";
+
   const [approved, setApproved] = useState(false);
 
   const [category, setCategory] = useState({
@@ -38,8 +38,8 @@ function AddCategory({ onClose }) {
     formData.append("image", category.image);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/addcategory`,
+      const response = await api.post(
+        "/api/addcategory",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -57,10 +57,7 @@ function AddCategory({ onClose }) {
   };
 
   const fetchSeller = async () => {
-    const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/api/seller/sellerdetails`,
-      { headers: { stoken } }
-    );
+    const res = await api.get("/api/seller/sellerdetails");
     if (res.data.success) {
       setApproved(res.data.seller[0].approved);
     }

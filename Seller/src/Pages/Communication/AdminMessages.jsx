@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 
 function AdminMessages() {
   const [messages, setMessages] = useState([]);
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/communication/admin-messages`)
+    api.get('/api/communication/admin-messages')
       .then(res => setMessages(res.data.data))
       .catch(console.error);
   }, []);

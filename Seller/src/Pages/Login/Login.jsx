@@ -1,12 +1,12 @@
 import React, { useContext, useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Store, ShieldCheck } from 'lucide-react';
 
 // SECURITY: Ensure axios sends cookies with every request
-axios.defaults.withCredentials = true;
+
 
 function Login() {
     const [isRegister, setIsRegister] = useState(false);
@@ -27,14 +27,14 @@ function Login() {
     const [pincode, setPincode] = useState('');
 
     // Use onLoginSuccess instead of setatoken
-    const { backendurl, onLoginSuccess } = useContext(Admincontext);
+    const { onLoginSuccess } = useContext(Admincontext);
     const navigate = useNavigate();
 
     // Registration handler
     const registerSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post(backendurl + "/api/seller/register", {
+            const { data } = await api.post("/api/seller/register", {
                 name, email, password, nickName, phone, street, city, state, pincode
             });
             if (data.success) {
@@ -52,7 +52,7 @@ function Login() {
     const verifyOtp = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
+            const { data } = await api.post("/api/seller/verify-otp", {
                 email, otp
             });
             if (data.success) {
@@ -73,7 +73,7 @@ function Login() {
     const loginSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post(backendurl + "/api/seller/login", {
+            const { data } = await api.post("/api/seller/login", {
                 email, password
             });
             if (data.success) {

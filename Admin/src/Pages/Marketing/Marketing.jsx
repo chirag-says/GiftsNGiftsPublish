@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { useLocation } from "react-router-dom";
 import { Button, TextField, Tab, Tabs, Box, Chip, Card, CardContent, Switch, FormControlLabel } from "@mui/material";
@@ -9,7 +9,7 @@ import { FiPlus } from "react-icons/fi";
 import { toast } from "react-toastify";
 
 function Marketing() {
-  const { backendurl, atoken } = useContext(Admincontext);
+  const { } = useContext(Admincontext);
   const location = useLocation();
   const [tabValue, setTabValue] = useState(0);
 
@@ -35,7 +35,7 @@ function Marketing() {
 
   const fetchMarketing = async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/admin/marketing`, { headers: { token: atoken } });
+      const { data } = await api.get('/api/admin/marketing');
       if (data.success) {
         setCoupons(data.coupons || []);
         setCampaigns(data.campaigns || []);
@@ -52,7 +52,7 @@ function Marketing() {
       return;
     }
     try {
-      await axios.post(`${backendurl}/api/admin/marketing/coupon`, newCoupon);
+      await api.post('/api/admin/marketing/coupon', newCoupon);
       fetchMarketing();
       toast.success("🎫 Coupon Created Successfully!");
       setNewCoupon({ code: "", value: "", expiryDate: "", discountType: "fixed" });
@@ -65,7 +65,7 @@ function Marketing() {
       return;
     }
     try {
-      await axios.post(`${backendurl}/api/admin/marketing/flash-sale`, newFlashSale);
+      await api.post('/api/admin/marketing/flash-sale', newFlashSale);
       fetchMarketing();
       toast.success("⚡ Flash Sale Created Successfully!");
       setNewFlashSale({ name: "", discountPercentage: "", startTime: "", endTime: "" });
@@ -78,7 +78,7 @@ function Marketing() {
       return;
     }
     try {
-      await axios.post(`${backendurl}/api/admin/marketing/campaign`, newCampaign);
+      await api.post('/api/admin/marketing/campaign', newCampaign);
       fetchMarketing();
       toast.success("🚀 Campaign Launched Successfully!");
       setNewCampaign({ title: "", type: "Email", content: "" });
@@ -87,7 +87,7 @@ function Marketing() {
 
   const updateAffiliate = async () => {
     try {
-      await axios.post(`${backendurl}/api/admin/marketing/affiliate`, affiliate);
+      await api.post('/api/admin/marketing/affiliate', affiliate);
       toast.success("✅ Affiliate Settings Updated!");
     } catch (e) { toast.error(e.response?.data?.message || e.message); }
   };
@@ -289,7 +289,7 @@ function Marketing() {
                       />
                       <Button size="small" variant="outlined" color="error" onClick={async () => {
                         try {
-                          await axios.delete(`${backendurl}/api/admin/marketing/campaign/${c._id}`);
+                          await api.delete(`/api/admin/marketing/campaign/${c._id}`);
                           fetchMarketing();
                         } catch (e) { console.error(e); }
                       }}>

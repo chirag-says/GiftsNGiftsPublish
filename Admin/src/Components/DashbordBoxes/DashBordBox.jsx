@@ -3,13 +3,13 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { GoGift } from "react-icons/go";
-import { FaArrowTrendUp } from "react-icons/fa6"; 
+import { FaArrowTrendUp } from "react-icons/fa6";
 import { LiaChartPieSolid } from "react-icons/lia";
 import { BsBank2 } from "react-icons/bs";
 import { TbBrandProducthunt } from "react-icons/tb";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { Navigation, Autoplay } from 'swiper/modules';
-import axios from 'axios';
+import api from '../../utils/api';
 
 export default function DashBordBox() {
   const [stats, setStats] = useState({
@@ -25,7 +25,7 @@ export default function DashBordBox() {
 
   const fetchDashboardStats = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/stats`);
+      const { data } = await api.get('/api/admin/stats');
       if (data.success) {
         setStats(data.stats);
       }
@@ -49,7 +49,7 @@ export default function DashBordBox() {
       icon: <LiaChartPieSolid className='text-[28px]' />,
       label: 'Total Revenue',
       // FIX: parseInt ensures no decimals are shown
-      amount: parseInt(stats.totalRevenue || 0), 
+      amount: parseInt(stats.totalRevenue || 0),
       // Green Gradient
       bgGradient: 'from-emerald-500 to-teal-400',
       shadowColor: 'shadow-emerald-200',
@@ -105,7 +105,7 @@ export default function DashBordBox() {
                   {typeof item.amount === 'number' ? item.amount.toLocaleString('en-IN') : item.amount}
                 </b>
                 <span className={`text-xs font-semibold ${item.textColor} flex items-center gap-1 mt-2`}>
-                   +2.5% <span className="text-gray-400 font-normal">than last week</span>
+                  +2.5% <span className="text-gray-400 font-normal">than last week</span>
                 </span>
               </div>
 

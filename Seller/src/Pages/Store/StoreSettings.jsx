@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuStore, LuPenLine, LuSave, LuX, LuCamera, LuSettings, LuInfo } from "react-icons/lu";
 
 function StoreSettings() {
@@ -15,14 +15,12 @@ function StoreSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/settings`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/store/settings');
         if (res.data.success && res.data.data) {
           setSettings(res.data.data);
         }
@@ -38,9 +36,7 @@ function StoreSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/settings`, settings, {
-        headers: { stoken }
-      });
+      const res = await api.post('/api/seller-panel/store/settings', settings);
       if (res.data.success) {
         setEditing(false);
         alert("Settings saved successfully!");
@@ -103,7 +99,7 @@ function StoreSettings() {
 
       {/* Store Banner & Logo Preview */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-        <div 
+        <div
           className="h-48 bg-gradient-to-br from-indigo-600 to-purple-700 relative"
           style={settings.storeBanner ? { backgroundImage: `url(${settings.storeBanner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
         >

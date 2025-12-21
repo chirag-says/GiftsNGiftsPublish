@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Switch, FormControlLabel, Select, MenuItem, FormControl, InputLabel, LinearProgress, Alert } from "@mui/material";
 import { MdSms } from "react-icons/md";
 import { FiRefreshCw, FiSave } from "react-icons/fi";
 
 function SmsSettings() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState("");
@@ -25,7 +25,7 @@ function SmsSettings() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/sms-settings`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/sms-settings');
             if (data.success && data.settings) {
                 setSmsSettings(prev => ({ ...prev, ...data.settings }));
             }
@@ -39,7 +39,7 @@ function SmsSettings() {
     const saveSettings = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/sms-settings`, smsSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/sms-settings', smsSettings);
             if (data.success) {
                 setSuccess("SMS settings saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);

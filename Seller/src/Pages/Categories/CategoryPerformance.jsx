@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdTrendingUp, MdCategory, MdDownload } from "react-icons/md";
 import { FiTrendingUp, FiTrendingDown, FiBarChart2 } from "react-icons/fi";
 import { exportToExcel, CATEGORY_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
 function CategoryPerformance() {
-  const [data, setData] = useState({ 
-    categories: [], 
-    bestPerforming: null, 
-    worstPerforming: null 
+  const [data, setData] = useState({
+    categories: [],
+    bestPerforming: null,
+    worstPerforming: null
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30days");
-  const stoken = localStorage.getItem("stoken");
+
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -26,9 +26,7 @@ function CategoryPerformance() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/categories/performance?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/categories/performance?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -59,7 +57,7 @@ function CategoryPerformance() {
             <option value="30days">Last 30 Days</option>
             <option value="90days">Last 90 Days</option>
           </select>
-          <button 
+          <button
             onClick={() => exportToExcel(data.categories, `category_performance_${period}`, CATEGORY_EXPORT_COLUMNS)}
             className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
           >
@@ -130,7 +128,7 @@ function CategoryPerformance() {
             <h3 className="font-semibold text-gray-800 mb-6 flex items-center gap-2">
               <FiBarChart2 className="text-blue-500" /> Revenue by Category
             </h3>
-            
+
             {data.categories?.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No category data available
@@ -156,13 +154,12 @@ function CategoryPerformance() {
                       <span className="text-gray-600">{formatINR(cat.revenue)}</span>
                     </div>
                     <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
-                      <div 
-                        className={`h-full rounded-lg transition-all ${
-                          i === 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                          i === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
-                          i === 2 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                          'bg-gradient-to-r from-orange-500 to-red-500'
-                        }`}
+                      <div
+                        className={`h-full rounded-lg transition-all ${i === 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                            i === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                              i === 2 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                                'bg-gradient-to-r from-orange-500 to-red-500'
+                          }`}
                         style={{ width: `${(cat.revenue / maxRevenue) * 100}%` }}
                       ></div>
                     </div>
@@ -177,7 +174,7 @@ function CategoryPerformance() {
             <div className="p-5 border-b border-gray-200">
               <h3 className="font-semibold text-gray-800">Detailed Performance</h3>
             </div>
-            
+
             {data.categories?.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No data available</div>
             ) : (
@@ -213,11 +210,10 @@ function CategoryPerformance() {
                         </td>
                         <td className="px-5 py-4 text-right text-gray-600">{cat.conversionRate}%</td>
                         <td className="px-5 py-4 text-right">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            cat.growth > 0 ? 'bg-green-100 text-green-700' : 
-                            cat.growth < 0 ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${cat.growth > 0 ? 'bg-green-100 text-green-700' :
+                              cat.growth < 0 ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                            }`}>
                             {cat.growth > 0 ? <FiTrendingUp /> : cat.growth < 0 ? <FiTrendingDown /> : null}
                             {Math.abs(cat.growth)}%
                           </span>

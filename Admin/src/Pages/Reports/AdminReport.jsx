@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -18,7 +18,7 @@ const AdminReport = () => {
 
   const allOrders = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`);
+      const res = await api.get('/api/admin/orders');
       const filled = res.data.orders.flatMap((order) =>
         order.items.map((item) => ({
           ...item,
@@ -92,7 +92,7 @@ const AdminReport = () => {
     ]);
 
     autoTable(doc, {
-      head: [["Seller","Brand","Seller ID","Total Orders","Total Sales (INR)"]],
+      head: [["Seller", "Brand", "Seller ID", "Total Orders", "Total Sales (INR)"]],
       body: tableData,
       startY: 30,
       styles: { fontSize: 10, cellPadding: 3 },
@@ -179,13 +179,12 @@ const AdminReport = () => {
               {report.map((item, index) => (
                 <tr
                   key={index}
-                  className={`border-b ${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  } hover:bg-blue-50 transition`}
+                  className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-blue-50 transition`}
                 >
                   <td className="px-4 py-3 border border-gray-300 text-center">{item.sellerId}</td>
                   <td className="px-4 py-3 border border-gray-300 text-center font-medium">{item.name}</td>
-                   <td className="px-4 py-3 border border-gray-300 text-center">{item.brandName}</td>
+                  <td className="px-4 py-3 border border-gray-300 text-center">{item.brandName}</td>
                   <td className="px-4 py-3 border border-gray-300  text-center">{item.orderCount}</td>
                   <td className="px-4 py-3 border border-gray-300  text-center">
                     ₹{item.totalSales.toLocaleString("en-IN")}

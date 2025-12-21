@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@mui/material";
 import { MdOutlineCloudUpload } from "react-icons/md";
-import axios from "axios";
+import api from "../../utils/api";
 
 function AddSubCategory({ onSubCategoryAdded, className = "" }) {
   const [subCategoryName, setSubCategoryName] = useState("");
@@ -10,11 +10,11 @@ function AddSubCategory({ onSubCategoryAdded, className = "" }) {
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
 
-  const stoken = localStorage.getItem("stoken") || "null";
+
 
   useEffect(() => {
-    axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`)
+    api
+      .get("/api/getcategories")
       .then((res) => setCategories(res.data))
       .catch((err) => console.error("Error fetching categories", err));
   }, []);
@@ -29,8 +29,8 @@ function AddSubCategory({ onSubCategoryAdded, className = "" }) {
 
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/addsubcategory`,
+      const response = await api.post(
+        "/api/addsubcategory",
         {
           subcategory: subCategoryName.trim(),
           categoryId: selectedCategory,
@@ -51,10 +51,7 @@ function AddSubCategory({ onSubCategoryAdded, className = "" }) {
   };
 
   const fetchSeller = async () => {
-    const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/api/seller/sellerdetails`,
-      { headers: { stoken } }
-    );
+    const res = await api.get("/api/seller/sellerdetails");
     if (res.data.success) {
       setApproved(res.data.seller[0].approved);
     }

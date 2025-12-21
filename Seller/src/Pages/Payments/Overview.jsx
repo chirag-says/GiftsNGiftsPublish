@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAccountBalanceWallet, MdTrendingUp, MdDownload, MdPayments, MdAccountBalance } from "react-icons/md";
 import { FiDollarSign, FiClock, FiCheckCircle, FiArrowUpCircle, FiArrowDownCircle } from "react-icons/fi";
 import { exportToExcel, SETTLEMENT_EXPORT_COLUMNS } from "../../utils/exportUtils";
@@ -21,7 +21,6 @@ function Overview() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("all");
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -36,14 +35,10 @@ function Overview() {
       setLoading(true);
       try {
         const [earningsRes, settlementsRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/earnings?period=${period}`, {
-            headers: { stoken }
-          }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/settlements?status=all`, {
-            headers: { stoken }
-          })
+          api.get(`/api/seller-panel/finance/earnings?period=${period}`),
+          api.get("/api/seller-panel/finance/settlements?status=all")
         ]);
-        
+
         if (earningsRes.data.success) {
           setData(earningsRes.data.data);
         }
@@ -110,7 +105,7 @@ function Overview() {
             <option value="6months">Last 6 Months</option>
             <option value="month">This Month</option>
           </select>
-          <button 
+          <button
             onClick={handleExport}
             className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
           >
@@ -172,7 +167,7 @@ function Overview() {
           {/* Earnings Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-6">Monthly Earnings Trend</h3>
-            
+
             {data.monthlyEarnings?.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No earnings data available
@@ -183,7 +178,7 @@ function Overview() {
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
                     <div className="w-full flex flex-col items-center">
                       <span className="text-xs text-gray-600 mb-1">{formatINR(month.amount)}</span>
-                      <div 
+                      <div
                         className="w-full bg-gradient-to-t from-green-500 to-emerald-400 rounded-t-lg transition-all hover:from-green-600 hover:to-emerald-500"
                         style={{ height: `${(month.amount / maxEarning) * 200}px`, minHeight: '20px' }}
                       ></div>

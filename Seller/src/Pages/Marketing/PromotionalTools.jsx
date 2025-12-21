@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdShare, MdEmail, MdBadge, MdQrCode, MdContentCopy, MdLink, MdCampaign, MdImage } from "react-icons/md";
 import { FaFacebook, FaTwitter, FaInstagram, FaWhatsapp, FaPinterest } from "react-icons/fa";
 
@@ -9,7 +9,6 @@ function PromotionalTools() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('social');
   const [copied, setCopied] = useState('');
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     fetchData();
@@ -19,12 +18,8 @@ function PromotionalTools() {
     setLoading(true);
     try {
       const [toolsRes, storeRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/promotional-tools`, {
-          headers: { stoken }
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/info`, {
-          headers: { stoken }
-        })
+        api.get("/api/seller-panel/marketing/promotional-tools"),
+        api.get("/api/seller-panel/store/info")
       ]);
       if (toolsRes.data.success) setTools(toolsRes.data.data || []);
       if (storeRes.data.success) setStoreInfo(storeRes.data.data);
@@ -110,11 +105,10 @@ function PromotionalTools() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-              activeTab === tab.id
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${activeTab === tab.id
                 ? 'bg-purple-600 text-white shadow-lg'
                 : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+              }`}
           >
             <tab.icon className="text-lg" />
             {tab.label}
@@ -153,7 +147,7 @@ function PromotionalTools() {
                 🛍️ Shop now: {getStoreUrl()}
               </p>
             </div>
-            <button 
+            <button
               onClick={() => copyToClipboard(`🎁 Check out my gift store on GiftsNGifts! Find unique personalized gifts for every occasion. 🛍️ Shop now: ${getStoreUrl()}`, 'message')}
               className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition-colors"
             >
@@ -189,7 +183,7 @@ function PromotionalTools() {
                   <div className="bg-gray-50 rounded-lg p-3 mb-3 break-all">
                     <code className="text-sm text-gray-700">{asset.value}</code>
                   </div>
-                  <button 
+                  <button
                     onClick={() => copyToClipboard(asset.value, asset.id)}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors w-full justify-center"
                   >
@@ -208,7 +202,7 @@ function PromotionalTools() {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Promotional Banners</h2>
           <p className="text-gray-500 mb-6">Download ready-to-use banners for your marketing campaigns</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { name: 'Store Banner - Large', size: '1200x628', type: 'Facebook/LinkedIn' },
@@ -239,7 +233,7 @@ function PromotionalTools() {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Templates</h2>
             <p className="text-gray-500 mb-6">Pre-designed email templates for different campaigns</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 { name: 'New Arrival Announcement', description: 'Announce new products to customers' },

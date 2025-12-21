@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import api from "../../utils/api";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import { MdDownload, MdTrendingUp, MdTrendingDown, MdShoppingCart, MdVisibility, MdPeople } from "react-icons/md";
@@ -14,7 +14,7 @@ function Analytics() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [period, setPeriod] = useState('week');
-  const stoken = localStorage.getItem("stoken");
+
 
   // Analytics Data States
   const [revenueData, setRevenueData] = useState([]);
@@ -38,9 +38,9 @@ function Analytics() {
     setLoading(true);
     try {
       const [revenueRes, productRes, trafficRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/revenue?period=${period}`, { headers: { stoken } }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/products?period=${period}`, { headers: { stoken } }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/traffic?period=${period}`, { headers: { stoken } })
+        api.get(`/api/seller-panel/analytics/revenue?period=${period}`),
+        api.get(`/api/seller-panel/analytics/products?period=${period}`),
+        api.get(`/api/seller-panel/analytics/traffic?period=${period}`)
       ]);
 
       if (revenueRes.data.success) {
@@ -109,14 +109,13 @@ function Analytics() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/export?period=${period}`,
-        { 
-          headers: { stoken },
+      const response = await api.get(
+        `/api/seller-panel/analytics/export?period=${period}`,
+        {
           responseType: 'blob'
         }
       );
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -183,9 +182,9 @@ function Analytics() {
             <option value="quarter">This Quarter</option>
             <option value="year">This Year</option>
           </select>
-          
+
           {/* Export Button */}
-          <button 
+          <button
             onClick={handleExport}
             disabled={exporting}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50"
@@ -203,11 +202,10 @@ function Analytics() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
             >
               {tab.label}
             </button>
@@ -297,11 +295,11 @@ function Analytics() {
                       <BarChart data={revenueData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(v) => `₹${v/1000}k`} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            borderRadius: '8px', 
-                            border: 'none', 
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(v) => `₹${v / 1000}k`} />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                             backgroundColor: '#fff'
                           }}
@@ -332,16 +330,16 @@ function Analytics() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            borderRadius: '8px', 
-                            border: 'none', 
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                          }} 
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}
                         />
-                        <Legend 
-                          verticalAlign="bottom" 
-                          height={36} 
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
                           iconType="circle"
                           formatter={(value) => <span className="text-gray-600 text-sm">{value}</span>}
                         />
@@ -378,17 +376,17 @@ function Analytics() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            borderRadius: '8px', 
-                            border: 'none', 
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                           }}
                           formatter={(value, name, props) => [`${value} sales`, props.payload.name]}
                         />
-                        <Legend 
-                          verticalAlign="bottom" 
-                          height={36} 
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
                           iconType="circle"
                           formatter={(value) => <span className="text-gray-600 text-sm">{value}</span>}
                         />
@@ -404,8 +402,8 @@ function Analytics() {
                     {productData.map((product, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
+                          <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: COLORS[index % COLORS.length] }}
                           ></div>
                           <span className="font-medium text-gray-800">{product.name}</span>
@@ -429,18 +427,18 @@ function Analytics() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          borderRadius: '8px', 
-                          border: 'none', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                         }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="orders" 
-                        stroke="#10B981" 
-                        fill="#D1FAE5" 
+                      <Area
+                        type="monotone"
+                        dataKey="orders"
+                        stroke="#10B981"
+                        fill="#D1FAE5"
                         strokeWidth={2}
                       />
                     </AreaChart>
@@ -512,9 +510,9 @@ function Analytics() {
                           ))}
                         </Pie>
                         <Tooltip />
-                        <Legend 
-                          verticalAlign="bottom" 
-                          height={36} 
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
                           iconType="circle"
                         />
                       </PieChart>
@@ -533,8 +531,8 @@ function Analytics() {
                         <div key={index} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div 
-                                className="w-3 h-3 rounded-full" 
+                              <div
+                                className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
                               ></div>
                               <span className="font-medium text-gray-700">{source.name}</span>
@@ -542,11 +540,11 @@ function Analytics() {
                             <span className="text-gray-900 font-semibold">{percentage}%</span>
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-2">
-                            <div 
+                            <div
                               className="h-2 rounded-full transition-all duration-300"
-                              style={{ 
-                                width: `${percentage}%`, 
-                                backgroundColor: COLORS[index % COLORS.length] 
+                              style={{
+                                width: `${percentage}%`,
+                                backgroundColor: COLORS[index % COLORS.length]
                               }}
                             ></div>
                           </div>

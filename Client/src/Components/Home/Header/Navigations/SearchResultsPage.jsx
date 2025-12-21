@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../../../utils/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const SearchResultsPage = () => {
@@ -24,8 +24,8 @@ const SearchResultsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/client/search`
+        const res = await api.get(
+          `/api/client/search`
         );
         const products = res.data.data;
 
@@ -91,22 +91,21 @@ const SearchResultsPage = () => {
 
       {/* Responsive Filters Button in next line */}
       <div className="block lg:hidden px-4 py-2">
-  <button
-    className="text-white px-4 py-2 rounded w-full"
-    style={{ backgroundColor: '#7d0492' }}
-    onClick={() => setShowMobileFilters(!showMobileFilters)}
-  >
-    {showMobileFilters ? "Close Filters" : "Filters"}
-  </button>
-</div>
+        <button
+          className="text-white px-4 py-2 rounded w-full"
+          style={{ backgroundColor: '#7d0492' }}
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+        >
+          {showMobileFilters ? "Close Filters" : "Filters"}
+        </button>
+      </div>
 
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filter Panel - responsive */}
         <div
-          className={`${
-            showMobileFilters ? "block" : "hidden"
-          } md:block w-full md:w-1/4 p-4 bg-white h-auto md:h-[80vh] rounded shadow`}
+          className={`${showMobileFilters ? "block" : "hidden"
+            } md:block w-full md:w-1/4 p-4 bg-white h-auto md:h-[80vh] rounded shadow`}
         >
           <h3 className="font-bold text-lg mb-4">Filters</h3>
 
@@ -163,48 +162,48 @@ const SearchResultsPage = () => {
 
         {/* Products */}
         <div className="w-full lg:w-3/4 bg-white rounded shadow-md">
-  {loading ? (
-    <p className="text-gray-500">Loading products...</p>
-  ) : filteredProducts.length > 0 ? (
-    <div className="flex flex-wrap justify-center gap-4 p-2 sm:p-4">
-      {filteredProducts.map((product) => (
-        <div
-          key={product._id}
-          className="bg-white rounded overflow-hidden shadow hover:shadow-lg transition w-[47%] sm:w-[45%] md:w-[30%] lg:w-[28%] xl:w-[23%] cursor-pointer"
-          onClick={() => navigate(`/products/${product._id}`)}
-        >
-                    <div className="w-full h-[280px] sm:h-[280px] md:h-[280px] lg:h-[280px] overflow-hidden">
-            <img
-              src={product.images?.[0]?.url || "/placeholder.jpg"}
-              alt={product.title}
-              // className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-              className="w-full h-full object-contain sm:object-cover hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-          <div className="text-center p-2">
-            <h3 className="text-gray-700 text-[13px] sm:text-[15px] md:text-[16px] font-semibold mb-1">
-              {product.title}
-            </h3>
-            <div className="flex justify-center items-center gap-2 text-center">
-              <p className="text-gray-900 font-semibold text-sm sm:text-base">
-                ₹{product.price}
-              </p>
-              {product.discount > 0 && (
-                <p className="text-green-800 text-[13px] sm:text-[14px]">
-                  {product.discount}% off
-                </p>
-              )}
+          {loading ? (
+            <p className="text-gray-500">Loading products...</p>
+          ) : filteredProducts.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-4 p-2 sm:p-4">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product._id}
+                  className="bg-white rounded overflow-hidden shadow hover:shadow-lg transition w-[47%] sm:w-[45%] md:w-[30%] lg:w-[28%] xl:w-[23%] cursor-pointer"
+                  onClick={() => navigate(`/products/${product._id}`)}
+                >
+                  <div className="w-full h-[280px] sm:h-[280px] md:h-[280px] lg:h-[280px] overflow-hidden">
+                    <img
+                      src={product.images?.[0]?.url || "/placeholder.jpg"}
+                      alt={product.title}
+                      // className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      className="w-full h-full object-contain sm:object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="text-center p-2">
+                    <h3 className="text-gray-700 text-[13px] sm:text-[15px] md:text-[16px] font-semibold mb-1">
+                      {product.title}
+                    </h3>
+                    <div className="flex justify-center items-center gap-2 text-center">
+                      <p className="text-gray-900 font-semibold text-sm sm:text-base">
+                        ₹{product.price}
+                      </p>
+                      {product.discount > 0 && (
+                        <p className="text-green-800 text-[13px] sm:text-[14px]">
+                          {product.discount}% off
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <p className="text-gray-600 mt-4">
+              No products found matching "<strong>{searchQuery}</strong>"
+            </p>
+          )}
         </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-gray-600 mt-4">
-      No products found matching "<strong>{searchQuery}</strong>"
-    </p>
-  )}
-</div>
 
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdCelebration, MdAdd, MdEdit, MdDelete } from "react-icons/md";
 import { FiCalendar, FiGift, FiPercent } from "react-icons/fi";
 
@@ -16,7 +16,6 @@ function SeasonalOffers() {
     applicableCategories: [],
     bannerImage: ""
   });
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     fetchData();
@@ -24,9 +23,7 @@ function SeasonalOffers() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/seasonal-offers`, {
-        headers: { stoken }
-      });
+      const res = await api.get("/api/seller-panel/marketing/seasonal-offers");
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -52,7 +49,7 @@ function SeasonalOffers() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case "Active": return "bg-green-100 text-green-700";
       case "Upcoming": return "bg-blue-100 text-blue-700";
       case "Expired": return "bg-gray-100 text-gray-600";
@@ -161,7 +158,7 @@ function SeasonalOffers() {
                 <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-xl flex items-center justify-center text-3xl">
                   {getSeasonIcon(offer.season)}
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-gray-800">{offer.name}</h4>
@@ -175,7 +172,7 @@ function SeasonalOffers() {
                       <FiPercent /> {offer.discountPercentage}% off
                     </span>
                     <span className="flex items-center gap-1">
-                      <FiCalendar /> 
+                      <FiCalendar />
                       {new Date(offer.startDate).toLocaleDateString()} - {new Date(offer.endDate).toLocaleDateString()}
                     </span>
                   </div>
@@ -224,7 +221,7 @@ function SeasonalOffers() {
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">Create Seasonal Offer</h3>
             </div>
-            
+
             <form className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Offer Name</label>

@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel } from "@mui/material";
 import { MdAssignment, MdDelete, MdEdit, MdPlayArrow, MdSchedule } from "react-icons/md";
 import { FiRefreshCw, FiPlus, FiFileText } from "react-icons/fi";
 
 function CustomReports() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [reports, setReports] = useState([]);
@@ -24,7 +24,7 @@ function CustomReports() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/reports/custom`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/reports/custom');
             if (data.success) setReports(data.reports || []);
         } catch (e) {
             console.error("Error fetching custom reports:", e);
@@ -62,10 +62,10 @@ function CustomReports() {
             };
 
             if (editReport) {
-                await axios.put(`${backendurl}/api/admin/reports/custom/${editReport._id}`, payload, { headers: { token: atoken } });
+                await api.put(`/api/admin/reports/custom/${editReport._id}`, payload);
                 setSuccess("Report updated!");
             } else {
-                await axios.post(`${backendurl}/api/admin/reports/custom`, payload, { headers: { token: atoken } });
+                await api.post('/api/admin/reports/custom', payload);
                 setSuccess("Report created!");
             }
             fetchData();
@@ -79,7 +79,7 @@ function CustomReports() {
     const deleteReport = async (id) => {
         if (!window.confirm("Are you sure you want to delete this report?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/reports/custom/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/reports/custom/${id}`);
             fetchData();
             setSuccess("Report deleted!");
             setTimeout(() => setSuccess(""), 3000);
@@ -90,7 +90,7 @@ function CustomReports() {
 
     const runReport = async (id) => {
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/reports/custom/${id}/run`, {}, { headers: { token: atoken } });
+            const { data } = await api.post(`/api/admin/reports/custom/${id}/run`, {});
             if (data.success) {
                 setSuccess(`Report generated! ${data.data?.length || 0} records found.`);
                 fetchData();

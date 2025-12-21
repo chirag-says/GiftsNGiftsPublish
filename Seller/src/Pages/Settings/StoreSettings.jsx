@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { Button, TextField, Switch, FormControlLabel } from "@mui/material";
 
@@ -12,7 +12,7 @@ function StoreSettings() {
     about: "",
     holidayMode: false
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchProfile();
@@ -20,11 +20,11 @@ function StoreSettings() {
 
   const fetchProfile = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller/profile`, { headers: { stoken } });
+      const { data } = await api.get("/api/seller/profile");
       if (data.success) {
-        setStoreData({ 
-          ...data.seller, 
-          holidayMode: data.seller.holidayMode || false 
+        setStoreData({
+          ...data.seller,
+          holidayMode: data.seller.holidayMode || false
         });
       }
     } catch (err) {
@@ -42,7 +42,7 @@ function StoreSettings() {
 
   const handleSave = async () => {
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller/updateprofile`, storeData, { headers: { stoken } });
+      const { data } = await api.post("/api/seller/updateprofile", storeData);
       if (data.success) {
         toast.success("Store settings updated!");
       } else {

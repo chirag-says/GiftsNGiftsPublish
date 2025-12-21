@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAttachMoney, MdTrendingUp, MdPieChart, MdAdd, MdEdit, MdDelete } from "react-icons/md";
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiCalendar } from "react-icons/fi";
 
@@ -16,7 +16,6 @@ function MarketingBudget() {
     endDate: '',
     notes: ''
   });
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     fetchData();
@@ -26,12 +25,8 @@ function MarketingBudget() {
     setLoading(true);
     try {
       const [budgetRes, summaryRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/budgets`, {
-          headers: { stoken }
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/budget-summary`, {
-          headers: { stoken }
-        })
+        api.get("/api/seller-panel/marketing/budgets"),
+        api.get("/api/seller-panel/marketing/budget-summary")
       ]);
       if (budgetRes.data.success) setBudgets(budgetRes.data.data || []);
       if (summaryRes.data.success) setSummary(summaryRes.data.data);
@@ -45,9 +40,7 @@ function MarketingBudget() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/budgets`, formData, {
-        headers: { stoken }
-      });
+      await api.post("/api/seller-panel/marketing/budgets", formData);
       setShowModal(false);
       setFormData({
         category: 'advertising',
@@ -203,7 +196,7 @@ function MarketingBudget() {
                     <span>{Math.round(((budget.spent || 0) / budget.amount) * 100)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all"
                       style={{ width: `${Math.min(100, ((budget.spent || 0) / budget.amount) * 100)}%` }}
                     ></div>

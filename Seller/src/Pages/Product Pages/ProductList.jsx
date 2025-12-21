@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { TextField, IconButton } from "@mui/material";
 import { MdOutlineEdit, MdClose, MdSaveAlt } from "react-icons/md";
 import { LuTrash2, LuPackage, LuSearch } from "react-icons/lu";
@@ -11,7 +11,6 @@ function ProductList() {
   const [editingId, setEditingId] = useState(null);
   const [updateTask, setUpdateTask] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const stoken = localStorage.getItem("stoken") || "";
 
   useEffect(() => {
     fetchProducts();
@@ -19,10 +18,7 @@ function ProductList() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getproducts`,
-        { headers: { stoken } }
-      );
+      const response = await api.get("/api/product/getproducts");
       setProducts(response.data.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -52,10 +48,7 @@ function ProductList() {
   const saveUpdate = async (id) => {
     const dataToSend = updateTask[id];
     try {
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/updateproduct/${id}`,
-        dataToSend
-      );
+      await api.put(`/api/product/updateproduct/${id}`, dataToSend);
       await fetchProducts();
       setEditingId(null);
     } catch (error) {
@@ -64,16 +57,16 @@ function ProductList() {
   };
 
   const deleteProduct = async (id) => {
-    if(!window.confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/product/deleteproduct/${id}`);
+      await api.delete(`/api/product/deleteproduct/${id}`);
       setProducts(products.filter((p) => p._id !== id));
     } catch (error) {
       console.error("Delete error:", error);
     }
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -159,9 +152,9 @@ function ProductList() {
                             )}
                           </div>
                           {isEditing ? (
-                            <TextField 
-                              size="small" 
-                              value={draft.title} 
+                            <TextField
+                              size="small"
+                              value={draft.title}
                               onChange={(e) => handleUpdateChange(product._id, e.target.value, "title")}
                               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                             />
@@ -174,11 +167,11 @@ function ProductList() {
                       {/* Price */}
                       <td className="px-6 py-4">
                         {isEditing ? (
-                          <TextField 
-                            type="number" 
-                            size="small" 
+                          <TextField
+                            type="number"
+                            size="small"
                             className="w-28"
-                            value={draft.price} 
+                            value={draft.price}
                             onChange={(e) => handleUpdateChange(product._id, e.target.value, "price")}
                             sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                           />
@@ -190,12 +183,12 @@ function ProductList() {
                       {/* Stock Status */}
                       <td className="px-6 py-4 text-center">
                         {isEditing ? (
-                          <TextField 
-                            type="number" 
-                            size="small" 
-                            label="Qty" 
+                          <TextField
+                            type="number"
+                            size="small"
+                            label="Qty"
                             className="w-24"
-                            value={draft.stock ?? product.stock} 
+                            value={draft.stock ?? product.stock}
                             onChange={(e) => handleUpdateChange(product._id, e.target.value, "stock")}
                             sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                           />
@@ -209,14 +202,14 @@ function ProductList() {
                         <div className="flex items-center justify-center gap-1">
                           {isEditing ? (
                             <>
-                              <button 
-                                onClick={() => saveUpdate(product._id)} 
+                              <button
+                                onClick={() => saveUpdate(product._id)}
                                 className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                               >
                                 <MdSaveAlt className="w-5 h-5" />
                               </button>
-                              <button 
-                                onClick={() => setEditingId(null)} 
+                              <button
+                                onClick={() => setEditingId(null)}
                                 className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
                               >
                                 <MdClose className="w-5 h-5" />
@@ -224,14 +217,14 @@ function ProductList() {
                             </>
                           ) : (
                             <>
-                              <button 
-                                onClick={() => handleEditClick(product)} 
+                              <button
+                                onClick={() => handleEditClick(product)}
                                 className="p-2 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                               >
                                 <MdOutlineEdit className="w-5 h-5" />
                               </button>
-                              <button 
-                                onClick={() => deleteProduct(product._id)} 
+                              <button
+                                onClick={() => deleteProduct(product._id)}
                                 className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                               >
                                 <LuTrash2 className="w-5 h-5" />

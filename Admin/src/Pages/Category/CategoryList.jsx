@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import Tooltip from "@mui/material/Tooltip";
 import { LuTrash2, LuSettings, LuLayers, LuTag, LuImage, LuPercent } from "react-icons/lu";
 import { Button, TextField, IconButton, Tabs, Tab, Box } from "@mui/material";
@@ -26,14 +26,14 @@ function CategoryList() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/getcategories`);
+      const response = await api.get('/api/getcategories');
       setCategories(response.data);
     } catch (error) { console.error(error); }
   };
 
   const handleDeleteCategory = async (id) => {
     if (window.confirm("Are you sure?")) {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/deletecategory/${id}`);
+      await api.delete(`/api/deletecategory/${id}`);
       fetchCategories();
     }
   };
@@ -45,7 +45,7 @@ function CategoryList() {
 
   const saveEdit = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/updatecategory/${id}`, editData);
+      await api.put(`/api/updatecategory/${id}`, editData);
       setEditingId(null);
       fetchCategories();
     } catch (e) { alert("Failed to save"); }
@@ -57,7 +57,7 @@ function CategoryList() {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/updatecategory/${id}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+      await api.put(`/api/updatecategory/${id}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
       fetchCategories();
     } catch (err) { console.error(err); }
   };

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 
 function EmailResponses() {
   const [emails, setEmails] = useState([]);
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/communication/email-responses`)
+    api.get('/api/communication/email-responses')
       .then(res => setEmails(res.data.data))
       .catch(console.error);
   }, []);

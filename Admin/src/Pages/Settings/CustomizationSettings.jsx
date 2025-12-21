@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Switch, FormControlLabel, LinearProgress, Alert, TextField } from "@mui/material";
 import { MdColorLens, MdShoppingCart, MdViewCompact, MdNotifications } from "react-icons/md";
 import { FiRefreshCw, FiSave } from "react-icons/fi";
 
 function CustomizationSettings() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState("");
@@ -49,7 +49,7 @@ function CustomizationSettings() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/customization`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/customization');
             if (data.success && data.settings) {
                 setCustomization(prev => ({ ...prev, ...data.settings }));
             }
@@ -63,7 +63,7 @@ function CustomizationSettings() {
     const saveSettings = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/customization`, customization, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/customization', customization);
             if (data.success) {
                 setSuccess("Customization settings saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);

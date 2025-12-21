@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LuTag, LuPenLine, LuSave, LuX, LuPercent, LuPackage, LuSearch, LuInfo } from "react-icons/lu";
 
 function DiscountManager() {
@@ -8,7 +8,6 @@ function DiscountManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
   const [discountValue, setDiscountValue] = useState("");
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -24,9 +23,7 @@ function DiscountManager() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/discounts`, {
-        headers: { stoken }
-      });
+      const res = await api.get("/api/seller-panel/marketing/discounts");
       if (res.data.success) setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -37,10 +34,9 @@ function DiscountManager() {
 
   const handleUpdateDiscount = async (productId) => {
     try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/marketing/discounts/${productId}`,
-        { discountPercentage: Number(discountValue) },
-        { headers: { stoken } }
+      const res = await api.put(
+        `/api/seller-panel/marketing/discounts/${productId}`,
+        { discountPercentage: Number(discountValue) }
       );
       if (res.data.success) {
         setEditingProduct(null);
@@ -54,7 +50,7 @@ function DiscountManager() {
     }
   };
 
-  const filteredProducts = data.products?.filter(p => 
+  const filteredProducts = data.products?.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
@@ -101,7 +97,7 @@ function DiscountManager() {
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Discount</span>
           </div>
           <h3 className="text-2xl font-bold text-gray-900">
-            {data.products?.length > 0 
+            {data.products?.length > 0
               ? Math.round(data.products.reduce((sum, p) => sum + (p.discount || 0), 0) / data.products.length)
               : 0}%
           </h3>
@@ -179,9 +175,8 @@ function DiscountManager() {
                           max="100"
                         />
                       ) : (
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          product.discount > 0 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-100 text-gray-600 border-gray-200'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${product.discount > 0 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-100 text-gray-600 border-gray-200'
+                          }`}>
                           {product.discount || 0}%
                         </span>
                       )}

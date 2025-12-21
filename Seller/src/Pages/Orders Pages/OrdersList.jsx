@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import { LuPackage, LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
-import axios from "axios";
+import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { useSellerOrders } from "../../hooks/useSellerOrders.js";
 import OrderSummaryCards from "../../Components/Orders/OrderSummaryCards.jsx";
@@ -26,10 +26,9 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedRange, setSelectedRange] = useState(initialRange || null);
   // NEW STATE: For sorting
-  const [sort, setSort] = useState(SORT_OPTIONS.NONE); 
+  const [sort, setSort] = useState(SORT_OPTIONS.NONE);
   const exportMenuRef = useRef(null);
   const { orders, setOrders, loading, error, stats } = useSellerOrders();
-  const stoken = localStorage.getItem("stoken");
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,10 +47,9 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
 
   const updateOrderStatus = async (id, status) => {
     try {
-      const { data } = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller/orders/${id}`,
-        { status },
-        { headers: { stoken } }
+      const { data } = await api.put(
+        `/api/seller/orders/${id}`,
+        { status }
       );
 
       if (data.success) {
@@ -73,19 +71,19 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
 
     // Apply Sorting logic
     if (sort === SORT_OPTIONS.NONE) {
-        return byStatus;
+      return byStatus;
     }
 
     const sorted = [...byStatus].sort((a, b) => {
-        const totalA = a.totalAmount;
-        const totalB = b.totalAmount;
+      const totalA = a.totalAmount;
+      const totalB = b.totalAmount;
 
-        if (sort === SORT_OPTIONS.TOTAL_ASC) {
-            return totalA - totalB; // Lowest to Highest
-        } else if (sort === SORT_OPTIONS.TOTAL_DESC) {
-            return totalB - totalA; // Highest to Lowest
-        }
-        return 0; // Should not happen if sort is checked
+      if (sort === SORT_OPTIONS.TOTAL_ASC) {
+        return totalA - totalB; // Lowest to Highest
+      } else if (sort === SORT_OPTIONS.TOTAL_DESC) {
+        return totalB - totalA; // Highest to Lowest
+      }
+      return 0; // Should not happen if sort is checked
     });
 
     return sorted;
@@ -105,7 +103,7 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   };
 
   const handleSortChange = (e) => {
-      setSort(e.target.value);
+    setSort(e.target.value);
   }
 
   const getStatusBadge = (status) => {
@@ -122,7 +120,7 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   const handleExport = (format) => {
     const dataToExport = filteredOrders.length > 0 ? filteredOrders : orders;
     const filename = selectedRange ? `orders_${selectedRange}` : statusKey ? `orders_${statusKey}` : 'all_orders';
-    
+
     if (format === 'csv') {
       exportToCSV(dataToExport, filename, ORDER_EXPORT_COLUMNS);
     } else {
@@ -140,52 +138,52 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
           <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
           <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
         </div>
-        
+
         {/* Export and Sort Controls Container */}
         <div className="flex gap-4 items-center">
-            {/* Sorting Select Field */}
-            <div className="relative">
-                <select
-                    value={sort}
-                    onChange={handleSortChange}
-                    className="appearance-none block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 transition-all shadow-sm focus:ring-indigo-500 focus:border-indigo-500 pr-10"
-                >
-                    <option value={SORT_OPTIONS.NONE}>Sort by Total (Default)</option>
-                    <option value={SORT_OPTIONS.TOTAL_DESC}>Total: Highest to Lowest</option>
-                    <option value={SORT_OPTIONS.TOTAL_ASC}>Total: Lowest to Highest</option>
-                </select>
-                <FaAngleDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
+          {/* Sorting Select Field */}
+          <div className="relative">
+            <select
+              value={sort}
+              onChange={handleSortChange}
+              className="appearance-none block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 transition-all shadow-sm focus:ring-indigo-500 focus:border-indigo-500 pr-10"
+            >
+              <option value={SORT_OPTIONS.NONE}>Sort by Total (Default)</option>
+              <option value={SORT_OPTIONS.TOTAL_DESC}>Total: Highest to Lowest</option>
+              <option value={SORT_OPTIONS.TOTAL_ASC}>Total: Lowest to Highest</option>
+            </select>
+            <FaAngleDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
 
 
-            {/* Export Menu Button */}
-            <div className="relative" ref={exportMenuRef}>
+          {/* Export Menu Button */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+            >
+              <LuDownload className="w-4 h-4" />
+              Export Orders
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                 <button
-                    onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                  onClick={() => handleExport('csv')}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                    <LuDownload className="w-4 h-4" />
-                    Export Orders
+                  <LuFileText className="w-4 h-4 text-gray-400" />
+                  Export as CSV
                 </button>
-                {showExportMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                        <button 
-                            onClick={() => handleExport('csv')} 
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <LuFileText className="w-4 h-4 text-gray-400" /> 
-                            Export as CSV
-                        </button>
-                        <button 
-                            onClick={() => handleExport('excel')} 
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <LuFileSpreadsheet className="w-4 h-4 text-emerald-500" /> 
-                            Export as Excel
-                        </button>
-                    </div>
-                )}
-            </div>
+                <button
+                  onClick={() => handleExport('excel')}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <LuFileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                  Export as Excel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -200,26 +198,26 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
       {/* Orders Table Card */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-            // Loading State...
-            <div className="py-16 text-center">
-                <div className="inline-flex items-center gap-2 text-gray-500">
-                    <div className="w-5 h-5 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
-                    <span>Loading orders…</span>
-                </div>
+          // Loading State...
+          <div className="py-16 text-center">
+            <div className="inline-flex items-center gap-2 text-gray-500">
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
+              <span>Loading orders…</span>
             </div>
+          </div>
         ) : error ? (
-            // Error State...
-            <div className="p-6 bg-red-50 text-red-700 border-b border-red-100">{error}</div>
+          // Error State...
+          <div className="p-6 bg-red-50 text-red-700 border-b border-red-100">{error}</div>
         ) : filteredOrders.length === 0 ? (
-            // Empty State...
-            <div className="py-16 text-center">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                        <LuPackage className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-sm">{meta?.emptyMessage || "No orders found in this category."}</p>
-                </div>
+          // Empty State...
+          <div className="py-16 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                <LuPackage className="w-6 h-6 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-sm">{meta?.emptyMessage || "No orders found in this category."}</p>
             </div>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px]">

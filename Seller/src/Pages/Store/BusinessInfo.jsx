@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdBusiness, MdEdit, MdSave, MdClose, MdVerified, MdPerson } from "react-icons/md";
 import { FiFileText, FiCreditCard, FiMapPin, FiInfo } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -28,14 +28,12 @@ function BusinessInfo() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/store/business-info');
         if (res.data.success && res.data.data) {
           setInfo(prev => ({ ...prev, ...res.data.data }));
         }
@@ -73,9 +71,8 @@ function BusinessInfo() {
 
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/business-info`,
-        { businessInfo: info },
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/store/business-info',
+        { businessInfo: info }
       );
       if (res.data.success) {
         setEditing(false);

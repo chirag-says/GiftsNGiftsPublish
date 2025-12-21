@@ -1,12 +1,12 @@
 import React, { useContext, useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 import { FiEye, FiEyeOff, FiLock, FiMail, FiShield } from 'react-icons/fi';
 
 function Login() {
-  const { backendurl, setatoken } = useContext(Admincontext);
+  const { setAuthenticated } = useContext(Admincontext);
   const navigate = useNavigate();
 
   const [formValues, setFormValues] = useState({ email: '', password: '' });
@@ -26,7 +26,7 @@ function Login() {
       setLoading(true);
       setError('');
 
-      const { data } = await axios.post(`${backendurl}/api/admin/login`, {
+      const { data } = await api.post('/api/admin/login', {
         email: formValues.email,
         password: formValues.password
       });
@@ -37,13 +37,14 @@ function Login() {
         return;
       }
 
-      localStorage.setItem('atoken', data.token);
+      // No localStorage token storage!
       if (data.user?.name) {
         localStorage.setItem('adminName', data.user.name);
       } else {
         localStorage.removeItem('adminName');
       }
-      setatoken(data.token);
+
+      setAuthenticated(true);
       toast.success('Welcome back, Admin');
       navigate('/');
     } catch (err) {
@@ -67,7 +68,7 @@ function Login() {
             </span>
 
             <h1 className="text-4xl font-black leading-tight mt-8">
-              GNG  
+              GNG
               <br />Admin Console
             </h1>
 

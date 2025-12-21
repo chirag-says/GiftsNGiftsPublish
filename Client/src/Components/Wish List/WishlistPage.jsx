@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
-import axios from "axios";
+
+import api from "../../utils/api";
 import { Link } from "react-router-dom";
 import { IoCloseSharp } from "react-icons/io5";
 import { FiHeart, FiShoppingCart, FiArrowRight } from "react-icons/fi";
@@ -8,13 +9,10 @@ import { AppContext } from "../context/Appcontext.jsx";
 
 function WishlistPage() {
   const { wishlistItems, setWishlistItems, fetchWishlist } = useContext(AppContext);
-  const token = localStorage.getItem("token");
 
   const handleRemove = async (productId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/auth/delete-wishlist/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/auth/delete-wishlist/${productId}`);
       setWishlistItems((prev) =>
         prev.filter((item) => (item?.product?._id || item?._id) !== productId)
       );
@@ -31,7 +29,7 @@ function WishlistPage() {
     <section className="py-6 md:py-12 bg-[#f9fafb] min-h-screen font-sans">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-6 md:gap-10">
-          
+
           {/* Sidebar - Stays at top on mobile, side on desktop */}
           <div className="lg:w-1/4 w-full order-2 lg:order-1">
             <SideMenu />
@@ -40,7 +38,7 @@ function WishlistPage() {
           {/* Main Content Area */}
           <div className="lg:w-3/4 w-full order-1 lg:order-2">
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-              
+
               {/* Header: More vertical padding on mobile */}
               <div className="p-6 md:p-10 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/50 backdrop-blur-sm sticky top-0 z-20">
                 <div>
@@ -64,8 +62,8 @@ function WishlistPage() {
                       if (!product || !product._id) return null;
 
                       return (
-                        <div 
-                          key={product._id} 
+                        <div
+                          key={product._id}
                           className="group relative bg-white border border-gray-100 rounded-3xl p-4 flex flex-row items-center gap-5 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500"
                         >
                           {/* Close Button - Larger touch target for mobile */}
@@ -93,7 +91,7 @@ function WishlistPage() {
                             <span className="text-[10px] font-black uppercase tracking-[0.15em] text-purple-400">
                               {product.brand || "Exclusive"}
                             </span>
-                            
+
                             <h3 className="text-sm sm:text-base font-bold text-gray-800 mt-1 mb-2 line-clamp-1 group-hover:text-purple-700 transition-colors">
                               <Link to={`/products/${product._id}`}>
                                 {product.title}
@@ -117,12 +115,12 @@ function WishlistPage() {
                             </div>
 
                             {/* View Button - Simple & Modern */}
-                            <Link 
-                                to={`/products/${product._id}`}
-                                className="inline-flex items-center gap-2 text-xs font-bold text-purple-600 group/btn hover:translate-x-1 transition-transform"
+                            <Link
+                              to={`/products/${product._id}`}
+                              className="inline-flex items-center gap-2 text-xs font-bold text-purple-600 group/btn hover:translate-x-1 transition-transform"
                             >
-                                Shop Now
-                                <FiArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
+                              Shop Now
+                              <FiArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
                             </Link>
                           </div>
                         </div>
@@ -133,16 +131,16 @@ function WishlistPage() {
                   /* Modern Empty State */
                   <div className="py-24 text-center">
                     <div className="relative w-24 h-24 mx-auto mb-6">
-                       <div className="absolute inset-0 bg-purple-100 rounded-full animate-ping opacity-25" />
-                       <div className="relative w-full h-full bg-purple-50 rounded-full flex items-center justify-center">
-                          <FiHeart className="text-purple-300 text-4xl" />
-                       </div>
+                      <div className="absolute inset-0 bg-purple-100 rounded-full animate-ping opacity-25" />
+                      <div className="relative w-full h-full bg-purple-50 rounded-full flex items-center justify-center">
+                        <FiHeart className="text-purple-300 text-4xl" />
+                      </div>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900">Your wishlist is lonely</h3>
                     <p className="text-gray-500 mt-2 max-w-xs mx-auto">Add items you love to find them later and keep track of price drops.</p>
                     <Link to="/" className="mt-8 inline-flex items-center gap-2 px-8 py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-200 transition-all">
-                        Discover Products
-                        <FiShoppingCart size={18} />
+                      Discover Products
+                      <FiShoppingCart size={18} />
                     </Link>
                   </div>
                 )}

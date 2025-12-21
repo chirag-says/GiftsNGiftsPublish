@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   LuTruck, LuPackage, LuMapPin, LuClock, LuCalendar, LuSave, LuX,
   LuPenLine, LuPlus, LuTrash2, LuCheck, LuInfo, LuBuilding, LuPhone,
@@ -11,7 +11,7 @@ function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   // General Tab State (Partners & Rates)
   const [generalSettings, setGeneralSettings] = useState({
@@ -109,9 +109,8 @@ function Settings() {
   const fetchAllSettings = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/all-settings`,
-        { headers: { stoken } }
+      const res = await api.get(
+        '/api/seller-panel/shipping/all-settings'
       );
       if (res.data.success) {
         const data = res.data.data;
@@ -156,10 +155,9 @@ function Settings() {
         ...scheduleSettings
       };
 
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/all-settings`,
-        payload,
-        { headers: { stoken } }
+      await api.post(
+        '/api/seller-panel/shipping/all-settings',
+        payload
       );
       setEditing(false);
       alert("Settings saved successfully!");
@@ -202,9 +200,9 @@ function Settings() {
 
   const handleAddPackage = () => {
     if (!packageForm.name) return;
-    
+
     const newPackage = { ...packageForm, _id: Date.now().toString() };
-    
+
     if (editingPackage) {
       setLogisticsSettings(prev => ({
         ...prev,
@@ -218,7 +216,7 @@ function Settings() {
         packageDimensions: [...prev.packageDimensions, newPackage]
       }));
     }
-    
+
     setShowPackageModal(false);
     setEditingPackage(null);
     setPackageForm({ name: "", length: 0, width: 0, height: 0, maxWeight: 0, isDefault: false });
@@ -293,23 +291,19 @@ function Settings() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 p-4 text-left transition-all border-b border-gray-100 last:border-0 ${
-                  activeTab === tab.id
+                className={`w-full flex items-center gap-3 p-4 text-left transition-all border-b border-gray-100 last:border-0 ${activeTab === tab.id
                     ? "bg-indigo-50 border-l-4 border-l-indigo-600"
                     : "hover:bg-gray-50"
-                }`}
+                  }`}
               >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  activeTab === tab.id ? "bg-indigo-100" : "bg-gray-100"
-                }`}>
-                  <tab.icon className={`w-5 h-5 ${
-                    activeTab === tab.id ? "text-indigo-600" : "text-gray-500"
-                  }`} />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${activeTab === tab.id ? "bg-indigo-100" : "bg-gray-100"
+                  }`}>
+                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? "text-indigo-600" : "text-gray-500"
+                    }`} />
                 </div>
                 <div>
-                  <p className={`font-medium ${
-                    activeTab === tab.id ? "text-indigo-600" : "text-gray-900"
-                  }`}>{tab.label}</p>
+                  <p className={`font-medium ${activeTab === tab.id ? "text-indigo-600" : "text-gray-900"
+                    }`}>{tab.label}</p>
                   <p className="text-xs text-gray-500">{tab.description}</p>
                 </div>
               </button>
@@ -406,11 +400,10 @@ function Settings() {
                       <button
                         onClick={() => editing && togglePartner(index)}
                         disabled={!editing}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          partner.isActive
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${partner.isActive
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-600"
-                        } ${editing ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed opacity-70"}`}
+                          } ${editing ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed opacity-70"}`}
                       >
                         {partner.isActive ? "Active" : "Inactive"}
                       </button>
@@ -782,11 +775,10 @@ function Settings() {
                           key={i}
                           onClick={() => editing && toggleWorkingDay(day)}
                           disabled={!editing}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                            scheduleSettings.workingDays?.includes(day)
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition ${scheduleSettings.workingDays?.includes(day)
                               ? "bg-indigo-600 text-white"
                               : "bg-gray-100 text-gray-600"
-                          } ${!editing && "cursor-not-allowed opacity-70"}`}
+                            } ${!editing && "cursor-not-allowed opacity-70"}`}
                         >
                           {day.slice(0, 3)}
                         </button>
@@ -810,9 +802,8 @@ function Settings() {
                     return (
                       <div key={i} className={`flex items-center justify-between p-4 ${!isWorking && "bg-gray-50"}`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            isWorking ? "bg-green-100" : "bg-gray-100"
-                          }`}>
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isWorking ? "bg-green-100" : "bg-gray-100"
+                            }`}>
                             <span className="text-sm font-medium">{day.slice(0, 2)}</span>
                           </div>
                           <span className={`font-medium ${isWorking ? "text-gray-900" : "text-gray-400"}`}>{day}</span>

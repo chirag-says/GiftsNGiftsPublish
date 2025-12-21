@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdFavorite, MdTrendingUp } from "react-icons/md";
 import { FiHeart, FiShoppingBag, FiUsers } from "react-icons/fi";
@@ -7,14 +7,11 @@ import { FiHeart, FiShoppingBag, FiUsers } from "react-icons/fi";
 function WishlistInsights() {
   const [data, setData] = useState({ totalWishlistAdditions: 0, uniqueCustomers: 0, topWishlistedProducts: [] });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/customers/wishlist-insights`, {
-          headers: { stoken }
-        });
+        const res = await api.get("/api/seller-panel/customers/wishlist-insights");
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -95,8 +92,8 @@ function WishlistInsights() {
                     {i + 1}
                   </span>
                   {item.product?.images?.[0]?.url ? (
-                    <img 
-                      src={item.product.images[0].url} 
+                    <img
+                      src={item.product.images[0].url}
                       alt={item.product.title}
                       className="w-16 h-16 rounded-xl object-cover border border-gray-200"
                     />
@@ -106,7 +103,7 @@ function WishlistInsights() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800">{item.product?.title || "Unknown Product"}</h4>
                   <p className="text-sm text-gray-500">{formatINR(item.product?.price || 0)}</p>

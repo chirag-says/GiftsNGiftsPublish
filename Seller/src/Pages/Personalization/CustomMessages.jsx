@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdEdit, MdSave, MdMessage } from "react-icons/md";
 import { FiEdit3, FiHeart, FiStar, FiGift } from "react-icons/fi";
 
@@ -13,7 +13,7 @@ function CustomMessages() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [newTemplate, setNewTemplate] = useState({ name: "", text: "", occasion: "" });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchData();
@@ -22,9 +22,7 @@ function CustomMessages() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/custom-messages`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/personalization/custom-messages');
       if (res.data.success) {
         setTemplates(res.data.data.templates || []);
         setSettings(res.data.data.settings || settings);
@@ -38,9 +36,7 @@ function CustomMessages() {
 
   const handleSaveSettings = async () => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/custom-messages/settings`, settings, {
-        headers: { stoken }
-      });
+      await api.put('/api/seller-panel/personalization/custom-messages/settings', settings);
       alert("Settings saved!");
     } catch (err) {
       alert("Failed to save");
@@ -50,9 +46,7 @@ function CustomMessages() {
   const handleAddTemplate = async () => {
     if (!newTemplate.name || !newTemplate.text) return;
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/custom-messages/templates`, newTemplate, {
-        headers: { stoken }
-      });
+      await api.post('/api/seller-panel/personalization/custom-messages/templates', newTemplate);
       fetchData();
       setNewTemplate({ name: "", text: "", occasion: "" });
     } catch (err) {
@@ -63,9 +57,7 @@ function CustomMessages() {
   const handleDeleteTemplate = async (id) => {
     if (!confirm("Delete this template?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/personalization/custom-messages/templates/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/personalization/custom-messages/templates/${id}`);
       fetchData();
     } catch (err) {
       alert("Failed to delete");
@@ -103,7 +95,7 @@ function CustomMessages() {
           {/* Settings */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-4">✉️ Message Settings</h3>
-            
+
             <div className="space-y-4">
               <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
                 <div>
@@ -219,7 +211,7 @@ function CustomMessages() {
                           <span className="text-xs text-gray-500">{template.occasion}</span>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleDeleteTemplate(template._id)}
                         className="text-gray-400 hover:text-red-600"
                       >

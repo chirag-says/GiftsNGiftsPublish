@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdAdd, MdEdit, MdDelete, MdOutlineInventory2 } from "react-icons/md";
 import { FiBox, FiPackage, FiCheck } from "react-icons/fi";
 
@@ -16,7 +16,7 @@ function PackageDimensions() {
     maxWeight: 0,
     isDefault: false
   });
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     fetchPackages();
@@ -25,9 +25,7 @@ function PackageDimensions() {
   const fetchPackages = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/packages`, {
-        headers: { stoken }
-      });
+      const res = await api.get('/api/seller-panel/shipping/packages');
       if (res.data.success) setPackages(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -40,13 +38,9 @@ function PackageDimensions() {
     e.preventDefault();
     try {
       if (editingPackage) {
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/packages/${editingPackage._id}`, formData, {
-          headers: { stoken }
-        });
+        await api.put(`/api/seller-panel/shipping/packages/${editingPackage._id}`, formData);
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/packages`, formData, {
-          headers: { stoken }
-        });
+        await api.post('/api/seller-panel/shipping/packages', formData);
       }
       fetchPackages();
       setShowModal(false);
@@ -59,9 +53,7 @@ function PackageDimensions() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this package size?")) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/packages/${id}`, {
-        headers: { stoken }
-      });
+      await api.delete(`/api/seller-panel/shipping/packages/${id}`);
       fetchPackages();
     } catch (err) {
       alert("Failed to delete package");
@@ -70,9 +62,7 @@ function PackageDimensions() {
 
   const handleSetDefault = async (id) => {
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/packages/${id}/default`, {}, {
-        headers: { stoken }
-      });
+      await api.post(`/api/seller-panel/shipping/packages/${id}/default`, {});
       fetchPackages();
     } catch (err) {
       alert("Failed to set default");
@@ -120,7 +110,7 @@ function PackageDimensions() {
           <h1 className="text-2xl font-bold text-gray-800">Package Dimensions</h1>
           <p className="text-sm text-gray-500">Configure standard box sizes for your products</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setShowModal(true); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
         >
@@ -137,7 +127,7 @@ function PackageDimensions() {
           <FiBox className="text-5xl text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700">No Packages Configured</h3>
           <p className="text-gray-500 mt-2 mb-4">Add your standard package sizes</p>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
           >
@@ -149,11 +139,10 @@ function PackageDimensions() {
           {/* Package Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {packages.map((pkg, i) => (
-              <div 
-                key={i} 
-                className={`bg-white border rounded-xl p-5 hover:shadow-md transition-all ${
-                  pkg.isDefault ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
-                }`}
+              <div
+                key={i}
+                className={`bg-white border rounded-xl p-5 hover:shadow-md transition-all ${pkg.isDefault ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+                  }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -173,13 +162,13 @@ function PackageDimensions() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <button 
+                    <button
                       onClick={() => openEditModal(pkg)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                     >
                       <MdEdit />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDelete(pkg._id)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                     >
@@ -227,7 +216,7 @@ function PackageDimensions() {
                 </div>
 
                 {!pkg.isDefault && (
-                  <button 
+                  <button
                     onClick={() => handleSetDefault(pkg._id)}
                     className="w-full mt-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2"
                   >
@@ -272,7 +261,7 @@ function PackageDimensions() {
                 {editingPackage ? 'Edit Package' : 'Add Package'}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Package Name</label>

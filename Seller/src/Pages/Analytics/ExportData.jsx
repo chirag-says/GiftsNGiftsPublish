@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdDownload, MdCalendarMonth, MdTableChart, MdBarChart, MdPictureAsPdf, MdGridView, MdCheckCircle } from "react-icons/md";
 import { FiFileText, FiDownload, FiClock } from "react-icons/fi";
 
@@ -10,7 +10,7 @@ function ExportData() {
   const [selectedDataTypes, setSelectedDataTypes] = useState([]);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [format, setFormat] = useState('csv');
-  const stoken = localStorage.getItem("stoken");
+
 
   const dataTypes = [
     { id: 'orders', label: 'Orders', description: 'All order details and status', icon: MdTableChart, color: 'blue' },
@@ -35,7 +35,7 @@ function ExportData() {
   ];
 
   const toggleDataType = (id) => {
-    setSelectedDataTypes(prev => 
+    setSelectedDataTypes(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     );
   };
@@ -62,12 +62,11 @@ function ExportData() {
         });
       }, 300);
 
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/export`, {
+      await api.post('/api/seller-panel/analytics/export', {
         dataTypes: selectedDataTypes,
         dateRange,
         format
       }, {
-        headers: { stoken },
         responseType: 'blob'
       });
 
@@ -110,11 +109,10 @@ function ExportData() {
                 <div
                   key={type.id}
                   onClick={() => toggleDataType(type.id)}
-                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                    selectedDataTypes.includes(type.id)
+                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedDataTypes.includes(type.id)
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className={`p-2 bg-${type.color}-100 rounded-lg`}>
@@ -178,11 +176,10 @@ function ExportData() {
                 <div
                   key={fmt.id}
                   onClick={() => setFormat(fmt.id)}
-                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all text-center ${
-                    format === fmt.id
+                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all text-center ${format === fmt.id
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <fmt.icon className="text-2xl mx-auto text-gray-600 mb-2" />
                   <h3 className="font-semibold text-gray-800">{fmt.label}</h3>
@@ -197,7 +194,7 @@ function ExportData() {
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Export Summary</h2>
-            
+
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Selected Data:</span>
@@ -224,7 +221,7 @@ function ExportData() {
                   <span className="text-gray-800">{exportProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
                     style={{ width: `${exportProgress}%` }}
                   ></div>
@@ -245,11 +242,10 @@ function ExportData() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-                exporting
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${exporting
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:scale-105'
-              }`}
+                }`}
             >
               <MdDownload className="text-xl" />
               {exporting ? 'Exporting...' : 'Export Data'}

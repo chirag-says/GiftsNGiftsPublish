@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TextField, Button, Radio } from '@mui/material';
-import axios from 'axios';
+import api from "../../utils/api";
 import Totalprice from '../Cart Page/Totalprice.jsx';
 import { MdModeEdit, MdDelete, MdAddLocationAlt, MdOutlineHomeWork } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
@@ -23,13 +23,11 @@ function AddAddress() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const token = localStorage.getItem('token');
+  // const token = localStorage.getItem('token'); // No longer needed
 
   const getProfile = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/profile`, {
-        headers: { token },
-      });
+      const { data } = await api.get('/api/user/profile');
       if (data.success) {
         setProfile(data.profile);
         setAddresses(data.profile.addresses || []);
@@ -62,16 +60,14 @@ function AddAddress() {
 
     try {
       if (editAddressId) {
-        const { data } = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/user/updateaddress/${editAddressId}`,
-          { userId: profile.user || profile._id, address: newAddress },
-          { headers: { token } }
+        const { data } = await api.put(`/api/user/updateaddress/${editAddressId}`,
+          { userId: profile.user || profile._id, address: newAddress }
         );
         if (data.success) toast.success("Address updated successfully");
       } else {
-        const { data } = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/user/addaddress`,
-          { address: newAddress },
-          { headers: { token } }
+        const { data } = await api.post(
+          '/api/user/addaddress',
+          { address: newAddress }
         );
         if (data.success) toast.success("Address added successfully");
       }
@@ -86,9 +82,9 @@ function AddAddress() {
   const handleDeleteAddress = async (addressId) => {
     if (!window.confirm("Delete this address?")) return;
     try {
-      const { data } = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/deleteaddress/${addressId}`,
-        { data: { userId: profile.user || profile._id }, headers: { token } }
+      const { data } = await api.delete(
+        `/api/user/deleteaddress/${addressId}`,
+        { data: { userId: profile.user || profile._id } }
       );
       if (data.success) {
         toast.info("Address deleted");
@@ -117,7 +113,7 @@ function AddAddress() {
     <div className="bg-gray-50 min-h-screen py-6 sm:py-10">
       <div className="container max-w-7xl mx-auto px-4">
         <div className="flex flex-col lg:flex-row gap-6">
-          
+
           {/* Left Part: Address Management */}
           <div className="lg:w-[70%] w-full order-2 lg:order-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-8">
@@ -140,21 +136,20 @@ function AddAddress() {
               <div className="space-y-4">
                 {addresses.length > 0 ? (
                   addresses.map((addr) => (
-                    <div 
-                      key={addr._id} 
+                    <div
+                      key={addr._id}
                       onClick={() => setSelectedAddress(addr)}
-                      className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-300 transition-all cursor-pointer ${
-                        selectedAddress?._id === addr._id 
-                        ? " bg-orange-50/20" 
-                        : "border-gray-100 hover:border-gray-200"
-                      }`}
+                      className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-300 transition-all cursor-pointer ${selectedAddress?._id === addr._id
+                          ? " bg-orange-50/20"
+                          : "border-gray-100 hover:border-gray-200"
+                        }`}
                     >
                       <Radio
                         checked={selectedAddress?._id === addr._id}
                         className="!p-0 !mt-1"
                         sx={{ '&.Mui-checked': { color: '#fb541b' } }}
                       />
-                      
+
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900">{addr.fullName}</span>
@@ -164,7 +159,7 @@ function AddAddress() {
                         <p className="text-sm text-gray-500 leading-relaxed max-w-md">
                           {addr.address}, {addr.city}, {addr.state} - <span className="font-bold text-gray-700">{addr.pin}</span>
                         </p>
-                        
+
                         {selectedAddress?._id === addr._id && (
                           <Button
                             variant="contained"
@@ -177,13 +172,13 @@ function AddAddress() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setEditAddressId(addr._id); setNewAddress({...addr}); setShowAddForm(true); }}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditAddressId(addr._id); setNewAddress({ ...addr }); setShowAddForm(true); }}
                           className="text-gray-400 hover:text-blue-500 p-1 transition-colors"
                         >
                           <MdModeEdit size={20} />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
                           className="text-gray-400 hover:text-red-500 p-1 transition-colors"
                         >
@@ -203,12 +198,12 @@ function AddAddress() {
               {(showAddForm || editAddressId) && (
                 <div className="mt-10 pt-8 border-t border-gray-100">
                   <div className="flex items-center gap-2 mb-6 text-gray-800">
-                     <MdOutlineHomeWork className="text-xl" />
-                     <h3 className="text-lg font-bold">
+                    <MdOutlineHomeWork className="text-xl" />
+                    <h3 className="text-lg font-bold">
                       {editAddressId ? 'Update Address' : 'New Address Detail'}
                     </h3>
                   </div>
-                  
+
                   <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                     <TextField label="Full Name" name="fullName" value={newAddress.fullName} onChange={handleAddressChange} fullWidth size="small" required />
                     <TextField label="Phone Number" name="phoneNumber" value={newAddress.phoneNumber} onChange={handleAddressChange} fullWidth size="small" required />
@@ -219,7 +214,7 @@ function AddAddress() {
                     <TextField label="State" name="state" value={newAddress.state} onChange={handleAddressChange} fullWidth size="small" required />
                     <TextField label="Pincode" name="pin" value={newAddress.pin} onChange={handleAddressChange} fullWidth size="small" required />
                     <TextField label="Country" name="country" value={newAddress.country} onChange={handleAddressChange} fullWidth size="small" required />
-                    
+
                     <div className="md:col-span-2 flex items-center gap-4 mt-4">
                       <Button type="submit" variant="contained" className="!bg-[#fb541b] !px-8 !py-2.5 !rounded-lg !font-bold !capitalize !shadow-none">
                         {editAddressId ? 'Save Changes' : 'Save Address'}

@@ -1,8 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 
-// SECURITY: Configure axios to send cookies with every request
-axios.defaults.withCredentials = true;
+
 
 export const Admincontext = createContext();
 
@@ -21,7 +20,7 @@ export const AdminProvider = ({ children }) => {
    */
   const checkAuth = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/seller/is-authenticated`);
+      const { data } = await api.get('/api/seller/is-authenticated');
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -43,7 +42,7 @@ export const AdminProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [backendurl]);
+  }, []);
 
   // Check auth status on mount
   useEffect(() => {
@@ -66,7 +65,7 @@ export const AdminProvider = ({ children }) => {
    */
   const logout = useCallback(async () => {
     try {
-      await axios.post(`${backendurl}/api/seller/logout`);
+      await api.post('/api/seller/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -77,7 +76,7 @@ export const AdminProvider = ({ children }) => {
       // Clean up any legacy localStorage items
       localStorage.removeItem('stoken');
     }
-  }, [backendurl]);
+  }, []);
 
   return (
     <Admincontext.Provider value={{

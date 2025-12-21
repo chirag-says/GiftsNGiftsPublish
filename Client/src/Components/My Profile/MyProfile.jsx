@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { TextField, Button, Paper } from "@mui/material";
-import axios from "axios";
+import api from "../../utils/api";
 import SideMenu from "./SideMenu.jsx";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/Appcontext.jsx";
@@ -11,7 +11,7 @@ function Myprofile() {
   const [editing, setEditing] = useState(false);
   const [localProfile, setLocalProfile] = useState(profile);
 
-  const token = localStorage.getItem("token") || null;
+
 
   useEffect(() => {
     setLocalProfile(profile);
@@ -24,10 +24,9 @@ function Myprofile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(
-        `${backendurl}/api/user/updateprofile`,
-        localProfile,
-        { headers: { token } }
+      const { data } = await api.post(
+        '/api/user/updateprofile',
+        localProfile
       );
       if (data.message) {
         toast.success(data.message);
@@ -43,7 +42,7 @@ function Myprofile() {
     <div className="min-h-screen bg-[#f8f9fa] py-6 md:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
-          
+
           {/* Side Menu Section - Hidden on small mobile or stacked */}
           <div className="lg:w-1/4 w-full order-2 lg:order-1">
             <SideMenu />
@@ -51,8 +50,8 @@ function Myprofile() {
 
           {/* Profile Content Section */}
           <div className="lg:w-3/4 w-full order-1 lg:order-2 space-y-6">
-            <Paper 
-              elevation={0} 
+            <Paper
+              elevation={0}
               className="!rounded-3xl border border-gray-100 overflow-hidden bg-white shadow-sm"
             >
               <div className="p-6 md:p-10">
@@ -75,9 +74,9 @@ function Myprofile() {
                 {!editing ? (
                   /* Display Grid: 1 col on mobile, 3 on desktop */
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    <ProfileInfoItem icon={<FiUser className="text-purple-500"/>} label="Full Name" value={profile?.name} />
-                    <ProfileInfoItem icon={<FiPhone className="text-blue-500"/>} label="Phone Number" value={profile?.phone} />
-                    <ProfileInfoItem icon={<FiMail className="text-orange-500"/>} label="Email Address" value={profile?.email} />
+                    <ProfileInfoItem icon={<FiUser className="text-purple-500" />} label="Full Name" value={profile?.name} />
+                    <ProfileInfoItem icon={<FiPhone className="text-blue-500" />} label="Phone Number" value={profile?.phone} />
+                    <ProfileInfoItem icon={<FiMail className="text-orange-500" />} label="Email Address" value={profile?.email} />
                   </div>
                 ) : (
                   /* Form Grid: Optimized for touch and spacing */
@@ -110,18 +109,18 @@ function Myprofile() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col gap-1.5 mb-10">
-                        <label className="text-[11px] font-bold uppercase text-gray-400 ml-1 tracking-wider">Email Address</label>
-                        <TextField
-                          fullWidth
-                          name="email"
-                          value={localProfile?.email || ""}
-                          onChange={handleChange}
-                          variant="outlined"
-                          required
-                          sx={inputStyles}
-                        />
+                      <label className="text-[11px] font-bold uppercase text-gray-400 ml-1 tracking-wider">Email Address</label>
+                      <TextField
+                        fullWidth
+                        name="email"
+                        value={localProfile?.email || ""}
+                        onChange={handleChange}
+                        variant="outlined"
+                        required
+                        sx={inputStyles}
+                      />
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -146,16 +145,16 @@ function Myprofile() {
 
             {/* Verification/Status Card (Bonus modern touch) */}
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
-               <div className="flex items-center gap-4 text-center md:text-left">
-                  <div className="p-3 bg-white/20 rounded-2xl">
-                    <FiCheckCircle size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold">Account Verified</h3>
-                    <p className="text-white/80 text-xs">Your account is secure and information is encrypted.</p>
-                  </div>
-               </div>
-               {/* <button className="px-5 py-2 bg-white text-purple-700 text-sm font-bold rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className="p-3 bg-white/20 rounded-2xl">
+                  <FiCheckCircle size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold">Account Verified</h3>
+                  <p className="text-white/80 text-xs">Your account is secure and information is encrypted.</p>
+                </div>
+              </div>
+              {/* <button className="px-5 py-2 bg-white text-purple-700 text-sm font-bold rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
                  Privacy Settings
                </button> */}
             </div>

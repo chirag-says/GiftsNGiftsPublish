@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdTrendingUp, MdShoppingCart, MdRemoveShoppingCart, MdDownload } from "react-icons/md";
 import { FiTarget, FiShoppingBag, FiPercent } from "react-icons/fi";
 
@@ -17,15 +17,13 @@ function ConversionReports() {
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30days");
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/analytics/conversion?period=${period}`, {
-          headers: { stoken }
-        });
+        const res = await api.get(`/api/seller-panel/analytics/conversion?period=${period}`);
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -104,7 +102,7 @@ function ConversionReports() {
           {/* Conversion Funnel */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h3 className="font-semibold text-gray-800 mb-6">Sales Funnel</h3>
-            
+
             <div className="space-y-4">
               {[
                 { label: 'Store Visits', value: data.funnelData?.[0]?.value || 1000, color: 'bg-blue-500' },
@@ -115,8 +113,8 @@ function ConversionReports() {
               ].map((step, i, arr) => {
                 const maxValue = arr[0].value;
                 const percentage = (step.value / maxValue) * 100;
-                const dropOff = i > 0 ? Math.round((1 - step.value / arr[i-1].value) * 100) : 0;
-                
+                const dropOff = i > 0 ? Math.round((1 - step.value / arr[i - 1].value) * 100) : 0;
+
                 return (
                   <div key={i} className="relative">
                     <div className="flex items-center justify-between mb-1">
@@ -129,7 +127,7 @@ function ConversionReports() {
                       </div>
                     </div>
                     <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full ${step.color} rounded-lg transition-all flex items-center justify-end pr-3`}
                         style={{ width: `${percentage}%` }}
                       >
@@ -146,7 +144,7 @@ function ConversionReports() {
             {/* Conversion by Category */}
             <div className="bg-white border border-gray-200 rounded-xl p-6">
               <h3 className="font-semibold text-gray-800 mb-4">Conversion by Category</h3>
-              
+
               {data.conversionByCategory?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No category data available</p>
               ) : (
@@ -156,7 +154,7 @@ function ConversionReports() {
                       <span className="font-medium text-gray-700">{cat.category}</span>
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-green-500 rounded-full"
                             style={{ width: `${cat.rate * 10}%` }}
                           ></div>
@@ -174,7 +172,7 @@ function ConversionReports() {
             {/* Conversion by Device */}
             <div className="bg-white border border-gray-200 rounded-xl p-6">
               <h3 className="font-semibold text-gray-800 mb-4">Conversion by Device</h3>
-              
+
               {data.conversionByDevice?.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No device data available</p>
               ) : (
@@ -184,7 +182,7 @@ function ConversionReports() {
                       <span className="font-medium text-gray-700">{device.device}</span>
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-blue-500 rounded-full"
                             style={{ width: `${device.rate * 10}%` }}
                           ></div>

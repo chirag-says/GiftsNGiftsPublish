@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Switch, FormControlLabel, LinearProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Select, MenuItem, FormControl, InputLabel, TextField } from "@mui/material";
 import { MdBackup, MdDelete, MdCloudDownload, MdSchedule } from "react-icons/md";
 import { FiRefreshCw, FiSave, FiDatabase, FiDownload } from "react-icons/fi";
 
 function DataBackup() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
     const [success, setSuccess] = useState("");
@@ -25,8 +25,8 @@ function DataBackup() {
         setLoading(true);
         try {
             const [backupsRes, settingsRes] = await Promise.all([
-                axios.get(`${backendurl}/api/admin/settings/backups`, { headers: { token: atoken } }),
-                axios.get(`${backendurl}/api/admin/settings/backup-settings`, { headers: { token: atoken } })
+                api.get('/api/admin/settings/backups'),
+                api.get('/api/admin/settings/backup-settings')
             ]);
             if (backupsRes.data.success) setBackups(backupsRes.data.backups || []);
             if (settingsRes.data.success && settingsRes.data.settings) {
@@ -42,7 +42,7 @@ function DataBackup() {
     const createBackup = async () => {
         setCreating(true);
         try {
-            const { data } = await axios.post(`${backendurl}/api/admin/settings/backup`, { backupType: "full" }, { headers: { token: atoken } });
+            const { data } = await api.post('/api/admin/settings/backup', { backupType: "full" });
             if (data.success) {
                 setSuccess("Backup started! It will complete in a few moments.");
                 setTimeout(() => {
@@ -60,7 +60,7 @@ function DataBackup() {
     const deleteBackup = async (id) => {
         if (!window.confirm("Are you sure you want to delete this backup?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/settings/backup/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/settings/backup/${id}`);
             fetchData();
             setSuccess("Backup deleted!");
             setTimeout(() => setSuccess(""), 3000);
@@ -71,7 +71,7 @@ function DataBackup() {
 
     const saveSettings = async () => {
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/backup-settings`, backupSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/backup-settings', backupSettings);
             if (data.success) {
                 setSuccess("Backup settings saved!");
                 setTimeout(() => setSuccess(""), 3000);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdRefresh, MdSearch, MdFilterList, MdInfo } from "react-icons/md";
 import { FiRefreshCcw, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
 
@@ -14,7 +14,6 @@ function Refunds() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const stoken = localStorage.getItem("stoken");
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -31,9 +30,7 @@ function Refunds() {
   const fetchRefunds = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/refunds?status=${statusFilter}`, {
-        headers: { stoken }
-      });
+      const res = await api.get(`/api/seller-panel/finance/refunds?status=${statusFilter}`);
       if (res.data.success) {
         setRefunds(res.data.data.refunds || []);
         setStats(res.data.data.stats || stats);
@@ -47,9 +44,7 @@ function Refunds() {
 
   const handleApproveRefund = async (refundId) => {
     try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/refunds/${refundId}/approve`, {}, {
-        headers: { stoken }
-      });
+      await api.post(`/api/seller-panel/finance/refunds/${refundId}/approve`, {});
       fetchRefunds();
     } catch (err) {
       alert("Failed to approve refund");
@@ -66,7 +61,7 @@ function Refunds() {
     return badges[status] || badges.pending;
   };
 
-  const filteredRefunds = refunds.filter(r => 
+  const filteredRefunds = refunds.filter(r =>
     r.orderId?.toLowerCase().includes(search.toLowerCase()) ||
     r.productName?.toLowerCase().includes(search.toLowerCase())
   );
@@ -79,7 +74,7 @@ function Refunds() {
           <h1 className="text-2xl font-bold text-gray-800">Refund Management</h1>
           <p className="text-sm text-gray-500">Track and manage customer refund requests</p>
         </div>
-        <button 
+        <button
           onClick={fetchRefunds}
           className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2"
         >
@@ -185,9 +180,9 @@ function Refunds() {
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             {refund.productImage && (
-                              <img 
-                                src={refund.productImage} 
-                                alt="" 
+                              <img
+                                src={refund.productImage}
+                                alt=""
                                 className="w-10 h-10 rounded-lg object-cover"
                               />
                             )}

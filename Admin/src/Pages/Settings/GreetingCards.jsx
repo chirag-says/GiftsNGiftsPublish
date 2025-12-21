@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, Chip, LinearProgress, Alert, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel, Avatar } from "@mui/material";
 import { MdCardGiftcard, MdDelete, MdEdit, MdCelebration, MdCake, MdFavorite } from "react-icons/md";
 import { FiRefreshCw, FiPlus, FiGift } from "react-icons/fi";
 
 function GreetingCards() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
@@ -34,7 +34,7 @@ function GreetingCards() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/greeting-cards`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/greeting-cards');
             if (data.success) setCards(data.cards || []);
         } catch (e) {
             console.error("Error fetching greeting cards:", e);
@@ -67,10 +67,10 @@ function GreetingCards() {
         if (!form.title) return;
         try {
             if (editCard) {
-                await axios.put(`${backendurl}/api/admin/settings/greeting-card/${editCard._id}`, form, { headers: { token: atoken } });
+                await api.put(`/api/admin/settings/greeting-card/${editCard._id}`, form);
                 setSuccess("Greeting card updated!");
             } else {
-                await axios.post(`${backendurl}/api/admin/settings/greeting-card`, form, { headers: { token: atoken } });
+                await api.post('/api/admin/settings/greeting-card', form);
                 setSuccess("Greeting card created!");
             }
             fetchData();
@@ -84,7 +84,7 @@ function GreetingCards() {
     const deleteCard = async (id) => {
         if (!window.confirm("Are you sure you want to delete this greeting card?")) return;
         try {
-            await axios.delete(`${backendurl}/api/admin/settings/greeting-card/${id}`, { headers: { token: atoken } });
+            await api.delete(`/api/admin/settings/greeting-card/${id}`);
             fetchData();
             setSuccess("Greeting card deleted!");
             setTimeout(() => setSuccess(""), 3000);

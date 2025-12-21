@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdLocalShipping, MdCheck, MdClose, MdEdit } from "react-icons/md";
 import { FiTruck, FiPackage, FiClock } from "react-icons/fi";
 
 function DeliveryPartners() {
   const [data, setData] = useState({ partners: [], recommended: [] });
   const [loading, setLoading] = useState(true);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/delivery-partners`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/shipping/delivery-partners');
         if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error(err);
@@ -26,15 +24,14 @@ function DeliveryPartners() {
 
   const handleTogglePartner = async (partnerId, enable) => {
     try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/shipping/delivery-partners`,
-        { partnerId, enabled: enable },
-        { headers: { stoken } }
+      const res = await api.put(
+        '/api/seller-panel/shipping/delivery-partners',
+        { partnerId, enabled: enable }
       );
       if (res.data.success) {
         setData(prev => ({
           ...prev,
-          partners: prev.partners.map(p => 
+          partners: prev.partners.map(p =>
             p._id === partnerId ? { ...p, enabled: enable } : p
           )
         }));
@@ -91,7 +88,7 @@ function DeliveryPartners() {
                     <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-3xl">
                       {partnerLogos[partner.name] || "📦"}
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-gray-800">{partner.name}</h4>
@@ -145,7 +142,7 @@ function DeliveryPartners() {
                   <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-3xl">
                     {partnerLogos[partner.name] || "📦"}
                   </div>
-                  
+
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-800">{partner.name}</h4>
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">

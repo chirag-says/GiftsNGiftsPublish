@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoSearchSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../../../../utils/api';
 
 const Search = () => {
   const [input, setInput] = useState("");
@@ -14,7 +14,7 @@ const Search = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/client/search`);
+        const res = await api.get('/api/client/search');
         setProducts(res.data.data);
       } catch (err) { console.error(err); }
     };
@@ -25,9 +25,9 @@ const Search = () => {
     const val = e.target.value;
     setInput(val);
     if (!val.trim()) { setFilteredProducts([]); setShowResult(false); return; }
-    
-    const filtered = products.filter(p => 
-      p.title?.toLowerCase().includes(val.toLowerCase()) || 
+
+    const filtered = products.filter(p =>
+      p.title?.toLowerCase().includes(val.toLowerCase()) ||
       p.categoryname?.name?.toLowerCase().includes(val.toLowerCase())
     ).slice(0, 8); // Limit results for speed
 
@@ -54,7 +54,7 @@ const Search = () => {
       {showResult && filteredProducts.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[1001]">
           {filteredProducts.map((p) => (
-            <div 
+            <div
               key={p._id}
               onClick={() => { navigate(`/products/${p._id}`); setShowResult(false); setInput(""); }}
               className="flex items-center gap-3 p-3 hover:bg-purple-50 cursor-pointer transition-colors border-b border-gray-50 last:border-none"
@@ -66,7 +66,7 @@ const Search = () => {
               </div>
             </div>
           ))}
-          <div 
+          <div
             onClick={() => navigate(`/search-results?query=${input}`)}
             className="p-3 text-center text-xs text-[#7d0492] font-bold bg-gray-50 cursor-pointer hover:bg-purple-100"
           >

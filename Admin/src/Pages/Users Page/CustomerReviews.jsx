@@ -3,12 +3,12 @@ import { useLocation } from "react-router-dom";
 import { FaStar, FaTrash, FaSearch, FaRegStar, FaQuoteLeft } from "react-icons/fa";
 import { MdOutlineRateReview, MdCheckCircle, MdCancel, MdReport, MdAnalytics, MdStore, MdProductionQuantityLimits, MdTrendingUp } from "react-icons/md";
 import { toast } from "react-toastify";
-import axios from "axios";
+import api from "../../utils/api";
 import { CircularProgress, Pagination, Tabs, Tab, Box, Button, Chip, LinearProgress, Card, CardContent } from "@mui/material";
 import { Admincontext } from "../../Components/context/admincontext";
 
 function CustomerReviews() {
-  const { atoken, backendurl } = useContext(Admincontext);
+  const { backendurl } = useContext(Admincontext);
   const location = useLocation();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({ totalReviews: 0, avgRating: 0, pendingCount: 0, reportedCount: 0 });
@@ -41,25 +41,24 @@ function CustomerReviews() {
     try {
       // 1. Product Ratings
       if (tabValue === 3) {
-        const { data } = await axios.get(`${backendurl}/api/admin/reviews/analytics?type=products`, { headers: { Authorization: `Bearer ${atoken}` } });
+        const { data } = await api.get('/api/admin/reviews/analytics?type=products');
         if (data.success) setProductRatings(data.data);
       }
       // 2. Vendor Ratings
       else if (tabValue === 4) {
-        const { data } = await axios.get(`${backendurl}/api/admin/reviews/analytics?type=vendors`, { headers: { Authorization: `Bearer ${atoken}` } });
+        const { data } = await api.get('/api/admin/reviews/analytics?type=vendors');
         if (data.success) setVendorRatings(data.data);
       }
       // 3. Analytics
       else if (tabValue === 5) {
-        const { data } = await axios.get(`${backendurl}/api/admin/reviews/analytics?type=general`, { headers: { Authorization: `Bearer ${atoken}` } });
+        const { data } = await api.get('/api/admin/reviews/analytics?type=general');
         if (data.success) setAnalyticsData(data.data);
       }
       // 4. Review Lists (All, Pending, Reported)
       else {
         const currentStatus = statusMap[tabValue] || 'All';
-        const { data } = await axios.get(
-          `${backendurl}/api/admin/reviews?page=${page}&limit=10&search=${searchTerm}&status=${currentStatus}`,
-          { headers: { Authorization: `Bearer ${atoken}`, token: atoken } }
+        const { data } = await api.get(
+          `/api/admin/reviews?page=${page}&limit=10&search=${searchTerm}&status=${currentStatus}`
         );
 
         if (data.success) {
@@ -81,13 +80,13 @@ function CustomerReviews() {
       fetchData();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [page, searchTerm, tabValue, atoken]);
+  }, [page, searchTerm, tabValue]);
 
   // Actions
   const handleDelete = async (id) => {
     if (!window.confirm("Delete permanently?")) return;
     try {
-      const { data } = await axios.delete(`${backendurl}/api/admin/delete-review/${id}`, { headers: { Authorization: `Bearer ${atoken}` } });
+      const { data } = await api.delete(`/api/admin/delete-review/${id}`);
       if (data.success) {
         toast.success("Deleted");
         setReviews(reviews.filter((r) => r._id !== id));
@@ -97,7 +96,7 @@ function CustomerReviews() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      const { data } = await axios.put(`${backendurl}/api/admin/review-status/${id}`, { status: newStatus }, { headers: { Authorization: `Bearer ${atoken}` } });
+      const { data } = await api.put(`/api/admin/review-status/${id}`, { status: newStatus });
       if (data.success) {
         toast.success(`Marked as ${newStatus}`);
         fetchData();

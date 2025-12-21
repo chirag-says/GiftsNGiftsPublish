@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, Alert, FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material";
 import { MdTrendingUp, MdShoppingCart, MdAttachMoney, MdShowChart } from "react-icons/md";
@@ -7,7 +7,7 @@ import { FiRefreshCw, FiDownload } from "react-icons/fi";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 function RevenueAnalytics() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [data, setData] = useState([]);
@@ -24,9 +24,8 @@ function RevenueAnalytics() {
             if (dateRange.start) params.append('startDate', dateRange.start);
             if (dateRange.end) params.append('endDate', dateRange.end);
 
-            const { data: res } = await axios.get(
-                `${backendurl}/api/admin/reports/revenue?${params.toString()}`,
-                { headers: { token: atoken } }
+            const { data: res } = await api.get(
+                `/api/admin/reports/revenue?${params.toString()}`
             );
             if (res.success) {
                 setData(res.data || []);

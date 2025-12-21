@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, TextField, Card, CardContent, Switch, FormControlLabel, LinearProgress, Alert } from "@mui/material";
 import { MdPolicy, MdCookie, MdStorage, MdPerson } from "react-icons/md";
 import { FiRefreshCw, FiSave } from "react-icons/fi";
 
 function GdprCompliance() {
-    const { backendurl, atoken } = useContext(Admincontext);
+    const { } = useContext(Admincontext);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState("");
@@ -33,7 +33,7 @@ function GdprCompliance() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`${backendurl}/api/admin/settings/gdpr`, { headers: { token: atoken } });
+            const { data } = await api.get('/api/admin/settings/gdpr');
             if (data.success && data.settings) {
                 setGdprSettings(prev => ({ ...prev, ...data.settings }));
             }
@@ -47,7 +47,7 @@ function GdprCompliance() {
     const saveSettings = async () => {
         setSaving(true);
         try {
-            const { data } = await axios.put(`${backendurl}/api/admin/settings/gdpr`, gdprSettings, { headers: { token: atoken } });
+            const { data } = await api.put('/api/admin/settings/gdpr', gdprSettings);
             if (data.success) {
                 setSuccess("GDPR settings saved successfully!");
                 setTimeout(() => setSuccess(""), 3000);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { MdColorLens, MdEdit, MdSave, MdClose, MdPreview } from "react-icons/md";
 import { FiLayout, FiType, FiDroplet } from "react-icons/fi";
 
@@ -18,14 +18,12 @@ function StoreCustomization() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const stoken = localStorage.getItem("stoken");
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/customization`, {
-          headers: { stoken }
-        });
+        const res = await api.get('/api/seller-panel/store/customization');
         if (res.data.success && res.data.data?.storeTheme) {
           setSettings(prev => ({ ...prev, ...res.data.data.storeTheme }));
         }
@@ -41,9 +39,8 @@ function StoreCustomization() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/store/customization`, 
-        { storeTheme: settings }, 
-        { headers: { stoken } }
+      const res = await api.post('/api/seller-panel/store/customization',
+        { storeTheme: settings }
       );
       if (res.data.success) {
         setEditing(false);
@@ -121,14 +118,14 @@ function StoreCustomization() {
             <MdPreview className="text-blue-500" /> Live Preview
           </h3>
         </div>
-        <div 
+        <div
           className="h-48 flex items-center justify-center"
           style={{ background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${settings.secondaryColor} 100%)` }}
         >
           <div className="bg-white rounded-xl shadow-lg p-6 max-w-md text-center">
             <h3 className="text-xl font-bold" style={{ color: settings.primaryColor }}>Your Store Name</h3>
             <p className="text-gray-500 text-sm mt-1">Your store tagline goes here</p>
-            <button 
+            <button
               className="mt-4 px-4 py-2 text-white rounded-lg"
               style={{ backgroundColor: settings.accentColor }}
             >
@@ -188,7 +185,7 @@ function StoreCustomization() {
                 <input
                   type="text"
                   value={settings.primaryColor}
-                  onChange={(e) => handleChange({ target: { name: 'primaryColor', value: e.target.value }})}
+                  onChange={(e) => handleChange({ target: { name: 'primaryColor', value: e.target.value } })}
                   disabled={!editing}
                   className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-lg disabled:bg-gray-50"
                 />
@@ -209,7 +206,7 @@ function StoreCustomization() {
                 <input
                   type="text"
                   value={settings.secondaryColor}
-                  onChange={(e) => handleChange({ target: { name: 'secondaryColor', value: e.target.value }})}
+                  onChange={(e) => handleChange({ target: { name: 'secondaryColor', value: e.target.value } })}
                   disabled={!editing}
                   className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-lg disabled:bg-gray-50"
                 />
@@ -230,7 +227,7 @@ function StoreCustomization() {
                 <input
                   type="text"
                   value={settings.accentColor}
-                  onChange={(e) => handleChange({ target: { name: 'accentColor', value: e.target.value }})}
+                  onChange={(e) => handleChange({ target: { name: 'accentColor', value: e.target.value } })}
                   disabled={!editing}
                   className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-lg disabled:bg-gray-50"
                 />
@@ -337,7 +334,7 @@ function StoreCustomization() {
               type="checkbox"
               name="headerStyle"
               checked={settings.headerStyle === 'modern'}
-              onChange={(e) => handleChange({ target: { name: 'headerStyle', value: e.target.checked ? 'modern' : 'classic' }})}
+              onChange={(e) => handleChange({ target: { name: 'headerStyle', value: e.target.checked ? 'modern' : 'classic' } })}
               disabled={!editing}
               className="w-5 h-5 text-blue-600 rounded"
             />

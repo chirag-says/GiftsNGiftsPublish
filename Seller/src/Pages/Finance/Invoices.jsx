@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdReceipt, MdDownload, MdPrint, MdSearch } from "react-icons/md";
 import { FiChevronLeft, FiChevronRight, FiFileText } from "react-icons/fi";
@@ -9,15 +9,13 @@ function Invoices() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const stoken = localStorage.getItem("stoken");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/seller-panel/finance/invoices?page=${page}`,
-          { headers: { stoken } }
+        const res = await api.get(
+          `/api/seller-panel/finance/invoices?page=${page}`
         );
         if (res.data.success) setData(res.data.data);
       } catch (err) {
@@ -252,7 +250,7 @@ function Invoices() {
                 <h3 className="text-xl font-bold text-gray-800">{selectedInvoice.invoiceNumber}</h3>
                 <p className="text-sm text-gray-500">{new Date(selectedInvoice.date).toLocaleDateString()}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedInvoice(null)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
               >

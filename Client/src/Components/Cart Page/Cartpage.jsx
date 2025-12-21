@@ -2,7 +2,7 @@ import { useContext, useEffect } from "react";
 import { AppContext } from "../context/Appcontext.jsx";
 import CartItems from "./CartItems";
 import Totalprice from "./Totalprice";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import { Button, Divider } from "@mui/material";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
@@ -10,7 +10,6 @@ import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 function Cartpage() {
   const navigate = useNavigate();
   const { cartItems, setCartItems, fetchCart } = useContext(AppContext);
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchCart();
@@ -18,9 +17,7 @@ function Cartpage() {
 
   const handleRemove = async (cartItemId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/auth/delete/${cartItemId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/auth/delete/${cartItemId}`);
       setCartItems((prev) => prev.filter((item) => item.product._id !== cartItemId));
     } catch (err) {
       console.error("Error removing cart item:", err);
@@ -29,9 +26,8 @@ function Cartpage() {
 
   const handleUpdateQuantity = async (productId, newQty) => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/auth/update-quantity`,
-        { productId, quantity: newQty },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put('/api/auth/update-quantity',
+        { productId, quantity: newQty }
       );
       setCartItems((prevItems) =>
         prevItems.map((item) => item.product._id === productId ? { ...item, quantity: newQty } : item)
@@ -77,8 +73,8 @@ function Cartpage() {
                 ) : (
                   <div className="py-20 text-center flex flex-col items-center">
                     <p className="text-gray-400 mb-6">Your cart feels a bit light...</p>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       onClick={() => navigate('/')}
                       className="!border-[#fb541b] !text-[#fb541b]"
                     >
@@ -88,8 +84,8 @@ function Cartpage() {
                 )}
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => navigate('/')}
               className="mt-6 text-sm font-medium text-gray-500 hover:text-[#fb541b] transition-colors"
             >

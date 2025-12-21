@@ -56,14 +56,26 @@ const parseEnvList = (value = '') =>
     .map((entry) => entry.trim().replace(/^['"]|['"]$/g, ''))
     .filter(Boolean);
 
-const defaultAllowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:5176',
-  'http://giftngifts.in',
-  'https://giftngifts.in'
-];
+// CORS Configuration - Environment-aware origins
+const isProduction = process.env.NODE_ENV === 'production';
+
+const defaultAllowedOrigins = isProduction
+  ? [
+    // Production origins only
+    'https://giftngifts.in',
+    'https://www.giftngifts.in',
+    'http://giftngifts.in',
+    'http://www.giftngifts.in'
+  ]
+  : [
+    // Development origins
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5176',
+    'http://giftngifts.in',
+    'https://giftngifts.in'
+  ];
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? parseEnvList(process.env.ALLOWED_ORIGINS)

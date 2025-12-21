@@ -13,42 +13,52 @@ import SellerNotification from "../model/sellerNotification.js";
 // ========================= REGISTER SELLER =========================
 export const registerseller = async (req, res) => {
   try {
-    // 3. Extract fields from request body
+    // Extract fields from request body
     const { name, email, password, nickName, phone, street, city, state, pincode, region } = req.body;
 
     if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode)
       return res.json({ success: false, message: "All fields including Address are required." });
 
-    if (!validator.isEmail(email))
-      return res.json({ success: false, message: "Invalid email format" });
+    // SECURITY: Type check to prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.json({ success: false, message: "Invalid input format" });
+    }
 
-    const existing = await sellermodel.findOne({ email });
+    // SECURITY: Sanitize and validate email
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
+      return res.json({ success: false, message: "Invalid email format" });
+    }
+
+    // SECURITY: Validate password strength
+    if (password.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    // Use sanitized email for query
+    const existing = await sellermodel.findOne({ email: sanitizedEmail });
     if (existing) return res.json({ success: false, message: "Seller already exists" });
 
-    // 6. UNIQUE ID GENERATION LOGIC
+    // UNIQUE ID GENERATION LOGIC
     // Logic: GNGDEL + Last 3 Digits of Pincode + First letter of Shop/Brand Name (nickName)
     const pinSuffix = pincode.toString().slice(-3);
-    const shopInitial = nickName.charAt(0).toUpperCase(); // Using brand/shop name initial
+    const shopInitial = nickName.charAt(0).toUpperCase();
 
-    // We append 2 random digits to ensure 100% database uniqueness even if 
-    // two sellers have the same Shop Initial and Pincode.
+    // Append 2 random digits to ensure database uniqueness
     const randomDigits = Math.floor(10 + Math.random() * 90);
-
     const generatedId = `GNGDEL${pinSuffix}${shopInitial}${randomDigits}`;
-    // Example: GNGDEL157X42 (for pincode 562157, brand "xKyzerOP")
-    // ----------------------------------
 
     const hashed = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     const seller = await sellermodel.create({
-      uniqueId: generatedId, // 5. Save Unique ID
-      name,
-      email,
+      uniqueId: generatedId,
+      name: name.trim(),
+      email: sanitizedEmail, // Use sanitized email
       password: hashed,
-      nickName,
+      nickName: nickName.trim(),
       phone,
-      region: region,        // 3. Save Region for sorting
+      region: region,
       otp,
       otpExpire: Date.now() + 10 * 60 * 1000,
       verified: false,
@@ -56,7 +66,7 @@ export const registerseller = async (req, res) => {
       lastLogin: Date.now()
     });
 
-    await sendEmail(email, "Your OTP Verification Code", `
+    await sendEmail(sanitizedEmail, "Your OTP Verification Code", `
             <h1>Welcome to GNG!</h1>
             <p>Your OTP is <b>${otp}</b></p>
             <p>Your Unique Seller ID is: <b>${generatedId}</b></p>
@@ -66,12 +76,12 @@ export const registerseller = async (req, res) => {
       success: true,
       message: "Registered successfully",
       uniqueId: generatedId,
-      email
+      email: sanitizedEmail
     });
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Registration failed. Please try again." });
   }
 };
 
@@ -80,22 +90,56 @@ export const loginseller = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const seller = await sellermodel.findOne({ email });
+    // SECURITY: Type check to prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    // SECURITY: Sanitize email
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
 
     if (!seller) return res.json({ success: false, message: "Invalid credentials" });
-    if (!seller.verified) return res.json({ success: false, message: "Please verify your email first" });
+
+    // SECURITY: Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // SECURITY: Check if seller is suspended
+    if (seller.status === 'Suspended') {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended. Contact support."
+      });
+    }
+
+    if (!seller.verified) {
+      return res.json({
+        success: false,
+        message: "Please verify your email first",
+        requiresVerification: true,
+        email: sanitizedEmail
+      });
+    }
 
     const match = await bcrypt.compare(password, seller.password);
     if (!match) return res.json({ success: false, message: "Invalid credentials" });
 
-    // 4. INACTIVITY CHECK LOGIC
+    // INACTIVITY CHECK LOGIC
     let responseMessage = "Login successful";
 
     if (seller.lastLogin) {
       const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 Days
       const timeDiff = Date.now() - new Date(seller.lastLogin).getTime();
 
-      // If inactive for more than 1 month
       if (timeDiff > thirtyDaysInMs) {
         responseMessage = "You have not done any transaction in one month. How can we assist you?";
       }
@@ -105,12 +149,13 @@ export const loginseller = async (req, res) => {
     seller.lastLogin = Date.now();
     await seller.save();
 
-    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET);
+    // SECURITY: JWT with expiry (7 days)
+    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.json({
       success: true,
       token,
-      message: responseMessage, // Frontend will display this specific message
+      message: responseMessage,
       user: {
         name: seller.name,
         email: seller.email,
@@ -122,7 +167,7 @@ export const loginseller = async (req, res) => {
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Login failed. Please try again." });
   }
 };
 
@@ -238,7 +283,7 @@ export const ordercomplete = async (req, res) => {
 
 export const addproducts = async (req, res) => {
   try {
-    const sellerId = req.sellerId;  // ✔ from token
+    const sellerId = req.sellerId;  // from token
 
     const {
       title, description, price, categoryname, subcategory,
@@ -246,10 +291,62 @@ export const addproducts = async (req, res) => {
       size, stock
     } = req.body;
 
+    // Basic required field validation
     if (!title || !description || !price || !categoryname || !subcategory || !stock) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
+    // ========== PRICE & DISCOUNT VALIDATION ==========
+    const numPrice = Number(price);
+    const numOldPrice = Number(oldprice) || numPrice;
+    const numDiscount = Number(discount) || 0;
+    const numStock = Number(stock);
+
+    // Validate price is positive
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return res.status(400).json({ success: false, message: 'Price must be a positive number' });
+    }
+
+    // Maximum price limit (prevent typos like 100000000)
+    if (numPrice > 10000000) {
+      return res.status(400).json({ success: false, message: 'Price exceeds maximum allowed limit (₹1 Crore)' });
+    }
+
+    // Validate old price >= current price
+    if (numOldPrice < numPrice) {
+      return res.status(400).json({ success: false, message: 'Original price cannot be less than current price' });
+    }
+
+    // Validate discount range (0-99%)
+    if (numDiscount < 0 || numDiscount > 99) {
+      return res.status(400).json({ success: false, message: 'Discount must be between 0 and 99%' });
+    }
+
+    // Validate discount calculation matches (with 10% tolerance for rounding)
+    if (numOldPrice > 0 && numDiscount > 0) {
+      const expectedPrice = Math.round(numOldPrice * (1 - numDiscount / 100));
+      const priceDifference = Math.abs(numPrice - expectedPrice);
+      const tolerance = numOldPrice * 0.1; // 10% tolerance
+
+      if (priceDifference > tolerance) {
+        return res.status(400).json({
+          success: false,
+          message: `Price mismatch: With ${numDiscount}% discount on ₹${numOldPrice}, expected price ~₹${expectedPrice}`
+        });
+      }
+    }
+
+    // Validate stock is non-negative
+    if (isNaN(numStock) || numStock < 0) {
+      return res.status(400).json({ success: false, message: 'Stock must be a non-negative number' });
+    }
+
+    // Validate stock maximum
+    if (numStock > 1000000) {
+      return res.status(400).json({ success: false, message: 'Stock exceeds maximum allowed limit' });
+    }
+
+    // ========== IMAGE UPLOAD ==========
     const images = await Promise.all(
       req.files.map(file =>
         cloudinary.uploader.upload(file.path, { resource_type: "image" })
@@ -261,19 +358,20 @@ export const addproducts = async (req, res) => {
       altText: title,
     }));
 
+    // ========== CREATE PRODUCT WITH VALIDATED VALUES ==========
     const newProduct = new addproductmodel({
-      title,
-      description,
-      price,
+      title: title.trim(),
+      description: description.trim(),
+      price: numPrice,           // Use validated number
       categoryname,
       subcategory,
-      oldprice,
-      discount,
+      oldprice: numOldPrice,     // Use validated number
+      discount: numDiscount,     // Use validated number
       ingredients,
       brand,
       additional_details,
       size,
-      stock,
+      stock: numStock,           // Use validated number
       sellerId,
       images: imageUrls
     });
@@ -627,5 +725,200 @@ export const markSellerNotificationRead = async (req, res) => {
   } catch (error) {
     console.error("Seller Notification Update Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ========================= RESEND VERIFICATION OTP =========================
+export const resendVerificationOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return res.json({ success: false, message: "Email is required" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      return res.json({ success: false, message: "Seller not found" });
+    }
+
+    if (seller.verified) {
+      return res.json({ success: false, message: "Account is already verified" });
+    }
+
+    // Rate limiting: Check if OTP was sent recently (1 minute cooldown)
+    if (seller.otpExpire && seller.otpExpire > Date.now() - 60000) {
+      const waitTime = Math.ceil((seller.otpExpire - Date.now() + 60000) / 1000);
+      return res.json({
+        success: false,
+        message: `Please wait ${waitTime} seconds before requesting new OTP`
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    seller.otp = otp;
+    seller.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await seller.save();
+
+    await sendEmail(sanitizedEmail, "Your New OTP Verification Code", `
+      <h1>Email Verification</h1>
+      <p>Your new OTP is: <b>${otp}</b></p>
+      <p>This code expires in 10 minutes.</p>
+      <p>If you did not request this, please ignore this email.</p>
+    `);
+
+    res.json({ success: true, message: "New OTP sent to your email" });
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+  }
+};
+
+// ========================= FORGOT PASSWORD =========================
+export const sellerForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return res.json({ success: false, message: "Email is required" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      // Don't reveal if email exists (security through obscurity)
+      return res.json({ success: true, message: "If the email exists, a password reset OTP has been sent" });
+    }
+
+    // Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // Rate limiting: Check if reset OTP was sent recently (2 minute cooldown)
+    if (seller.resetOtpExpire && seller.resetOtpExpire > Date.now() - 120000) {
+      return res.json({
+        success: false,
+        message: "Please wait before requesting another reset OTP"
+      });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+    seller.resetOtp = otp;
+    seller.resetOtpExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await seller.save();
+
+    await sendEmail(seller.email, "Password Reset OTP", `
+      <h1>Reset Your Password</h1>
+      <p>Your OTP to reset password is: <b>${otp}</b></p>
+      <p>This code expires in 15 minutes.</p>
+      <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+    `);
+
+    res.json({ success: true, message: "Password reset OTP sent to your email" });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ success: false, message: "Failed to send reset OTP. Please try again." });
+  }
+};
+
+// ========================= RESET PASSWORD =========================
+export const sellerResetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Validate inputs
+    if (!email || !otp || !newPassword) {
+      return res.json({ success: false, message: "Email, OTP, and new password are required" });
+    }
+
+    if (typeof email !== 'string' || typeof otp !== 'string' || typeof newPassword !== 'string') {
+      return res.json({ success: false, message: "Invalid input format" });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      return res.json({ success: false, message: "Invalid request" });
+    }
+
+    // Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // Validate OTP
+    if (!seller.resetOtp || seller.resetOtp !== otp) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    // Check OTP expiry
+    if (!seller.resetOtpExpire || seller.resetOtpExpire < Date.now()) {
+      return res.json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    // Hash new password and save
+    seller.password = await bcrypt.hash(newPassword, 10);
+    seller.resetOtp = null;
+    seller.resetOtpExpire = null;
+    await seller.save();
+
+    // Send confirmation email
+    await sendEmail(seller.email, "Password Reset Successful", `
+      <h1>Password Changed</h1>
+      <p>Your password has been successfully reset.</p>
+      <p>If you did not make this change, please contact support immediately.</p>
+    `);
+
+    res.json({ success: true, message: "Password reset successfully. Please login with your new password." });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ success: false, message: "Failed to reset password. Please try again." });
+  }
+};
+
+// ========================= CHECK SELLER AUTHENTICATED =========================
+export const isSellerAuthenticated = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const seller = await sellermodel.findById(sellerId).select('-password -otp -resetOtp');
+
+    if (!seller) {
+      return res.json({ success: false, message: "Seller not found" });
+    }
+
+    return res.json({
+      success: true,
+      seller: {
+        id: seller._id,
+        name: seller.name,
+        email: seller.email,
+        nickName: seller.nickName,
+        uniqueId: seller.uniqueId,
+        verified: seller.verified,
+        approved: seller.approved,
+        status: seller.status
+      }
+    });
+  } catch (error) {
+    console.error("Auth Check Error:", error);
+    res.status(500).json({ success: false, message: "Authentication check failed" });
   }
 };

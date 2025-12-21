@@ -93,33 +93,119 @@ export const register = async (req, res) => {
       message: "Missing Details",
     });
   }
-  try {
-    const existinguser = await usermodel.findOne({ email });
 
-    //check user exsit or not--
+  // Validate password length
+  if (password.length < 8) {
+    return res.json({
+      success: false,
+      message: "Password must be at least 8 characters",
+    });
+  }
+
+  try {
+    const existinguser = await usermodel.findOne({ email: email.toLowerCase().trim() });
+
+    //check user exist or not--
     if (existinguser) {
       return res.json({
         success: false,
-        message: "User already exists ",
+        message: "User already exists",
       });
     }
 
     const hashedpasswoed = await bcrypt.hash(password, 10);
 
-    //create new user--- and save it --
-    const user = new usermodel({ name, email, password: hashedpasswoed });
+    // Generate OTP for verification
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+    //create new user with OTP
+    const user = new usermodel({
+      name,
+      email: email.toLowerCase().trim(),
+      password: hashedpasswoed,
+      verifyotp: otp,
+      verifyotpexpAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      isAccountVerify: false
+    });
     await user.save();
 
     const profile = new Profile({
       user: user._id,
-      phone: "", // optionally set default
+      phone: "",
       addresses: [],
       name: name,
       email: email,
     });
     await profile.save();
 
-    //create token------
+    // Send OTP email for verification
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Verify Your GiftNGifts Account",
+      text: `Welcome to GiftNGifts! Your verification OTP is: ${otp}. This code expires in 10 minutes.`,
+      html: `
+        <h1>Welcome to GiftNGifts!</h1>
+        <p>Your verification OTP is: <b>${otp}</b></p>
+        <p>This code expires in 10 minutes.</p>
+        <p>If you did not create this account, please ignore this email.</p>
+      `
+    };
+
+    await transporter.sendMail(mailOption);
+
+    // Return success - user needs to verify OTP
+    return res.json({
+      success: true,
+      message: "Registration successful! Please verify your email with OTP.",
+      requiresOtp: true,
+      email: email.toLowerCase().trim()
+    });
+  } catch (error) {
+    console.error("Registration Error:", error);
+    res.json({
+      success: false,
+      message: process.env.NODE_ENV === 'production'
+        ? "Registration failed. Please try again."
+        : error.message,
+    });
+  }
+};
+
+// Verify Registration OTP
+export const verifyRegistrationOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.json({ success: false, message: "Email and OTP are required" });
+  }
+
+  try {
+    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    if (user.isAccountVerify) {
+      return res.json({ success: false, message: "Account is already verified. Please login." });
+    }
+
+    if (user.verifyotp !== otp) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    if (user.verifyotpexpAt < Date.now()) {
+      return res.json({ success: false, message: "OTP has expired. Please register again." });
+    }
+
+    // Mark account as verified
+    user.isAccountVerify = true;
+    user.verifyotp = "";
+    user.verifyotpexpAt = 0;
+    await user.save();
+
+    // Create token and log user in
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -131,24 +217,10 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    //send welcome email (non-blocking - don't wait for it)
-    const mailOption = {
-      from: process.env.SENDER_EMAIL,
-      to: email,
-      subject: "Welcome to GiftNGifts",
-      text: `Welcome to GiftNGifts! Your account has been created successfully with email: ${email}`,
-    };
-
-    // Send email in background - don't block registration
-    transporter.sendMail(mailOption).catch(err => {
-      console.log("Welcome email failed:", err.message);
-    });
-
-    // Return success with user data for auto-login
     return res.json({
       success: true,
       token,
-      message: "Account created successfully!",
+      message: "Email verified successfully! Welcome to GiftNGifts.",
       user: {
         id: user._id,
         name: user.name,
@@ -156,10 +228,58 @@ export const register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.json({
-      success: false,
-      message: error.message,
-    });
+    console.error("Verify Registration OTP Error:", error);
+    res.json({ success: false, message: "Verification failed. Please try again." });
+  }
+};
+
+// Resend Registration OTP
+export const resendRegistrationOtp = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.json({ success: false, message: "Email is required" });
+  }
+
+  try {
+    const user = await usermodel.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found. Please register first." });
+    }
+
+    if (user.isAccountVerify) {
+      return res.json({ success: false, message: "Account is already verified. Please login." });
+    }
+
+    // Rate limiting: Check if OTP was sent recently (1 minute cooldown)
+    if (user.verifyotpexpAt && user.verifyotpexpAt > Date.now() - 60000) {
+      return res.json({
+        success: false,
+        message: "Please wait 1 minute before requesting a new OTP"
+      });
+    }
+
+    // Generate new OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.verifyotp = otp;
+    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    // Send OTP email
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Your New Verification OTP",
+      text: `Your new verification OTP is: ${otp}. This code expires in 10 minutes.`,
+    };
+
+    await transporter.sendMail(mailOption);
+
+    return res.json({ success: true, message: "New OTP sent to your email" });
+  } catch (error) {
+    console.error("Resend Registration OTP Error:", error);
+    res.json({ success: false, message: "Failed to resend OTP. Please try again." });
   }
 };
 
@@ -218,9 +338,12 @@ export const login = async (req, res) => {
       message: "OTP sent to your email. Please verify to login.",
     });
   } catch (error) {
+    console.error("Login Error:", error);
     res.json({
       success: false,
-      message: error.message,
+      message: process.env.NODE_ENV === 'production'
+        ? "Login failed. Please try again."
+        : error.message,
     });
   }
 };

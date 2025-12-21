@@ -19,7 +19,7 @@ const StyledBadge = styled(Badge)({
     fontWeight: "800",
     height: "18px",
     minWidth: "18px",
-    
+
     boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
   },
 });
@@ -45,13 +45,13 @@ const Navigation = () => {
     <header className="sticky top-0 bg-[#7d0492] w-full z-[1000] shadow-md transition-all duration-300">
       <nav className="container mx-auto px-4 py-3 md:py-4">
         <div className="flex items-center justify-between gap-4 md:gap-10">
-          
+
           {/* Logo Section */}
           <Link to="/" className="flex-shrink-0 transition-transform active:scale-95">
-            <img 
-              src={logo} 
-              alt="Logo" 
-              className="h-10 md:h-14 w-auto object-contain brightness-110" 
+            <img
+              src={logo}
+              alt="Logo"
+              className="h-10 md:h-14 w-auto object-contain brightness-110"
             />
           </Link>
 
@@ -62,32 +62,32 @@ const Navigation = () => {
 
           {/* Action Icons */}
           <div className="flex items-center gap-1 md:gap-3">
-            <NavIcon 
-              title="Search" 
-              icon={<MdSearch />} 
-              onClick={() => navigate('/search-results')} 
-              mobileOnly 
+            <NavIcon
+              title="Search"
+              icon={<MdSearch />}
+              onClick={() => navigate('/search-results')}
+              mobileOnly
             />
-            
-            <NavIcon 
-              title="Wishlist" 
-              icon={<FiHeart />} 
-              to="/wishlist" 
-              badgeCount={wishlistItems.length} 
+
+            <NavIcon
+              title="Wishlist"
+              icon={<FiHeart />}
+              to="/wishlist"
+              badgeCount={wishlistItems.length}
               hideMobile
             />
 
-            <NavIcon 
-              title="Cart" 
-              icon={<MdOutlineShoppingCart />} 
-              to="/cartlist" 
-              badgeCount={cartItems.length} 
+            <NavIcon
+              title="Cart"
+              icon={<MdOutlineShoppingCart />}
+              to="/cartlist"
+              badgeCount={cartItems.length}
             />
 
             {/* Auth / Profile Section */}
             <div className="relative ml-2 border-l border-white/20 pl-3 md:pl-5" ref={userMenuRef}>
               {userData ? (
-                <button 
+                <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-[#7d0492] flex items-center justify-center font-bold text-sm shadow-inner hover:ring-4 hover:ring-white/20 transition-all"
                 >
@@ -97,7 +97,7 @@ const Navigation = () => {
                 <Button
                   onClick={() => navigate("/login")}
                   variant="outlined"
-                  className="!text-white !border-white/40 !rounded-full !px-5 !text-xs !font-bold hover:!bg-white hover:!text-[#7d0492] !transition-all"
+                  className="!text-white !border-white/40 !rounded-full !pb-2 !pt-2 !px-5 !text-xs !font-bold hover:!bg-white hover:!text-[#7d0492] !transition-all"
                 >
                   Sign In
                 </Button>
@@ -116,9 +116,9 @@ const Navigation = () => {
                     <DropdownItem icon={<FiUser />} label="My Profile" to="/myProfile" onClick={() => setUserMenuOpen(false)} />
                     <DropdownItem icon={<FiPackage />} label="Orders" to="/orders" onClick={() => setUserMenuOpen(false)} />
                     <DropdownItem icon={<FiHeart />} label="Wishlist" to="/wishlist" onClick={() => setUserMenuOpen(false)} />
-                    
+
                     <div className="my-2 border-t border-gray-50" />
-                    
+
                     <button
                       onClick={() => { logout(); setUserMenuOpen(false); }}
                       className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-colors group"
@@ -164,8 +164,8 @@ const NavIcon = ({ icon, title, to, badgeCount, onClick, mobileOnly, hideMobile 
 
 // Reusable Dropdown Item Component
 const DropdownItem = ({ icon, label, to, onClick }) => (
-  <Link 
-    to={to} 
+  <Link
+    to={to}
     onClick={onClick}
     className="flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-[#7d0492] rounded-xl transition-all group"
   >

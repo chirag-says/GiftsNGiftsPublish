@@ -32,9 +32,10 @@ export const paymentVerification = async (req, res) => {
 
     if (expectedSignature === razorpay_signature) {
       await Payment.create({ razorpay_order_id, razorpay_payment_id, razorpay_signature });
-      // res.redirect(`http://localhost:5173/paymentsuccess?reference=${razorpay_payment_id}`);
-      // Example inside /api/paymentVerification
-      res.redirect(`http://localhost:5173/payment-success?reference=${razorpay_payment_id}`); // or your frontend success page
+
+      // PRODUCTION FIX: Use environment variable for frontend URL
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      res.redirect(`${frontendUrl}/payment-success?reference=${razorpay_payment_id}`);
 
     } else {
       res.status(400).json({ success: false, message: "Invalid signature" });

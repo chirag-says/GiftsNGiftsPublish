@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/Appcontext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Show/Hide password toggle
   const [isOtpPage, setIsOtpPage] = useState(false); // OTP screen toggle
 
   const inputRefs = useRef([]);
@@ -22,6 +24,7 @@ const Login = () => {
     setName("");
     setEmail("");
     setPassword("");
+    setShowPassword(false);
     setIsOtpPage(false);
     // Ensure inputRefs exist before clearing
     inputRefs.current.forEach((input) => { if (input) input.value = "" });
@@ -66,19 +69,28 @@ const Login = () => {
         });
 
         if (data.success) {
-          localStorage.setItem("token", data.token);
-          setIsLoggedin(true);
-
-          if (data.user) {
-            setUserdata({
-              _id: data.user.id || data.user._id,
-              name: data.user.name,
-              email: data.user.email,
-            });
+          // Registration now requires OTP verification
+          if (data.requiresOtp) {
+            setIsOtpPage(true);
+            toast.success("OTP sent to your email. Please verify.");
+            setPassword("");
+            setTimeout(() => {
+              if (inputRefs.current[0]) inputRefs.current[0].focus();
+            }, 100);
+          } else {
+            // Fallback for direct login (if backend changes)
+            localStorage.setItem("token", data.token);
+            setIsLoggedin(true);
+            if (data.user) {
+              setUserdata({
+                _id: data.user.id || data.user._id,
+                name: data.user.name,
+                email: data.user.email,
+              });
+            }
+            toast.success("Account created successfully!");
+            navigate("/");
           }
-
-          toast.success("Account created successfully! You are now logged in.");
-          navigate("/");
         } else {
           toast.error(data.message);
         }
@@ -114,10 +126,12 @@ const Login = () => {
         return;
       }
 
-      const { data } = await axios.post(
-        `${backendurl}/api/auth/verify-login-otp`,
-        { email, otp }
-      );
+      // Use different endpoint based on login vs registration
+      const endpoint = state === "Sign Up"
+        ? `${backendurl}/api/auth/verify-registration-otp`
+        : `${backendurl}/api/auth/verify-login-otp`;
+
+      const { data } = await axios.post(endpoint, { email, otp });
 
       if (data.success) {
         localStorage.setItem("token", data.token);
@@ -131,12 +145,44 @@ const Login = () => {
           });
         }
 
+        toast.success(state === "Sign Up" ? "Account verified! Welcome!" : "Login successful!");
         navigate("/");
       } else {
         toast.error(data.message || "OTP verification failed.");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "OTP verification failed.");
+    }
+  };
+
+  // Resend OTP handler
+  const resendOtpHandler = async () => {
+    try {
+      const endpoint = state === "Sign Up"
+        ? `${backendurl}/api/auth/resend-registration-otp`
+        : `${backendurl}/api/auth/login`;
+
+      const payload = state === "Sign Up" ? { email } : { email, password: "" };
+
+      // For login, we need to trigger login again to get new OTP
+      if (state === "Login") {
+        toast.info("Please enter your password and submit again to receive a new OTP.");
+        setIsOtpPage(false);
+        return;
+      }
+
+      const { data } = await axios.post(endpoint, payload);
+
+      if (data.success) {
+        toast.success("New OTP sent to your email.");
+        // Clear OTP inputs
+        inputRefs.current.forEach((input) => { if (input) input.value = "" });
+        if (inputRefs.current[0]) inputRefs.current[0].focus();
+      } else {
+        toast.error(data.message || "Failed to resend OTP.");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to resend OTP.");
     }
   };
 
@@ -182,15 +228,24 @@ const Login = () => {
               type="submit"
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-[#fb541b] hover:bg-[#e04818] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#fb541b] transition-colors"
             >
-              Verify & Login
+              {state === "Sign Up" ? "Verify & Create Account" : "Verify & Login"}
             </button>
-            <button
-              type="button"
-              onClick={() => setIsOtpPage(false)}
-              className="w-full text-sm text-gray-500 hover:text-gray-700"
-            >
-              Back to Login
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsOtpPage(false)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={resendOtpHandler}
+                className="text-sm font-semibold text-[#fb541b] hover:text-[#e04818] hover:underline"
+              >
+                Resend OTP
+              </button>
+            </div>
           </form>
         ) : (
           /* Login / Sign Up Form */
@@ -234,14 +289,31 @@ const Login = () => {
                     </span>
                   )}
                 </div>
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  value={password}
-                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#fb541b]/20 focus:border-[#fb541b] transition-all"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    value={password}
+                    className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#fb541b]/20 focus:border-[#fb541b] transition-all"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#fb541b] transition-colors focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
+                  </button>
+                </div>
+                {state === "Sign Up" && (
+                  <p className="text-xs text-gray-400 mt-1 ml-1">Must be at least 8 characters</p>
+                )}
               </div>
             </div>
 

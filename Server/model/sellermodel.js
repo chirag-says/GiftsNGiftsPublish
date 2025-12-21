@@ -11,6 +11,15 @@ const sellerschema = new mongoose.Schema({
   otpExpire: { type: Date },
   verified: { type: Boolean, default: false },
 
+  // Password reset fields
+  resetOtp: { type: String },
+  resetOtpExpire: { type: Date },
+
+  // Account blocking (security feature)
+  isBlocked: { type: Boolean, default: false },
+  blockedAt: { type: Date },
+  blockReason: { type: String },
+
   phone: Number,
   alternatePhone: { type: Number },
 

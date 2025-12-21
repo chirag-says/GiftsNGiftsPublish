@@ -152,7 +152,7 @@ export const loginseller = async (req, res) => {
     // SECURITY: JWT with expiry (7 days)
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    // SECURITY: Set HttpOnly cookie (XSS protection)
+    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("stoken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -163,7 +163,6 @@ export const loginseller = async (req, res) => {
 
     res.json({
       success: true,
-      token, // Keep for backward compatibility (will be removed in future)
       message: responseMessage,
       user: {
         name: seller.name,

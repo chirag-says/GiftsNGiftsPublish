@@ -5,9 +5,12 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 
+// Ensure cookies are sent with all requests
+axios.defaults.withCredentials = true;
+
 const Login = () => {
   const navigate = useNavigate();
-  const { backendurl, setIsLoggedin, getuserData, setUserdata, userData } =
+  const { backendurl, setIsLoggedin, setUserdata, onLoginSuccess } =
     useContext(AppContext);
 
   const [state, setState] = useState("Login"); // Login or Sign Up
@@ -135,15 +138,8 @@ const Login = () => {
 
       if (data.success) {
         // Token is now set via HttpOnly cookie by the server (XSS protection)
-        setIsLoggedin(true);
-
-        if (data.user) {
-          setUserdata({
-            _id: data.user.id || data.user._id,
-            name: data.user.name,
-            email: data.user.email,
-          });
-        }
+        // Use onLoginSuccess to set state and fetch user data
+        onLoginSuccess(data.user);
 
         toast.success(state === "Sign Up" ? "Account verified! Welcome!" : "Login successful!");
         navigate("/");

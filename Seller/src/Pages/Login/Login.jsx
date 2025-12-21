@@ -5,6 +5,9 @@ import { Admincontext } from '../../Components/context/admincontext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Store, ShieldCheck } from 'lucide-react';
 
+// SECURITY: Ensure axios sends cookies with every request
+axios.defaults.withCredentials = true;
+
 function Login() {
     const [isRegister, setIsRegister] = useState(false);
     const [isOtpScreen, setIsOtpScreen] = useState(false);
@@ -23,50 +26,67 @@ function Login() {
     const [state, setState] = useState('');
     const [pincode, setPincode] = useState('');
 
-    const { backendurl, setatoken } = useContext(Admincontext);
+    // Use onLoginSuccess instead of setatoken
+    const { backendurl, onLoginSuccess } = useContext(Admincontext);
     const navigate = useNavigate();
 
-    // --- (Submit functions remain unchanged) ---
+    // Registration handler
     const registerSubmit = async (e) => {
         e.preventDefault();
-        const { data } = await axios.post(backendurl + "/api/seller/register", {
-            name, email, password, nickName, phone, street, city, state, pincode
-        });
-        if (data.success) {
-            toast.success(data.message);
-            setIsOtpScreen(true);
-        } else {
-            toast.error(data.message);
+        try {
+            const { data } = await axios.post(backendurl + "/api/seller/register", {
+                name, email, password, nickName, phone, street, city, state, pincode
+            });
+            if (data.success) {
+                toast.success(data.message);
+                setIsOtpScreen(true);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Registration failed");
         }
     };
 
+    // OTP verification handler
     const verifyOtp = async (e) => {
         e.preventDefault();
-        const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
-            email, otp
-        });
-        if (data.success) {
-            localStorage.setItem("stoken", data.token);
-            setatoken(data.token);
-            navigate("/seller-profile");
-            toast.success("OTP verified, login success");
-        } else {
-            toast.error(data.message);
+        try {
+            const { data } = await axios.post(backendurl + "/api/seller/verify-otp", {
+                email, otp
+            });
+            if (data.success) {
+                // Token is set via HttpOnly cookie by server
+                // Use onLoginSuccess to update context state
+                onLoginSuccess(data.user);
+                navigate("/seller-profile");
+                toast.success("OTP verified, login success");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "OTP verification failed");
         }
     };
 
+    // Login handler
     const loginSubmit = async (e) => {
         e.preventDefault();
-        const { data } = await axios.post(backendurl + "/api/seller/login", {
-            email, password
-        });
-        if (data.success) {
-            localStorage.setItem("stoken", data.token);
-            setatoken(data.token);
-            navigate("/");
-            toast.success("Login successful");
-        } else {
-            toast.error(data.message);
+        try {
+            const { data } = await axios.post(backendurl + "/api/seller/login", {
+                email, password
+            });
+            if (data.success) {
+                // Token is set via HttpOnly cookie by server
+                // Use onLoginSuccess to update context state
+                onLoginSuccess(data.user);
+                navigate("/");
+                toast.success("Login successful");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Login failed");
         }
     };
     // ------------------------------------------

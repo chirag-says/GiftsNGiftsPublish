@@ -21,8 +21,8 @@ import productDetailsRoutes from "./routes/productdetails_api.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import adminRoutes from "./routes/adminRoute.js";
-import productPerformanceRoutes from "./routes/productPerformanceRoutes.js";  // ✔ FIXED
-import sellerPanelRoutes from "./routes/sellerPanelRoutes.js";  // New Seller Panel Routes
+import productPerformanceRoutes from "./routes/productPerformanceRoutes.js";
+import sellerPanelRoutes from "./routes/sellerPanelRoutes.js";
 import giftRoutes from "./routes/giftRoutes.js";
 import inventoryHubRoutes from "./routes/inventoryHubRoutes.js";
 import adminShippingRoutes from "./routes/adminShippingRoutes.js";
@@ -31,14 +31,14 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import reportsRoutes from "./routes/reportsRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
-import multer from 'multer'; // For error handling
+import multer from 'multer';
 
-
+// ========== PRODUCTION: Rate Limiting & Logging ==========
+import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-
 
 const app = express();
 const port = process.env.PORT || 7000;
@@ -46,6 +46,70 @@ const port = process.env.PORT || 7000;
 connectDB();
 connectcloudinary();
 scheduleSellerInactivitySweep();
+
+// ========== PRODUCTION LOGGING ==========
+// Log format: combined (Apache-style) for production, dev for development
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined'));
+} else {
+  app.use(morgan('dev'));
+}
+
+// ========== RATE LIMITING ==========
+// General API rate limiter - 100 requests per 15 minutes per IP
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // 500 requests per window
+  message: {
+    success: false,
+    message: 'Too many requests. Please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for static files
+    return req.path.startsWith('/uploads');
+  }
+});
+
+// Strict rate limiter for auth endpoints - 10 requests per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Only 10 auth attempts
+  message: {
+    success: false,
+    message: 'Too many login/registration attempts. Please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// OTP rate limiter - 5 OTP requests per 10 minutes
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // Only 5 OTP requests
+  message: {
+    success: false,
+    message: 'Too many OTP requests. Please wait 10 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiter to all API routes
+app.use('/api', generalLimiter);
+
+// Apply stricter limiters to auth routes
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/verify-login-otp', otpLimiter);
+app.use('/api/auth/verify-registration-otp', otpLimiter);
+app.use('/api/auth/resend-registration-otp', otpLimiter);
+app.use('/api/auth/send-reset-otp', otpLimiter);
+app.use('/api/seller/login', authLimiter);
+app.use('/api/seller/register', authLimiter);
+app.use('/api/seller/verify-otp', otpLimiter);
+app.use('/api/seller/resend-otp', otpLimiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

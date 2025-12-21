@@ -1,158 +1,164 @@
 import axios from 'axios';
-import React, { useEffect, useState, createContext } from 'react';
+import React, { useEffect, useState, createContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 export const AppContext = createContext();
+
+// CRITICAL: Enable cookies for all axios requests
 axios.defaults.withCredentials = true;
 
 export const AppContextProvider = (props) => {
   const navigate = useNavigate();
   const backendurl = import.meta.env.VITE_BACKEND_URL || "http://localhost:7000";
 
+  // Auth state - no localStorage token, server cookie is the source of truth
   const [isLoggedin, setIsLoggedin] = useState(false);
-  // const [userData, setUserdata] = useState(false);
   const [userData, setUserdata] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state for initial auth check
 
   const [profile, setProfile] = useState({ name: '', phone: '', email: '' });
-
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
 
-  const token = localStorage.getItem('token') || null;
-
-  // Helper: Axios headers
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  // ========== FETCH FUNCTIONS ==========
 
   // Fetch detailed profile info
-  const fetchProfile = async () => {
-    if (!token) return;
+  const fetchProfile = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/user/profile`, {
-        headers: authHeader,
-      });
+      const { data } = await axios.get(`${backendurl}/api/user/profile`);
       if (data.success && data.profile) {
         setProfile(data.profile);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, [backendurl]);
 
   // Fetch basic user data
-  const getuserData = async () => {
-    if (!token) return;
+  const getuserData = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${backendurl}/api/user/data`, {
-        headers: authHeader,
-      });
+      const { data } = await axios.get(`${backendurl}/api/user/data`);
       if (data.success) {
         setUserdata(data.userData);
         fetchProfile();
-      } else {
-        toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error('Error fetching user data:', error);
     }
-  };
-
-  // Check if user is authenticated
-  const getAuthstate = async () => {
-    if (!token) return;
-
-    try {
-      const { data } = await axios.get(`${backendurl}/api/auth/is-auth`, {
-        headers: authHeader,
-      });
-
-      if (data.success) {
-        setIsLoggedin(true);
-        getuserData();
-        fetchCart();
-        fetchWishlist();
-      } else {
-        logout(); // remove invalid token
-      }
-    } catch (error) {
-      logout(); // clear invalid session
-    }
-  };
+  }, [backendurl, fetchProfile]);
 
   // Fetch Cart
-  const fetchCart = async () => {
-    if (!token) return;
+  const fetchCart = useCallback(async () => {
     try {
-      const res = await axios.get(`${backendurl}/api/auth/cart`, {
-        headers: authHeader,
-      });
+      const res = await axios.get(`${backendurl}/api/auth/cart`);
       setCartItems(res.data.cart || []);
     } catch (err) {
       console.error("Error fetching cart:", err);
     }
-  };
-  const clearCartAfterOrder = async () => {
-    if (!token) return;
-    setCartItems([]);
-    try {
-      await axios.delete(`${backendurl}/api/auth/clear-cart`, {
-        headers: authHeader,
-      });
-      await fetchCart();
-    } catch (err) {
-      console.error("Error clearing backend cart:", err);
-    }
-  };
-
+  }, [backendurl]);
 
   // Fetch Wishlist
-  const fetchWishlist = async () => {
-    if (!token) return;
+  const fetchWishlist = useCallback(async () => {
     try {
-      const res = await axios.get(`${backendurl}/api/auth/wishlist`, {
-        headers: authHeader,
-      });
+      const res = await axios.get(`${backendurl}/api/auth/wishlist`);
       setWishlistItems(res.data.wishlist || []);
     } catch (err) {
       console.error("Error fetching wishlist:", err);
     }
-  };
+  }, [backendurl]);
 
-  // Logout
-  const logout = async () => {
+  // Clear cart after order
+  const clearCartAfterOrder = useCallback(async () => {
+    setCartItems([]);
     try {
-      const { data } = await axios.post(`${backendurl}/api/auth/logout`, {}, {
-        headers: authHeader,
-      });
-      if (data.success) {
-        localStorage.removeItem("token");
-        // Clear chatbot session so previous user's data isn't shown
-        localStorage.removeItem("chatbotSessionId");
+      await axios.delete(`${backendurl}/api/auth/clear-cart`);
+      await fetchCart();
+    } catch (err) {
+      console.error("Error clearing backend cart:", err);
+    }
+  }, [backendurl, fetchCart]);
+
+  // ========== AUTH FUNCTIONS ==========
+
+  /**
+   * Check if user is logged in by calling /api/auth/me
+   * This replaces localStorage.getItem('token') check
+   * The server will verify the HttpOnly cookie
+   */
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${backendurl}/api/auth/me`);
+
+      if (data.success && data.user) {
+        setIsLoggedin(true);
+        setUserdata(data.user);
+
+        // Fetch additional data
+        fetchProfile();
+        fetchCart();
+        fetchWishlist();
+      } else {
         setIsLoggedin(false);
         setUserdata(null);
-        setProfile({ name: '', phone: '', email: '' });
-        setCartItems([]);
-        setWishlistItems([]);
-        navigate('/');
       }
     } catch (error) {
-      toast.error(error.message);
+      // 401 means not logged in - this is expected for guests
+      if (error.response?.status === 401) {
+        setIsLoggedin(false);
+        setUserdata(null);
+      } else {
+        console.error('Auth check failed:', error);
+      }
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [backendurl, fetchProfile, fetchCart, fetchWishlist]);
 
+  /**
+   * Logout - calls server to clear the HttpOnly cookie
+   */
+  const logout = useCallback(async () => {
+    try {
+      await axios.post(`${backendurl}/api/auth/logout-session`);
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear state regardless of server response
+      setIsLoggedin(false);
+      setUserdata(null);
+      setProfile({ name: '', phone: '', email: '' });
+      setCartItems([]);
+      setWishlistItems([]);
+
+      // Clear any remaining localStorage items (cleanup)
+      localStorage.removeItem("chatbotSessionId");
+
+      navigate('/');
+      toast.success('Logged out successfully');
+    }
+  }, [backendurl, navigate]);
+
+  /**
+   * Called after successful login/registration
+   * Sets user data and fetches additional info
+   */
+  const onLoginSuccess = useCallback((user) => {
+    setIsLoggedin(true);
+    if (user) {
+      setUserdata(user);
+    }
+    fetchProfile();
+    fetchCart();
+    fetchWishlist();
+  }, [fetchProfile, fetchCart, fetchWishlist]);
+
+  // ========== INITIAL AUTH CHECK ==========
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
-    if (savedToken) {
-      setIsLoggedin(true);
-      getuserData();       // fetch user details
-      fetchCart();         // fetch cart
-      fetchWishlist();     // fetch wishlist
-    }
-
-    getAuthstate();
-  }, []);
-
+  // ========== CONTEXT VALUE ==========
   const value = {
     backendurl,
     isLoggedin,
@@ -169,7 +175,10 @@ export const AppContextProvider = (props) => {
     setWishlistItems,
     fetchCart,
     fetchWishlist,
-    clearCartAfterOrder
+    clearCartAfterOrder,
+    loading,           // NEW: Loading state for auth check
+    checkAuthStatus,   // NEW: Manual auth refresh
+    onLoginSuccess     // NEW: Called after successful login
   };
 
   return (
@@ -178,3 +187,4 @@ export const AppContextProvider = (props) => {
     </AppContext.Provider>
   );
 };
+

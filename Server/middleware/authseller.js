@@ -4,42 +4,33 @@ import sellermodel from "../model/sellermodel.js";
 
 /**
  * Seller Authentication Middleware
- * SECURITY: Validates JWT and checks seller account status
- * 
- * Token Priority:
- * 1. HttpOnly Cookie (stoken) - Most secure, preferred
- * 2. Authorization Header (Bearer token) - For mobile apps
- * 3. Custom Header (stoken) - Legacy support, deprecated
+ * SECURITY: Reads JWT EXCLUSIVELY from HttpOnly cookie
+ * No header/localStorage fallback - pure cookie-based auth
  */
 const authseller = async (req, res, next) => {
   try {
-    // SECURITY: Try to get token from multiple sources (prioritize cookies)
-    let token = null;
-
-    // 1. Try HttpOnly Cookie first (most secure)
-    if (req.cookies && req.cookies.stoken) {
-      token = req.cookies.stoken;
-    }
-    // 2. Try Authorization header (for mobile/API clients)
-    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-    // 3. Legacy: Custom header (deprecated, for backward compatibility)
-    else if (req.headers.stoken) {
-      token = req.headers.stoken;
-    }
+    // SECURITY: ONLY read from HttpOnly cookie - no other source
+    const token = req.cookies?.stoken;
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Login required" });
+      return res.status(401).json({
+        success: false,
+        message: "Login required. Please sign in."
+      });
     }
 
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // CRITICAL: Fetch seller and check status
-    const seller = await sellermodel.findById(decode.id).select('status verified approved isBlocked');
+    const seller = await sellermodel.findById(decoded.id)
+      .select('name email status verified approved isBlocked uniqueId region');
 
     if (!seller) {
-      return res.status(401).json({ success: false, message: "Seller not found. Please register." });
+      return res.status(401).json({
+        success: false,
+        message: "Seller not found. Please register."
+      });
     }
 
     // Check if seller is blocked
@@ -67,20 +58,32 @@ const authseller = async (req, res, next) => {
       });
     }
 
-    req.sellerId = decode.id;
-    req.seller = seller; // Attach seller object for convenience
+    // Attach seller info to request
+    req.sellerId = decoded.id;
+    req.seller = seller;
+
     next();
-  } catch (e) {
-    if (e.name === 'TokenExpiredError') {
-      return res.status(401).json({ success: false, message: "Session expired. Please login again" });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired. Please login again."
+      });
     }
-    if (e.name === 'JsonWebTokenError') {
-      return res.status(401).json({ success: false, message: "Invalid token. Please login again" });
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid session. Please login again."
+      });
     }
-    console.error("Auth Middleware Error:", e);
-    res.status(401).json({ success: false, message: "Authentication failed" });
+    console.error("Seller Auth Middleware Error:", error);
+    res.status(401).json({
+      success: false,
+      message: "Authentication failed."
+    });
   }
 };
 
 export default authseller;
+
 

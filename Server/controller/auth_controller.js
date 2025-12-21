@@ -65,17 +65,24 @@ export const verifyLoginOtp = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    // SECURITY: Clear OTP after successful verification
+    user.verifyotp = '';
+    user.verifyotpexpAt = 0;
+    await user.save();
+
+    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/"
     });
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
@@ -210,16 +217,17 @@ export const verifyRegistrationOtp = async (req, res) => {
       expiresIn: "7d",
     });
 
+    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/"
     });
 
     return res.json({
       success: true,
-      token,
       message: "Email verified successfully! Welcome to GiftNGifts.",
       user: {
         id: user._id,
@@ -844,5 +852,39 @@ export const logoutUser = async (req, res) => {
   } catch (error) {
     console.error("Logout Error:", error);
     res.status(500).json({ success: false, message: "Logout failed" });
+  }
+};
+
+// ========================= GET CURRENT USER (Session Check) =========================
+/**
+ * GET /api/auth/me
+ * Used by frontend to check if user is logged in on page load
+ * Replaces localStorage.getItem('token') check
+ */
+export const getMe = async (req, res) => {
+  try {
+    // Token is already verified by userAuth middleware
+    // req.userId is set by the middleware
+    const user = await usermodel.findById(req.userId).select('name email isAccountVerify');
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isAccountVerify
+      }
+    });
+  } catch (error) {
+    console.error("Get Me Error:", error);
+    res.status(500).json({ success: false, message: "Failed to get user info" });
   }
 };

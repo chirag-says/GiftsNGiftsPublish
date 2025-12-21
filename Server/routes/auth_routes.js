@@ -20,7 +20,10 @@ import {
     clearUserCart,
     // New Registration OTP Functions
     verifyRegistrationOtp,
-    resendRegistrationOtp
+    resendRegistrationOtp,
+    // Session management
+    logoutUser,
+    getMe
 } from "../controller/auth_controller.js";
 import userAuth from "../middleware/userAuth.js";
 import auth from "../middleware/cartmiddleare.js"
@@ -29,17 +32,21 @@ const router = express.Router();
 
 // ============ AUTH ROUTES ============
 router.post('/register', register);
-router.post('/verify-registration-otp', verifyRegistrationOtp);  // NEW: Verify registration OTP
-router.post('/resend-registration-otp', resendRegistrationOtp);  // NEW: Resend registration OTP
+router.post('/verify-registration-otp', verifyRegistrationOtp);
+router.post('/resend-registration-otp', resendRegistrationOtp);
 router.post('/login', login);
 router.post('/logout', logout);
 router.post('/send-verify-otp', userAuth, sendverifyotp);
 router.post('/verify-Account', userAuth, verifyingEmail);
-router.get('/is-auth', userAuth, isAuthenticated)
-router.post('/send-reset-otp', sendResetpassword)
-router.post('/reset-password', resetpassword)
+router.get('/is-auth', userAuth, isAuthenticated);
+router.post('/send-reset-otp', sendResetpassword);
+router.post('/reset-password', resetpassword);
 router.post('/login-request-otp', loginRequestOtp);
 router.post("/verify-login-otp", verifyLoginOtp);
+
+// ============ SESSION MANAGEMENT ============
+router.get('/me', userAuth, getMe);           // NEW: Get current user (replaces localStorage check)
+router.post('/logout-session', logoutUser);    // NEW: Proper logout (clears cookie)
 
 // ============ CART ROUTES ============
 router.post('/Cart', auth, Addtocart)

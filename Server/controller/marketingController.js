@@ -74,8 +74,8 @@ export const createCoupon = async (req, res) => {
       discountType,
       discountValue,
       minOrderValue: minOrderValue || 0,
-      maxDiscount,
-      usageLimit,
+      maxDiscount: maxDiscount === "" ? undefined : maxDiscount,
+      usageLimit: usageLimit === "" ? undefined : usageLimit,
       validFrom: validFrom || new Date(),
       validUntil,
       applicableProducts,
@@ -96,6 +96,12 @@ export const updateCoupon = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
     const { couponId, ...updateData } = req.body;
+
+    // Sanitize updateData for optional numeric fields
+    if (updateData.maxDiscount === "") updateData.maxDiscount = undefined;
+    if (updateData.usageLimit === "") updateData.usageLimit = undefined;
+    if (updateData.minOrderValue === "") updateData.minOrderValue = 0;
+    if (updateData.code) updateData.code = updateData.code.toUpperCase();
 
     const coupon = await CouponModel.findOne({ _id: couponId, sellerId });
     if (!coupon) {

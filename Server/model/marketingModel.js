@@ -15,7 +15,7 @@ const bannerSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 });
 
-export const Coupon = mongoose.model("Coupon", couponSchema);
+export const Coupon = mongoose.model("AdminCoupon", couponSchema);
 export const Banner = mongoose.model("Banner", bannerSchema);
 
 const campaignSchema = new mongoose.Schema({

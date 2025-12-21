@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from "../../utils/api";
+import { exportToCSV } from "../../utils/exportUtils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
@@ -109,32 +110,21 @@ function Analytics() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const response = await api.get(
-        `/api/seller-panel/analytics/export?period=${period}`,
-        {
-          responseType: 'blob'
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `analytics-report-${period}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const response = await api.get(`/api/seller-panel/analytics/export?type=orders`);
+      
+      if (response.data.success && response.data.data && response.data.data.records) {
+        const columns = [
+          { header: 'Order ID', key: 'orderId' },
+          { header: 'Date', key: 'date' },
+          { header: 'Customer', key: 'customer' },
+          { header: 'Items', key: 'items' },
+          { header: 'Total', key: 'total' },
+          { header: 'Status', key: 'status' }
+        ];
+        exportToCSV(response.data.data.records, `analytics_report_${period}`, columns);
+      }
     } catch (err) {
       console.error("Export failed:", err);
-      // Fallback: export current data as JSON
-      const exportData = { revenueData, productData, trafficData, stats };
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `analytics-report-${period}.json`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
     } finally {
       setExporting(false);
     }

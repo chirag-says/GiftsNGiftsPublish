@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../utils/api";
+import { exportToCSV } from "../../utils/exportUtils";
 import { MdInventory, MdWarning, MdCheckCircle, MdDownload } from "react-icons/md";
 import { FiPackage, FiAlertTriangle, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 
@@ -41,16 +42,22 @@ function InventoryReports() {
 
   const handleExport = async () => {
     try {
-      const res = await api.get('/api/seller-panel/analytics/export?type=inventory', {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'inventory-report.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      // Fetch full product list for export
+      const res = await api.get('/api/seller-panel/analytics/export?type=products');
+      
+      if (res.data.success && res.data.data && res.data.data.records) {
+        const columns = [
+          { header: 'Product Name', key: 'title' },
+          { header: 'Category', key: 'category' },
+          { header: 'Price', key: 'price' },
+          { header: 'Stock', key: 'stock' },
+          { header: 'Status', key: 'availability' },
+          { header: 'Approved', key: 'approved' }
+        ];
+        exportToCSV(res.data.data.records, 'inventory_report', columns);
+      } else {
+        alert("No data to export");
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to export");

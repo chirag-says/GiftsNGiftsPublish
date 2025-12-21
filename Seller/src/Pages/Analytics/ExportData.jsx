@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import api from "../../utils/api";
+import { exportToCSV, exportToExcel } from "../../utils/exportUtils";
 import { MdDownload, MdCalendarMonth, MdTableChart, MdBarChart, MdPictureAsPdf, MdGridView, MdCheckCircle } from "react-icons/md";
 import { FiFileText, FiDownload, FiClock } from "react-icons/fi";
 
@@ -51,36 +52,73 @@ function ExportData() {
     setExportSuccess(false);
 
     try {
-      // Simulate export progress
-      const progressInterval = setInterval(() => {
-        setExportProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
+      const totalTypes = selectedDataTypes.length;
+      let completedTypes = 0;
+
+      for (const type of selectedDataTypes) {
+        // Update progress
+        setExportProgress(Math.round((completedTypes / totalTypes) * 100));
+
+        try {
+          const response = await api.get(`/api/seller-panel/analytics/export`, {
+            params: {
+              type: type,
+              startDate: dateRange.start,
+              endDate: dateRange.end
+            }
+          });
+
+          if (response.data.success && response.data.data && response.data.data.records) {
+            const records = response.data.data.records;
+            let columns = [];
+
+            if (type === 'orders') {
+              columns = [
+                { header: 'Order ID', key: 'orderId' },
+                { header: 'Date', key: 'date' },
+                { header: 'Customer', key: 'customer' },
+                { header: 'Email', key: 'email' },
+                { header: 'Items', key: 'items' },
+                { header: 'Total', key: 'total' },
+                { header: 'Status', key: 'status' },
+                { header: 'Address', key: 'address' }
+              ];
+            } else if (type === 'products') {
+              columns = [
+                { header: 'Product ID', key: 'productId' },
+                { header: 'Title', key: 'title' },
+                { header: 'Category', key: 'category' },
+                { header: 'Price', key: 'price' },
+                { header: 'Stock', key: 'stock' },
+                { header: 'Status', key: 'approved', getValue: (item) => item.approved ? 'Approved' : 'Pending' }
+              ];
+            } else if (type === 'customers') {
+              columns = [
+                { header: 'Name', key: 'name' },
+                { header: 'Email', key: 'email' },
+                { header: 'Phone', key: 'phone' },
+                { header: 'Total Orders', key: 'totalOrders' },
+                { header: 'Total Spent', key: 'totalSpent' }
+              ];
+            }
+
+            if (columns.length > 0) {
+              if (format === 'csv') {
+                exportToCSV(records, `${type}_export_${new Date().toISOString().split('T')[0]}`, columns);
+              } else {
+                exportToExcel(records, `${type}_export_${new Date().toISOString().split('T')[0]}`, columns);
+              }
+            }
           }
-          return prev + 10;
-        });
-      }, 300);
+        } catch (err) {
+          console.error(`Failed to export ${type}:`, err);
+        }
 
-      await api.post('/api/seller-panel/analytics/export', {
-        dataTypes: selectedDataTypes,
-        dateRange,
-        format
-      }, {
-        responseType: 'blob'
-      });
+        completedTypes++;
+      }
 
-      clearInterval(progressInterval);
       setExportProgress(100);
       setExportSuccess(true);
-
-      // In a real scenario, trigger download
-      // const url = window.URL.createObjectURL(new Blob([response.data]));
-      // const link = document.createElement('a');
-      // link.href = url;
-      // link.setAttribute('download', `export.${format}`);
-      // document.body.appendChild(link);
-      // link.click();
 
     } catch (err) {
       console.error(err);

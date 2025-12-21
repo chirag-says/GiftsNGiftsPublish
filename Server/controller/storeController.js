@@ -222,8 +222,7 @@ export const updateStoreCustomization = async (req, res) => {
 // Get Holiday Mode Status
 export const getHolidayMode = async (req, res) => {
   try {
-    // const sellerId = req.sellerId || req.body.sellerId;
-    const sellerId = req.user?._id || req.user?.id;
+    const sellerId = req.sellerId;
     const settings = await StoreSettingsModel.findOne({ sellerId });
     const seller = await sellermodel.findById(sellerId);
 
@@ -243,9 +242,8 @@ export const getHolidayMode = async (req, res) => {
 // Update Holiday Mode
 export const updateHolidayMode = async (req, res) => {
   try {
-    // const sellerId = req.sellerId || req.body.sellerId;
-    const sellerId = req.user?._id || req.user?.id;
-    const { holidayMode } = req.body;
+    const sellerId = req.sellerId;
+    const holidayMode = req.body;
 
     // Update in seller model
     await sellermodel.findByIdAndUpdate(sellerId, { holidayMode: holidayMode.isEnabled });

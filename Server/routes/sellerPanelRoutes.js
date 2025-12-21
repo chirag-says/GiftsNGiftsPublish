@@ -1,5 +1,6 @@
 import express from "express";
 import authseller from "../middleware/authseller.js";
+import upload from "../middleware/multer.js";
 
 // Finance Controllers
 import {
@@ -95,7 +96,9 @@ import {
   getDeliveryPartners,
   updateDeliveryPartners,
   getShippingRates,
-  updateShippingRates,
+  addShippingRate,
+  updateShippingRate,
+  deleteShippingRate,
   getPackageDimensions,
   updatePackageDimensions,
   getTrackingOrders,
@@ -161,7 +164,10 @@ sellerPanelRouter.get("/customers/loyalty", authseller, getLoyaltyProgram);
 
 // ============ STORE ROUTES ============
 sellerPanelRouter.get("/store/settings", authseller, getStoreSettings);
-sellerPanelRouter.post("/store/settings", authseller, updateStoreSettings);
+sellerPanelRouter.post("/store/settings", authseller, upload.fields([
+  { name: 'storeLogo', maxCount: 1 },
+  { name: 'storeBanner', maxCount: 1 }
+]), updateStoreSettings);
 sellerPanelRouter.get("/store/business-info", authseller, getBusinessInfo);
 sellerPanelRouter.post("/store/business-info", authseller, updateBusinessInfo);
 sellerPanelRouter.get("/store/customization", authseller, getStoreCustomization);
@@ -224,7 +230,9 @@ sellerPanelRouter.post("/shipping/settings", authseller, updateShippingSettings)
 sellerPanelRouter.get("/shipping/partners", authseller, getDeliveryPartners);
 sellerPanelRouter.post("/shipping/partners", authseller, updateDeliveryPartners);
 sellerPanelRouter.get("/shipping/rates", authseller, getShippingRates);
-sellerPanelRouter.post("/shipping/rates", authseller, updateShippingRates);
+sellerPanelRouter.post("/shipping/rates", authseller, addShippingRate);
+sellerPanelRouter.put("/shipping/rates/:rateId", authseller, updateShippingRate);
+sellerPanelRouter.delete("/shipping/rates/:rateId", authseller, deleteShippingRate);
 sellerPanelRouter.get("/shipping/dimensions", authseller, getPackageDimensions);
 sellerPanelRouter.post("/shipping/dimensions", authseller, updatePackageDimensions);
 sellerPanelRouter.get("/shipping/tracking", authseller, getTrackingOrders);

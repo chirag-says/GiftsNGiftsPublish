@@ -13,7 +13,7 @@ export const getAllShippingSettings = async (req, res) => {
         sellerId,
         defaultShippingRate: 50,
         freeShippingThreshold: 500,
-        processingTime: "1-2"
+        processingTime: 2
       });
       await settings.save();
     }
@@ -174,7 +174,8 @@ export const getShippingSettings = async (req, res) => {
 // Update Shipping Settings
 export const updateShippingSettings = async (req, res) => {
   try {
-    const { sellerId, ...updateData } = req.body;
+    const sellerId = req.sellerId;
+    const { sellerId: bodySellerId, ...updateData } = req.body;
 
     let settings = await ShippingSettingsModel.findOne({ sellerId });
 
@@ -277,7 +278,70 @@ export const getShippingRates = async (req, res) => {
   }
 };
 
-// Update Shipping Rates
+// Add Shipping Rate
+export const addShippingRate = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const newRate = req.body;
+
+    let settings = await ShippingSettingsModel.findOne({ sellerId });
+    if (!settings) {
+      settings = new ShippingSettingsModel({ sellerId, shippingZones: [] });
+    }
+
+    settings.shippingZones.push(newRate);
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "Shipping rate added", data: settings.shippingZones });
+  } catch (error) {
+    console.error("Add Shipping Rate Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Update Shipping Rate
+export const updateShippingRate = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { rateId } = req.params;
+    const updateData = req.body;
+
+    let settings = await ShippingSettingsModel.findOne({ sellerId });
+    if (!settings) return res.status(404).json({ success: false, message: "Settings not found" });
+
+    const rateIndex = settings.shippingZones.findIndex(z => z._id.toString() === rateId);
+    if (rateIndex === -1) return res.status(404).json({ success: false, message: "Rate not found" });
+
+    Object.assign(settings.shippingZones[rateIndex], updateData);
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "Shipping rate updated", data: settings.shippingZones });
+  } catch (error) {
+    console.error("Update Shipping Rate Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Delete Shipping Rate
+export const deleteShippingRate = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { rateId } = req.params;
+
+    let settings = await ShippingSettingsModel.findOne({ sellerId });
+    if (!settings) return res.status(404).json({ success: false, message: "Settings not found" });
+
+    settings.shippingZones = settings.shippingZones.filter(z => z._id.toString() !== rateId);
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "Shipping rate deleted", data: settings.shippingZones });
+  } catch (error) {
+    console.error("Delete Shipping Rate Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Update Shipping Rates (Bulk/Legacy)
 export const updateShippingRates = async (req, res) => {
   try {
     const { sellerId, defaultShippingRate, freeShippingThreshold, shippingZones } = req.body;
@@ -299,7 +363,7 @@ export const updateShippingRates = async (req, res) => {
       await settings.save();
     }
 
-    res.status(200).json({ success: true, message: "Rates updated", data: settings });
+    res.status(200).json({ success: true, message: "Settings updated", data: settings });
   } catch (error) {
     console.error("Update Shipping Rates Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });

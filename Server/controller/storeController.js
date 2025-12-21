@@ -3,6 +3,7 @@ import sellermodel from "../model/sellermodel.js";
 import orderModel from "../model/order.js";
 import addproductmodel from "../model/addproduct.js";
 import Review from "../model/review.js";
+import { v2 as cloudinary } from 'cloudinary';
 
 // Get Store Settings
 export const getStoreSettings = async (req, res) => {
@@ -34,6 +35,22 @@ export const updateStoreSettings = async (req, res) => {
   try {
     const sellerId = req.sellerId || req.body.sellerId;
     const updateData = req.body;
+
+    // Handle file uploads
+    if (req.files) {
+      if (req.files.storeLogo && req.files.storeLogo[0]) {
+        const result = await cloudinary.uploader.upload(req.files.storeLogo[0].path, {
+          folder: "store_logos"
+        });
+        updateData.storeLogo = result.secure_url;
+      }
+      if (req.files.storeBanner && req.files.storeBanner[0]) {
+        const result = await cloudinary.uploader.upload(req.files.storeBanner[0].path, {
+          folder: "store_banners"
+        });
+        updateData.storeBanner = result.secure_url;
+      }
+    }
 
     let settings = await StoreSettingsModel.findOne({ sellerId });
 

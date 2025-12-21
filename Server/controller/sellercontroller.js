@@ -156,7 +156,7 @@ export const loginseller = async (req, res) => {
     res.cookie("stoken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/"
     });
@@ -200,12 +200,26 @@ export const verifyOtp = async (req, res) => {
     seller.otpExpire = null;
     await seller.save();
 
-    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie("stoken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
+    });
 
     res.json({
       success: true,
       message: "OTP verified",
-      token
+      user: {
+        name: seller.name,
+        email: seller.email,
+        id: seller._id,
+        uniqueId: seller.uniqueId,
+        region: seller.region
+      }
     });
 
   } catch (error) {
@@ -938,7 +952,7 @@ export const logoutSeller = async (req, res) => {
     res.clearCookie("stoken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/"
     });
 

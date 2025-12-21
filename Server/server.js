@@ -31,6 +31,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import reportsRoutes from "./routes/reportsRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
+import multer from 'multer'; // For error handling
 
 
 
@@ -147,7 +148,62 @@ app.use('/api/admin/notifications', notificationRoutes);
 app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/reports', reportsRoutes);
 
+// ========== GLOBAL ERROR HANDLER ==========
+// Handles Multer errors and other middleware errors
 
+app.use((err, req, res, next) => {
+  console.error('Global Error Handler:', err.message);
 
+  // Handle Multer errors (file upload)
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 5MB.'
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        message: 'Too many files. Maximum is 10 files.'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`
+    });
+  }
+
+  // Handle custom file filter errors
+  if (err.message && (
+    err.message.includes('Only image files') ||
+    err.message.includes('Invalid file extension')
+  )) {
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+
+  // Handle CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'Cross-origin request blocked'
+    });
+  }
+
+  // Generic error handler
+  const statusCode = err.statusCode || 500;
+  const message = process.env.NODE_ENV === 'production'
+    ? 'An error occurred. Please try again.'
+    : err.message;
+
+  res.status(statusCode).json({
+    success: false,
+    message
+  });
+});
 
 app.listen(port, () => console.log(`Server started on port ${port}...`));
+

@@ -5,8 +5,8 @@ import { LuTruck, LuPenLine, LuSave, LuX, LuPackage, LuMapPin, LuInfo } from "re
 function ShippingSettings() {
   const [settings, setSettings] = useState({
     freeShippingThreshold: 0,
-    defaultShippingCost: 0,
-    expressShippingCost: 0,
+    defaultShippingRate: 0,
+    expressShippingRate: 0,
     processingTime: "1-2",
     shippingZones: [],
     packagingIncluded: true
@@ -27,7 +27,7 @@ function ShippingSettings() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get('/api/seller-panel/shipping/settings');
+        const res = await api.get('/api/seller-panel/shipping/all-settings');
         if (res.data.success && res.data.data) {
           setSettings(res.data.data);
         }
@@ -43,7 +43,7 @@ function ShippingSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await api.post('/api/seller-panel/shipping/settings', settings);
+      const res = await api.post('/api/seller-panel/shipping/all-settings', settings);
       if (res.data.success) {
         setEditing(false);
         alert("Shipping settings saved!");
@@ -128,7 +128,7 @@ function ShippingSettings() {
             </div>
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Standard</span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">{formatINR(settings.defaultShippingCost)}</h3>
+          <h3 className="text-2xl font-bold text-gray-900">{formatINR(settings.defaultShippingRate)}</h3>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -138,7 +138,7 @@ function ShippingSettings() {
             </div>
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Express</span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">{formatINR(settings.expressShippingCost)}</h3>
+          <h3 className="text-2xl font-bold text-gray-900">{formatINR(settings.expressShippingRate)}</h3>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -181,8 +181,8 @@ function ShippingSettings() {
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Standard Shipping Cost (₹)</label>
               <input
                 type="number"
-                name="defaultShippingCost"
-                value={settings.defaultShippingCost}
+                name="defaultShippingRate"
+                value={settings.defaultShippingRate}
                 onChange={handleChange}
                 disabled={!editing}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-all"
@@ -194,8 +194,8 @@ function ShippingSettings() {
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Express Shipping Cost (₹)</label>
               <input
                 type="number"
-                name="expressShippingCost"
-                value={settings.expressShippingCost}
+                name="expressShippingRate"
+                value={settings.expressShippingRate}
                 onChange={handleChange}
                 disabled={!editing}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-all"

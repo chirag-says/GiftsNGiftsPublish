@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { v2 as cloudinary } from "cloudinary"; // Import Cloudinary
+import adminAuth from "../middleware/authAdmin.js";
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // POST: Add Category
-router.post("/addcategory", upload.single("image"), async (req, res) => {
+router.post("/addcategory", adminAuth, upload.single("image"), async (req, res) => {
   try {
     const { categoryname, altText } = req.body;
 
@@ -89,7 +90,7 @@ router.get("/getcategory/:id", async (req, res) => {
 });
 
 // DELETE: Delete Category
-router.delete("/deletecategory/:id", async (req, res) => {
+router.delete("/deletecategory/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const category = await Category.findById(id);
@@ -110,7 +111,7 @@ router.delete("/deletecategory/:id", async (req, res) => {
 });
 
 // PUT: Update Category
-router.put("/updatecategory/:id", upload.single("image"), async (req, res) => {
+router.put("/updatecategory/:id", adminAuth, upload.single("image"), async (req, res) => {
   try {
     const { id } = req.params;
     const { categoryname, altText, commissionRate, attributes } = req.body;

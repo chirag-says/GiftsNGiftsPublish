@@ -769,7 +769,8 @@ export const getChatSessionById = async (req, res) => {
 
 export const getChatSessionsForUser = async (req, res) => {
     try {
-        const { userId } = req.query;
+        const userId = req.userId; // Securely get ID from auth middleware
+        
         if (!userId || !isObjectId(userId)) {
             return res.status(400).json({ success: false, message: 'Valid userId is required.' });
         }

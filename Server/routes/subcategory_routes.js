@@ -1,11 +1,12 @@
 import express from 'express';
 import Subcategory from '../model/Subcategory.js';
 import Category from '../model/Category.js'; // Assuming you have a Category model
+import adminAuth from '../middleware/authAdmin.js';
 
 const router = express.Router();
 
 // Add a new subcategory
-router.post('/addsubcategory', async (req, res) => {
+router.post('/addsubcategory', adminAuth, async (req, res) => {
     try {
         console.log("Received request body:", req.body);
         const { subcategory, categoryId } = req.body;
@@ -41,7 +42,7 @@ router.get('/getsubcategories', async (req, res) => {
 });
 
 // Update a subcategory
-router.put('/updatesubcategory/:id', async (req, res) => {
+router.put('/updatesubcategory/:id', adminAuth, async (req, res) => {
     try {
         const { subcategory } = req.body;
 
@@ -68,7 +69,7 @@ router.put('/updatesubcategory/:id', async (req, res) => {
 
 
 // Delete a subcategory
-router.delete('/deletesubcategory/:id', async (req, res) => {
+router.delete('/deletesubcategory/:id', adminAuth, async (req, res) => {
     try {
         const deletedSubcategory = await Subcategory.findByIdAndDelete(req.params.id);
 

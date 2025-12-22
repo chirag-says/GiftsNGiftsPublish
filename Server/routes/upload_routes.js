@@ -1,11 +1,12 @@
 import express from "express";
 import upload from "../middleware/multer.js";
 import Product from "../model/addproduct.js";
+import authseller from "../middleware/authseller.js";
 
 const router = express.Router();
 
 // Upload up to 5 images for a product
-router.post("/uploads", upload.array("images", 5), async (req, res) => {
+router.post("/uploads", authseller, upload.array("images", 5), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No images uploaded." });

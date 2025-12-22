@@ -14,9 +14,15 @@ import { sendEmail } from "../config/mail.js";
 // ... (Authentication functions remain the same) ...
 
 const getAdminIdFromRequest = (req) => {
-  let token = req.headers?.token;
-  if (!token && req.headers?.authorization && req.headers.authorization.startsWith('Bearer ')) {
+  let token;
+  
+  // Check for token in Authorization header
+  if (req.headers?.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
+  } 
+  // Check for token in cookies
+  else if (req.cookies && req.cookies.admin_token) {
+    token = req.cookies.admin_token;
   }
 
   if (!token) {
@@ -84,12 +90,33 @@ export const loginAdmin = async (req, res) => {
       expiresIn: "7d",
     });
 
+    // Set HttpOnly cookie
+    res.cookie('admin_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-site cookie for production
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.json({
       success: true,
       message: "Login successful",
       token,
       user: { name: admin.name },
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const logoutAdmin = async (req, res) => {
+  try {
+    res.clearCookie('admin_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
+    res.json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

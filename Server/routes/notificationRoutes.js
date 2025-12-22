@@ -29,24 +29,25 @@ import {
     clearActivityLogs,
     getActivityStats
 } from '../controller/notificationController.js';
+import adminAuth from '../middleware/authAdmin.js';
 
 const router = express.Router();
 
 // Main data endpoint - gets all notifications data in one call
-router.get('/', getAllNotificationsData);
+router.get('/', adminAuth, getAllNotificationsData);
 
 // Notifications
-router.get('/notifications', getNotifications);
-router.put('/notification/:id/read', markAsRead);
-router.post('/notifications/mark-all-read', markAllAsRead);
-router.delete('/notification/:id', deleteNotification);
-router.post('/notifications/clear', clearAllNotifications);
+router.get('/notifications', adminAuth, getNotifications);
+router.put('/notification/:id/read', adminAuth, markAsRead);
+router.post('/notifications/mark-all-read', adminAuth, markAllAsRead);
+router.delete('/notification/:id', adminAuth, deleteNotification);
+router.post('/notifications/clear', adminAuth, clearAllNotifications);
 
 // Order Alerts
-router.get('/order-alerts', getOrderAlerts);
-router.post('/order-alert', createOrderAlert);
-router.put('/order-alert/:id/read', markOrderAlertRead);
-router.delete('/order-alert/:id', deleteOrderAlert);
+router.get('/order-alerts', adminAuth, getOrderAlerts);
+router.post('/order-alert', adminAuth, createOrderAlert);
+router.put('/order-alert/:id/read', adminAuth, markOrderAlertRead);
+router.delete('/order-alert/:id', adminAuth, deleteOrderAlert);
 
 // System Updates
 router.get('/system-updates', getSystemUpdates);

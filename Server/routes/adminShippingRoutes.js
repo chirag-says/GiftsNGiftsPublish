@@ -26,6 +26,7 @@ const router = express.Router();
 
 const injectAdminSellerId = (req, res, next) => {
     if (!req.body.sellerId) {
+        // Use a valid MongoDB ObjectId for the platform admin
         req.body.sellerId = "000000000000000000000000";
     }
     next();

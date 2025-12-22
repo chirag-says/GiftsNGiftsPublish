@@ -43,63 +43,66 @@ import {
     checkInactiveVendors,
     getSellerInactivityReport,
     getAdminProfile,
-    updateAdminProfile
+    updateAdminProfile,
+    logoutAdmin
 } from '../controller/admincontroller.js';
+import adminAuth from '../middleware/authAdmin.js';
 
 const router = express.Router();
 
 // --- Authentication ---
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
-router.get('/account/profile', getAdminProfile);
-router.put('/account/profile', updateAdminProfile);
+router.post('/logout', logoutAdmin);
+router.get('/account/profile', adminAuth, getAdminProfile);
+router.put('/account/profile', adminAuth, updateAdminProfile);
 
 // --- Dashboard Data ---
-router.get("/stats", getDashboardStats);
-router.get('/activity', getRecentActivities);
+router.get("/stats", adminAuth, getDashboardStats);
+router.get('/activity', adminAuth, getRecentActivities);
 
 // --- Management Routes ---
-router.get('/orders', getAllOrders);
-router.get('/users', userlist); // Added route for userlist
-router.put('/toggle-user-block/:userId', toggleUserBlock);
+router.get('/orders', adminAuth, getAllOrders);
+router.get('/users', adminAuth, userlist); // Added route for userlist
+router.put('/toggle-user-block/:userId', adminAuth, toggleUserBlock);
 
 // --- Product Routes ---
 // router.get('/products', getAllProducts);
-router.put('/toggle-product/:productId', approveProduct);
-router.get("/seller-products/:sellerId", getProductsBySeller);
+router.put('/toggle-product/:productId', adminAuth, approveProduct);
+router.get("/seller-products/:sellerId", adminAuth, getProductsBySeller);
 // Add these routes
-router.get('/products', getAdminProducts); // Accepts ?type=pending, etc.
-router.put('/toggle-featured/:id', toggleFeatured);
-router.get('/reviews/analytics', getReviewAnalytics);
-router.get('/reviews', getAllReviews);
-router.put('/review-status/:id', updateReviewStatus);
-router.delete('/delete-review/:id', deleteReview);
-router.get('/sellers', getAllSellers);
-router.put('/toggle-approve/:id', toggleSellerApproval);
-router.put('/update-commission/:id', updateSellerCommission); // NEW
-router.get('/seller-products/:id', getSellerProducts);
-router.get('/finance/transactions', getAllTransactions);
-router.get('/finance/payouts', getVendorPayouts);
-router.post('/finance/payout-action', processPayout);
-router.get('/finance/settlements', getPendingSettlements);
-router.get('/finance/commissions', getCommissionReport);
-router.get('/finance/refunds', getRefunds);
-router.get('/finance/stats', getFinancialStats);
-router.get("/inventory", getInventoryData);
-router.post("/inventory/update", updateStock);
+router.get('/products', adminAuth, getAdminProducts); // Accepts ?type=pending, etc.
+router.put('/toggle-featured/:id', adminAuth, toggleFeatured);
+router.get('/reviews/analytics', adminAuth, getReviewAnalytics);
+router.get('/reviews', adminAuth, getAllReviews);
+router.put('/review-status/:id', adminAuth, updateReviewStatus);
+router.delete('/delete-review/:id', adminAuth, deleteReview);
+router.get('/sellers', adminAuth, getAllSellers);
+router.put('/toggle-approve/:id', adminAuth, toggleSellerApproval);
+router.put('/update-commission/:id', adminAuth, updateSellerCommission); // NEW
+router.get('/seller-products/:id', adminAuth, getSellerProducts);
+router.get('/finance/transactions', adminAuth, getAllTransactions);
+router.get('/finance/payouts', adminAuth, getVendorPayouts);
+router.post('/finance/payout-action', adminAuth, processPayout);
+router.get('/finance/settlements', adminAuth, getPendingSettlements);
+router.get('/finance/commissions', adminAuth, getCommissionReport);
+router.get('/finance/refunds', adminAuth, getRefunds);
+router.get('/finance/stats', adminAuth, getFinancialStats);
+router.get("/inventory", adminAuth, getInventoryData);
+router.post("/inventory/update", adminAuth, updateStock);
 
 // Marketing
-router.get("/marketing", getMarketingData);
-router.post("/marketing/coupon", createCoupon);
-router.post("/marketing/campaign", createCampaign);
-router.post("/marketing/flash-sale", createFlashSale);
-router.post("/marketing/banner", createBanner);
-router.delete("/marketing/banner/:id", deleteBanner);
-router.post("/marketing/affiliate", updateAffiliateSettings);
-router.get('/analytics/export', exportSalesReport);
+router.get("/marketing", adminAuth, getMarketingData);
+router.post("/marketing/coupon", adminAuth, createCoupon);
+router.post("/marketing/campaign", adminAuth, createCampaign);
+router.post("/marketing/flash-sale", adminAuth, createFlashSale);
+router.post("/marketing/banner", adminAuth, createBanner);
+router.delete("/marketing/banner/:id", adminAuth, deleteBanner);
+router.post("/marketing/affiliate", adminAuth, updateAffiliateSettings);
+router.get('/analytics/export', adminAuth, exportSalesReport);
 // Analytics
-router.get("/analytics/advanced", getAdvancedAnalytics);
-router.get("/sellers/check-inactive",checkInactiveVendors);
-router.get("/sellers/inactivity", getSellerInactivityReport);
+router.get("/analytics/advanced", adminAuth, getAdvancedAnalytics);
+router.get("/sellers/check-inactive", adminAuth, checkInactiveVendors);
+router.get("/sellers/inactivity", adminAuth, getSellerInactivityReport);
 
 export default router;

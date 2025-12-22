@@ -1,8 +1,9 @@
 import express from 'express';
+import adminAuth from '../middleware/authAdmin.js';
 const router = express.Router();
 
 // Dummy Admin Messages
-router.get('/admin-messages', (req, res) => {
+router.get('/admin-messages', adminAuth, (req, res) => {
   res.json({
     success: true,
     data: [
@@ -13,7 +14,7 @@ router.get('/admin-messages', (req, res) => {
 });
 
 // Dummy Support Tickets
-router.get('/support-tickets', (req, res) => {
+router.get('/support-tickets', adminAuth, (req, res) => {
   res.json({
     success: true,
     data: [
@@ -24,7 +25,7 @@ router.get('/support-tickets', (req, res) => {
 });
 
 // Dummy Notifications
-router.get('/notifications', (req, res) => {
+router.get('/notifications', adminAuth, (req, res) => {
   res.json({
     success: true,
     data: [
@@ -35,7 +36,7 @@ router.get('/notifications', (req, res) => {
 });
 
 // Dummy Chat with Customers
-router.get('/chat-customers', (req, res) => {
+router.get('/chat-customers', adminAuth, (req, res) => {
   res.json({
     success: true,
     data: [
@@ -46,7 +47,7 @@ router.get('/chat-customers', (req, res) => {
 });
 
 // Dummy Email Responses
-router.get('/email-responses', (req, res) => {
+router.get('/email-responses', adminAuth, (req, res) => {
   res.json({
     success: true,
     data: [

@@ -16,38 +16,39 @@ import {
     deleteExportLog,
     getReportsSummary
 } from '../controller/reportsController.js';
+import adminAuth from '../middleware/authAdmin.js';
 
 const router = express.Router();
 
 // Summary
-router.get('/summary', getReportsSummary);
+router.get('/summary', adminAuth, getReportsSummary);
 
 // Revenue Analytics
-router.get('/revenue', getRevenueAnalytics);
+router.get('/revenue', adminAuth, getRevenueAnalytics);
 
 // Vendor Performance
-router.get('/vendor-performance', getVendorPerformance);
-router.get('/seller-sales', getSellerSalesReport);
+router.get('/vendor-performance', adminAuth, getVendorPerformance);
+router.get('/seller-sales', adminAuth, getSellerSalesReport);
 
 // Product Analytics
-router.get('/product-analytics', getProductAnalytics);
+router.get('/product-analytics', adminAuth, getProductAnalytics);
 
 // Customer Insights
-router.get('/customer-insights', getCustomerInsights);
+router.get('/customer-insights', adminAuth, getCustomerInsights);
 
 // Traffic Reports
-router.get('/traffic', getTrafficReports);
+router.get('/traffic', adminAuth, getTrafficReports);
 
 // Custom Reports
-router.get('/custom', getCustomReports);
-router.post('/custom', createCustomReport);
-router.put('/custom/:id', updateCustomReport);
-router.delete('/custom/:id', deleteCustomReport);
-router.post('/custom/:id/run', runCustomReport);
+router.get('/custom', adminAuth, getCustomReports);
+router.post('/custom', adminAuth, createCustomReport);
+router.put('/custom/:id', adminAuth, updateCustomReport);
+router.delete('/custom/:id', adminAuth, deleteCustomReport);
+router.post('/custom/:id/run', adminAuth, runCustomReport);
 
 // Export Data
-router.get('/exports', getExportLogs);
-router.post('/export', createExport);
+router.get('/exports', adminAuth, getExportLogs);
+router.post('/export', adminAuth, createExport);
 router.delete('/export/:id', deleteExportLog);
 
 export default router;

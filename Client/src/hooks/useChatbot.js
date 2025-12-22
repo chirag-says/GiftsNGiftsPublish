@@ -28,7 +28,7 @@ export const useChatbot = ({ backendurl, userData }) => {
   const sessionIdRef = useRef(localStorage.getItem('chatbotSessionId') || '');
   const abortRef = useRef(false);
 
-  const userId = userData?._id;
+  const userId = userData?._id || userData?.id;
   const userName = userData?.name;
   const userEmail = userData?.email;
 
@@ -81,7 +81,8 @@ export const useChatbot = ({ backendurl, userData }) => {
         setError(errorMsg);
       }
     } finally {
-      if (!abortRef.current) setIsBootstrapping(false);
+      // Always turn off bootstrapping, even if aborted, to prevent stuck UI
+      setIsBootstrapping(false);
     }
   }, [backendurl, userEnvelope]);
 

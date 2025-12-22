@@ -32,9 +32,12 @@ import BulkOrders from './Components/Home/Footer/BulkOrders.jsx'
 import RefundPlicy from './Components/Home/Footer/RefundPolicy.jsx'
 import ErrorPage from "./Components/ErrorPage/ErrorPage.jsx";
 import ChatWidget from "./Components/Chatbot/ChatWidget.jsx";
+import ScrollToTop from "./Components/ScrollToTop.jsx";
+
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" exact={true} element={<Home />} />

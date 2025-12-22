@@ -310,7 +310,12 @@ export const addproducts = async (req, res) => {
     const {
       title, description, price, categoryname, subcategory,
       oldprice, discount, ingredients, brand, additional_details,
-      size, stock
+      size, stock,
+      // ⭐ Extra Product Specification Fields
+      productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
+      genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
+      materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
+      manufacturer, packer, department, countryOfOrigin
     } = req.body;
 
     // Basic required field validation
@@ -395,7 +400,12 @@ export const addproducts = async (req, res) => {
       size,
       stock: numStock,           // Use validated number
       sellerId,
-      images: imageUrls
+      images: imageUrls,
+      // ⭐ Add Extra Fields
+      productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
+      genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
+      materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
+      manufacturer, packer, department, countryOfOrigin
     });
 
     await newProduct.save();

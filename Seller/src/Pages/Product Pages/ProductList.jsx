@@ -48,11 +48,16 @@ function ProductList() {
   const saveUpdate = async (id) => {
     const dataToSend = updateTask[id];
     try {
+      // Optimistic UI Update
+      setProducts(prev => prev.map(p => p._id === id ? { ...p, ...dataToSend } : p));
+      
       await api.put(`/api/product/updateproduct/${id}`, dataToSend);
-      await fetchProducts();
+      await fetchProducts(); // Refresh to get server-calculated fields (like availability)
       setEditingId(null);
     } catch (error) {
       console.error("Update failed:", error);
+      alert("Failed to update product");
+      fetchProducts(); // Revert on error
     }
   };
 

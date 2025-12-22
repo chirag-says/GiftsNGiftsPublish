@@ -18,7 +18,11 @@ const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const status = error.response?.status;
+        
+        // 401: Unauthorized (Token expired/missing)
+        // 403: Forbidden (Banned/Suspended/Not Verified)
+        if (status === 401 || status === 403) {
             // Redirect to login on auth failure
             if (window.location.pathname !== '/login') {
                 window.location.href = '/login';

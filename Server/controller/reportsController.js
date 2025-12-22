@@ -290,10 +290,21 @@ export const getProductAnalytics = async (req, res) => {
             { $limit: parseInt(limit) }
         ]);
 
+        // Get view stats per product
+        const viewStats = await ProductAnalytics.aggregate([
+             {
+                $group: {
+                    _id: "$productId",
+                    totalViews: { $sum: "$views" }
+                }
+            }
+        ]);
+
         const analyticsData = products.map(p => {
             const stats = productStats.find(s => s._id?.toString() === p._id.toString()) || { purchases: 0, revenue: 0 };
-            // Mock views for now (can implement view tracking later)
-            const views = Math.floor(stats.purchases * (10 + Math.random() * 20)) || Math.floor(Math.random() * 100);
+            const viewStat = viewStats.find(v => v._id?.toString() === p._id.toString());
+            const views = viewStat ? viewStat.totalViews : 0;
+            
             return {
                 _id: p._id,
                 name: p.title,

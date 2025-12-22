@@ -447,13 +447,20 @@ export const updateSellerProfile = async (req, res) => {
     let seller = await sellermodel.findById(sellerId);
     if (!seller) return res.status(404).json({ success: false, message: "Seller not found" });
 
-    // 1. Extract alternatePhone from req.body
-    const { name, email, phone, alternatePhone, street, city, state, pincode } = req.body;
+    // 1. Extract fields from req.body
+    const { name, email, phone, alternatePhone, street, city, state, pincode, nickName, about, holidayMode } = req.body;
 
     // Update fields
     seller.name = name || seller.name;
     seller.email = email || seller.email;
     seller.phone = phone || seller.phone;
+    seller.nickName = nickName || seller.nickName;
+    seller.about = about || seller.about;
+    
+    // Handle boolean explicitly
+    if (holidayMode !== undefined) {
+      seller.holidayMode = holidayMode;
+    }
 
     // 2. Update the specific field
     seller.alternatePhone = alternatePhone || seller.alternatePhone;
@@ -506,6 +513,14 @@ export const getSellerOrders = async (req, res) => {
     // Optional: filter out only relevant items for that seller
     const filteredOrders = orders.map(order => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId);
+      
+      // Determine status for this seller's portion of the order
+      // If items have individual status, use that. Otherwise fallback to global order status.
+      // We'll take the status of the first item as the representative status for the seller's bundle
+      const sellerStatus = sellerItems.length > 0 && sellerItems[0].status 
+        ? sellerItems[0].status 
+        : order.status;
+
       return {
         _id: order._id,
         user: order.user,
@@ -513,7 +528,7 @@ export const getSellerOrders = async (req, res) => {
         totalAmount: sellerItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
         shippingAddress: order.shippingAddress,
         placedAt: order.placedAt,
-        status: order.status,
+        status: sellerStatus,
         image: order.image,
         paymentId: order.paymentId
       };
@@ -554,12 +569,16 @@ export const getSellerDashboardStats = async (req, res) => {
     let totalRevenue = 0;
 
     orders.forEach(order => {
-      order.items.forEach(item => {
-        if (item.sellerId?.toString() === sellerId.toString()) {
-          totalOrders += 1;
-          totalSales += item.price * item.quantity;
-        }
-      });
+      // Only count items belonging to this seller
+      const sellerItems = order.items.filter(item => item.sellerId?.toString() === sellerId.toString());
+      
+      if (sellerItems.length > 0) {
+        totalOrders += 1; // Count unique orders containing seller's products
+        
+        // Sum up revenue from seller's items only
+        const orderRevenue = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        totalSales += orderRevenue;
+      }
     });
 
     totalRevenue = totalSales; // You can subtract expenses or fees here
@@ -601,7 +620,19 @@ export const updateSellerOrderStatus = async (req, res) => {
         item.status = status;
       }
     });
-    order.status = status;
+    
+    // Update global status based on all items
+    const allDelivered = order.items.every(item => item.status === 'Delivered');
+    const allCancelled = order.items.every(item => item.status === 'Cancelled');
+
+    if (allDelivered) {
+      order.status = 'Delivered';
+    } else if (allCancelled) {
+      order.status = 'Cancelled';
+    } else if (status !== 'Pending' && status !== 'Cancelled' && order.status === 'Pending') {
+      order.status = 'Processing';
+    }
+    // Otherwise keep existing global status (e.g. Processing)
 
     await order.save();
     return res.json({ success: true, message: "Order status updated", order });

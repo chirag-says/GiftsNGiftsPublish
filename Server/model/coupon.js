@@ -9,8 +9,7 @@ const couponSchema = new mongoose.Schema({
   code: {
     type: String,
     required: true,
-    uppercase: true,
-    unique: true
+    uppercase: true
   },
   description: {
     type: String
@@ -60,6 +59,9 @@ const couponSchema = new mongoose.Schema({
     ref: "Category"
   }]
 }, { timestamps: true });
+
+// Compound index to ensure unique codes per seller
+couponSchema.index({ sellerId: 1, code: 1 }, { unique: true });
 
 const CouponModel = mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
 export default CouponModel;

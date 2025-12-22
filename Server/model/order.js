@@ -13,6 +13,7 @@ const orderSchema = new mongoose.Schema({
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
       sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "Seller", required: true },
+      status: { type: String, default: "Pending" }, // Per-item status
     },
   ],
   totalAmount: { type: Number, required: true },

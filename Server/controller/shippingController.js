@@ -13,7 +13,7 @@ export const getAllShippingSettings = async (req, res) => {
         sellerId,
         defaultShippingRate: 50,
         freeShippingThreshold: 500,
-        processingTime: 2
+        processingTime: "1-2"
       });
       await settings.save();
     }
@@ -159,7 +159,7 @@ export const getShippingSettings = async (req, res) => {
         sellerId,
         defaultShippingRate: 50,
         freeShippingThreshold: 500,
-        processingTime: 2
+        processingTime: "1-2"
       });
       await settings.save();
     }
@@ -379,12 +379,7 @@ export const getPackageDimensions = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: settings?.packageDimensions || {
-        defaultWeight: 0.5,
-        defaultLength: 20,
-        defaultWidth: 15,
-        defaultHeight: 10
-      }
+      data: settings?.packageDimensions || []
     });
   } catch (error) {
     console.error("Package Dimensions Error:", error);

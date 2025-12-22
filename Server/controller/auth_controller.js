@@ -426,8 +426,18 @@ export const Addtocart = async (req, res) => {
       (item) => item.productId.toString() === productId
     );
 
+    const newQuantity = existingItem 
+      ? existingItem.quantity + parseInt(quantity, 10) 
+      : parseInt(quantity, 10);
+
+    if (newQuantity > product.stock) {
+      return res.status(400).json({ 
+        message: `Cannot add ${quantity} items. Only ${product.stock} in stock. You already have ${existingItem ? existingItem.quantity : 0} in cart.` 
+      });
+    }
+
     if (existingItem) {
-      existingItem.quantity += parseInt(quantity, 10);
+      existingItem.quantity = newQuantity;
     } else {
       cart.items.push({
         productId: product._id,
@@ -444,11 +454,15 @@ export const Addtocart = async (req, res) => {
       .map((item) => ({
         product: {
           _id: item.productId._id,
-          name: item.productId.name,
-          image: item.productId.image,
+          title: item.productId.title,
           price: item.productId.price,
+          oldprice: item.productId.oldprice,
+          discount: item.productId.discount,
+          brand: item.productId.brand,
+          image: item.productId.images?.[0]?.url || "",
+          sellerId: item.sellerId,
+          stock: item.productId.stock
         },
-        sellerId: item.sellerId,
         quantity: item.quantity,
       }));
 
@@ -480,7 +494,8 @@ export const GetCart = async (req, res) => {
           discount: item.productId.discount,
           brand: item.productId.brand,
           image: item.productId.images[0]?.url || "",
-          sellerId: item.productId.sellerId
+          sellerId: item.productId.sellerId,
+          stock: item.productId.stock
         },
         quantity: item.quantity,
       }));
@@ -662,8 +677,10 @@ export const ToggleCartQuantity = async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Note: Basic stock check, consider using stock field if available
-    // if (quantity > product.stock) ...
+    // Check stock availability
+    if (quantity > product.stock) {
+      return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
+    }
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: "Cart not found" });

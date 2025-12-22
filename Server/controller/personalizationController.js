@@ -4,24 +4,14 @@ import addproductmodel from "../model/addproduct.js";
 // Get All Personalization Options
 export const getPersonalizationOptions = async (req, res) => {
   try {
-    const { sellerId } = req.body;
+    const sellerId = req.sellerId || req.body.sellerId;
 
     const options = await PersonalizationModel.find({ sellerId });
 
-    const grouped = {
-      giftWrapping: options.filter(o => o.type === "gift_wrapping"),
-      greetingCards: options.filter(o => o.type === "greeting_card"),
-      customMessages: options.filter(o => o.type === "custom_message"),
-      addOnServices: options.filter(o => o.type === "add_on_service")
-    };
-
+    // Return flat list as expected by frontend
     res.status(200).json({
       success: true,
-      data: {
-        options: grouped,
-        totalActive: options.filter(o => o.isActive).length,
-        totalOptions: options.length
-      }
+      data: options
     });
   } catch (error) {
     console.error("Personalization Options Error:", error);
@@ -124,7 +114,8 @@ export const getAddOnServices = async (req, res) => {
 // Create Personalization Option
 export const createPersonalizationOption = async (req, res) => {
   try {
-    const { sellerId, type, name, description, price, image, applicableProducts } = req.body;
+    const sellerId = req.sellerId || req.body.sellerId;
+    const { type, name, description, price, image, applicableProducts, maxLength, options } = req.body;
 
     if (!type || !name || price === undefined) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -137,7 +128,9 @@ export const createPersonalizationOption = async (req, res) => {
       description,
       price,
       image,
-      applicableProducts
+      applicableProducts,
+      maxLength,
+      options
     });
 
     await option.save();
@@ -152,9 +145,12 @@ export const createPersonalizationOption = async (req, res) => {
 // Update Personalization Option
 export const updatePersonalizationOption = async (req, res) => {
   try {
-    const { sellerId, optionId, ...updateData } = req.body;
+    const sellerId = req.sellerId || req.body.sellerId;
+    const { optionId, _id, ...updateData } = req.body;
+    
+    const idToUpdate = optionId || _id;
 
-    const option = await PersonalizationModel.findOne({ _id: optionId, sellerId });
+    const option = await PersonalizationModel.findOne({ _id: idToUpdate, sellerId });
     if (!option) {
       return res.status(404).json({ success: false, message: "Option not found" });
     }
@@ -172,7 +168,7 @@ export const updatePersonalizationOption = async (req, res) => {
 // Delete Personalization Option
 export const deletePersonalizationOption = async (req, res) => {
   try {
-    const { sellerId } = req.body;
+    const sellerId = req.sellerId || req.body.sellerId;
     const { optionId } = req.params;
 
     const option = await PersonalizationModel.findOneAndDelete({ _id: optionId, sellerId });

@@ -2,6 +2,7 @@ import addproductmodel from "../model/addproduct.js";
 import mongoose from "mongoose";
 import Review from "../model/review.js";
 import orderModel from "../model/order.js";
+import { ProductAnalytics } from "../model/reportsModel.js";
 
 export const addProduct = async (req, res) => {
   try {
@@ -71,6 +72,21 @@ export const updateProduct = async (req, res) => {
       product[key] = req.body[key];
     });
 
+    // Recalculate availability if stock changes
+    if (req.body.stock !== undefined) {
+      const stock = parseInt(req.body.stock);
+      product.stock = stock;
+      product.isAvailable = stock > 0;
+      
+      if (stock <= 0) {
+        product.availability = "Out of Stock";
+      } else if (stock < 5) {
+        product.availability = "Low Stock";
+      } else {
+        product.availability = "In Stock";
+      }
+    }
+
     // Handle image update if sent
     if (req.files?.images) {
       const newImages = req.files.images.map(file => ({
@@ -111,13 +127,43 @@ export const getProductById = async (req, res) => {
 
     const product = await addproductmodel.findById(id)
       .populate("categoryname", "name")
-      .populate("subcategory", "name");
+      .populate("subcategory", "name")
+      .lean();
 
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    return res.status(200).json({ success: true, data: product });
+    // TRACK VIEW
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      await ProductAnalytics.findOneAndUpdate(
+        { productId: id, date: today },
+        { $inc: { views: 1 } },
+        { upsert: true, new: true }
+      );
+    } catch (analyticsError) {
+      console.error("Failed to track product view:", analyticsError);
+      // Don't fail the request if analytics fails
+    }
+
+    // FETCH TOTAL VIEWS
+    let totalViews = 0;
+    try {
+      const analytics = await ProductAnalytics.aggregate([
+        { $match: { productId: new mongoose.Types.ObjectId(id) } },
+        { $group: { _id: null, totalViews: { $sum: "$views" } } }
+      ]);
+      if (analytics.length > 0) {
+        totalViews = analytics[0].totalViews;
+      }
+    } catch (err) {
+      console.error("Error fetching total views", err);
+    }
+
+    return res.status(200).json({ success: true, data: { ...product, views: totalViews } });
 
   } catch (error) {
     return res.status(500).json({ success: false, message: "Server error", error: error.message });
@@ -188,7 +234,16 @@ export const filterProducts = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    // Optional: Check if product belongs to seller (if sellerId is available in req)
+    // const sellerId = req.sellerId; 
+    // const product = await addproductmodel.findOne({ _id: id, sellerId });
+    
     const del = await addproductmodel.findByIdAndDelete(id);
+    
+    if (!del) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
     res.json({ success: true, message: "Product deleted successfully", data: del });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

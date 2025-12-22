@@ -70,6 +70,11 @@ export const loginAdmin = async (req, res) => {
       return res.json({ success: false, message: "Invalid email or password" });
     }
 
+    // Check if admin is blocked (if field exists)
+    if (admin.isBlocked) {
+      return res.status(403).json({ success: false, message: "Admin account is blocked" });
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.json({ success: false, message: "Invalid email or password" });

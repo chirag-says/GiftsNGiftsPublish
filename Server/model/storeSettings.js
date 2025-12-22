@@ -50,6 +50,8 @@ const storeSettingsSchema = new mongoose.Schema({
     businessType: String,
     gstNumber: String,
     panNumber: String,
+    personalPanNumber: String,
+    businessPanNumber: String,
     registrationNumber: String,
     yearEstablished: Number,
     businessAddress: String,
@@ -82,6 +84,13 @@ const storeSettingsSchema = new mongoose.Schema({
     endDate: Date,
     autoReplyEnabled: { type: Boolean, default: true },
     autoReplyMessage: { type: String, default: "Thank you for your message. We're currently on holiday and will respond when we return." }
+  },
+  notifications: {
+    emailNotifications: { type: Boolean, default: true },
+    smsNotifications: { type: Boolean, default: false },
+    orderAlerts: { type: Boolean, default: true },
+    stockAlerts: { type: Boolean, default: true },
+    reviewAlerts: { type: Boolean, default: true }
   },
   verificationStatus: {
     isVerified: { type: Boolean, default: false },

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
+import Admin from '../model/adminModel.js';
 
-const adminAuth = (req, res, next) => {
+const adminAuth = async (req, res, next) => {
 
   const authHeader = req.headers.authorization;
 
@@ -12,6 +13,17 @@ const adminAuth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Verify admin exists and is not blocked
+    const admin = await Admin.findById(decoded.id);
+    if (!admin) {
+      return res.status(401).json({ success: false, message: "Admin not found" });
+    }
+    
+    if (admin.isBlocked) {
+      return res.status(403).json({ success: false, message: "Admin account is blocked" });
+    }
+
     req.adminId = decoded.id;
     next();
   } catch (error) {

@@ -54,7 +54,7 @@ sellerrouter.post(
 sellerrouter.get("/sellerdetails", authseller, getSeller);
 
 // Users (Admin feature - consider adding admin auth)
-sellerrouter.get("/users-list", userlist);
+// sellerrouter.get("/users-list", userlist);
 
 // Orders
 sellerrouter.get("/orders", authseller, getSellerOrders);

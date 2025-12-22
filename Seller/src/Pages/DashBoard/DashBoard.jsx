@@ -187,16 +187,16 @@ function DashBoard() {
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Seller Dashboard</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Seller Dashboard</h1>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="relative" ref={exportMenuRef}>
                   <button
                     onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm md:text-base"
                   >
                     <FiDownload className="w-4 h-4" />
-                    Export
+                    <span className="hidden xs:inline">Export</span>
                   </button>
                   {showExportMenu && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
@@ -226,10 +226,10 @@ function DashBoard() {
         {/* Navigation Tabs */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
-            <nav className="flex space-x-8">
+            <nav className="flex w-full justify-between md:justify-start md:w-auto md:space-x-8 pb-1 md:pb-0">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview'
+                className={`flex-1 md:flex-none text-center whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm ${activeTab === 'overview'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -238,7 +238,7 @@ function DashBoard() {
               </button>
               <button
                 onClick={() => setActiveTab('products')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'products'
+                className={`flex-1 md:flex-none text-center whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm ${activeTab === 'products'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -247,7 +247,7 @@ function DashBoard() {
               </button>
               <button
                 onClick={() => setActiveTab('orders')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders'
+                className={`flex-1 md:flex-none text-center whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm ${activeTab === 'orders'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -256,7 +256,7 @@ function DashBoard() {
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'analytics'
+                className={`flex-1 md:flex-none text-center whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm ${activeTab === 'analytics'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -268,57 +268,57 @@ function DashBoard() {
         </div>
 
         {/* Main Content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-8">
+        <main className="px-4 sm:px-6 lg:px-8 py-4 md:py-8">
           {/* Stats Cards - Always visible */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-4 md:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                  <FaRupeeSign className="h-6 w-6 text-white" />
+                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-2 md:p-3">
+                  <FaRupeeSign className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                    <dd className="text-lg font-medium text-gray-900">{formatINR(stats?.overall?.total || 0)}</dd>
+                    <dt className="text-xs md:text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                    <dd className="text-base md:text-lg font-medium text-gray-900">{formatINR(stats?.overall?.total || 0)}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 md:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
-                  <FiShoppingBag className="h-6 w-6 text-white" />
+                <div className="flex-shrink-0 bg-green-500 rounded-md p-2 md:p-3">
+                  <FiShoppingBag className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats?.overall?.count || 0}</dd>
+                    <dt className="text-xs md:text-sm font-medium text-gray-500 truncate">Total Orders</dt>
+                    <dd className="text-base md:text-lg font-medium text-gray-900">{stats?.overall?.count || 0}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 md:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                  <FiPackage className="h-6 w-6 text-white" />
+                <div className="flex-shrink-0 bg-yellow-500 rounded-md p-2 md:p-3">
+                  <FiPackage className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Products</dt>
-                    <dd className="text-lg font-medium text-gray-900">{productStats.total}</dd>
+                    <dt className="text-xs md:text-sm font-medium text-gray-500 truncate">Products</dt>
+                    <dd className="text-base md:text-lg font-medium text-gray-900">{productStats.total}</dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 md:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                  <FiUsers className="h-6 w-6 text-white" />
+                <div className="flex-shrink-0 bg-blue-500 rounded-md p-2 md:p-3">
+                  <FiUsers className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-4 md:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Customers</dt>
-                    <dd className="text-lg font-medium text-gray-900">{new Set(orders.map(o => o.user)).size || 0}</dd>
+                    <dt className="text-xs md:text-sm font-medium text-gray-500 truncate">Customers</dt>
+                    <dd className="text-base md:text-lg font-medium text-gray-900">{new Set(orders.map(o => o.user)).size || 0}</dd>
                   </dl>
                 </div>
               </div>
@@ -353,11 +353,11 @@ function DashBoard() {
                     {/* Order History Button */}
                     <button
                       onClick={() => navigate('/orders')}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm md:text-base"
                     >
-                      <FiShoppingBag className="w-5 h-5" />
+                      <FiShoppingBag className="w-4 h-4 md:w-5 md:h-5" />
                       Order History
-                      <FiArrowRight className="w-4 h-4" />
+                      <FiArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                   </div>
                 </div>
@@ -370,20 +370,20 @@ function DashBoard() {
                   <div className="p-6 space-y-3">
                     <button
                       onClick={() => setIsOpenAddProductPanel({ open: true, model: "Add Product" })}
-                      className="w-full flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm md:text-base"
                     >
                       <FiPlus className="mr-2" />
                       Add New Product
                     </button>
                     <button
                       onClick={() => navigate('/orders')}
-                      className="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
                       View All Orders
                     </button>
                     <button
                       onClick={() => navigate('/products')}
-                      className="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
                       Manage Products
                     </button>
@@ -470,9 +470,9 @@ function DashBoard() {
                     </div>
                     <button
                       onClick={() => setIsOpenAddProductPanel({ open: true, model: "Add Product" })}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-2"
+                      className="px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-2 text-sm md:text-base"
                     >
-                      <FiPlus /> Add Product
+                      <FiPlus /> <span className="hidden sm:inline">Add Product</span>
                     </button>
                   </div>
                 </div>
@@ -592,12 +592,12 @@ function DashBoard() {
                         placeholder="Search orders..."
                         value={orderSearch}
                         onChange={(e) => setOrderSearch(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="pl-9 pr-3 py-1.5 md:pl-10 md:pr-4 md:py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-36 sm:w-auto"
                       />
-                      <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
+                      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
-                    <button className="p-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                      <FiFilter className="text-gray-500" />
+                    <button className="p-1.5 md:p-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                      <FiFilter className="text-gray-500 w-4 h-4 md:w-5 md:h-5" />
                     </button>
                   </div>
                 </div>
@@ -773,7 +773,7 @@ function DashBoard() {
                       </div>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/analytics/revenue')} className="w-full mt-4 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50 font-medium">
+                  <button onClick={() => navigate('/analytics')} className="w-full mt-4 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50 font-medium">
                     View Detailed Analytics
                   </button>
                 </div>

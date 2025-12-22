@@ -31,6 +31,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import reportsRoutes from "./routes/reportsRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
+import communicationRoutes from "./routes/communicationRoutes.js";
 
 
 
@@ -134,6 +135,7 @@ app.use('/api/admin/support', supportRoutes);
 app.use('/api/admin/notifications', notificationRoutes);
 app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/reports', reportsRoutes);
+app.use('/api/communication', communicationRoutes);
 
 
 

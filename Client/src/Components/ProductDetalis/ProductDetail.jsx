@@ -262,7 +262,9 @@ function ProductDetail() {
       api.get(`/api/product/reviews/${productId}`),
       api.get(`/api/product/related/${productId}`)
     ]).then(([productRes, reviewsRes, relatedRes]) => {
-      setProduct(productRes.data);
+      // Handle both wrapped {success: true, data: ...} and direct responses
+      setProduct(productRes.data.data || productRes.data);
+      
       if (reviewsRes.data.success) {
         setReviews(reviewsRes.data.reviews || []);
         setReviewStats(reviewsRes.data.stats);
@@ -394,7 +396,7 @@ function ProductDetail() {
       toast.success("Added to cart!");
       if (fetchCart) fetchCart();
     } catch (error) {
-      toast.error("Failed to add to cart");
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     } finally {
       setIsAddingToCart(false);
     }
@@ -639,21 +641,23 @@ function ProductDetail() {
                 {product.title}
               </h1>
 
-              {/* Rating */}
-              {reviewStats && (
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 rounded-lg">
-                    <span className="font-bold">{reviewStats.avgRating}</span>
-                    <HiStar className="w-4 h-4" />
-                  </div>
-                  <span className="text-gray-500">
-                    {reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? 'Rating' : 'Ratings'}
-                    {reviewStats.verifiedPurchases > 0 && (
-                      <span className="text-green-600 ml-2">• {reviewStats.verifiedPurchases} Verified</span>
-                    )}
-                  </span>
-                </div>
-              )}
+              {/* Rating & Views */}
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                {reviewStats && (
+                  <>
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 rounded-lg">
+                      <span className="font-bold">{reviewStats.avgRating}</span>
+                      <HiStar className="w-4 h-4" />
+                    </div>
+                    <span className="text-gray-500">
+                      {reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? 'Rating' : 'Ratings'}
+                      {reviewStats.verifiedPurchases > 0 && (
+                        <span className="text-green-600 ml-2">• {reviewStats.verifiedPurchases} Verified</span>
+                      )}
+                    </span>
+                  </>
+                )}
+              </div>
 
               {/* Price */}
               <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl p-6 mb-6 shadow-sm">

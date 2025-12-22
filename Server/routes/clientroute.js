@@ -6,6 +6,7 @@ import {
   getUserOrders,
   getOrderById,
   getSearchProduct,
+  validateStock,
 } from "../controller/clientcontroller.js";
 
 import userAuth from "../middleware/userAuth.js";
@@ -18,5 +19,6 @@ router.post("/place-order", userAuth, placeorder);
 router.get("/get-orders", userAuth, getUserOrders);
 router.get("/order/:id", userAuth, getOrderById);
 router.get("/search",  getSearchProduct);
+router.post("/validate-stock", userAuth, validateStock);
 
 export default router;

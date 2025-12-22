@@ -94,7 +94,8 @@ const RightComponent = ({ product }) => {
       }
     } catch (error) {
       console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
+      // Show specific error message from backend (e.g., stock limit)
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     } finally {
       setIsAddingToCart(false);
     }

@@ -83,6 +83,22 @@ function OrderSummery() {
     const totalAmount = itemsToBuy.reduce((t, i) => t + i.product.price * i.quantity, 0);
 
     try {
+      // Validate stock before payment
+      const validationPayload = {
+        items: itemsToBuy.map((item) => ({
+          productId: item.product._id,
+          name: item.product.title || item.product.name,
+          quantity: item.quantity,
+        }))
+      };
+      
+      try {
+        await api.post('/api/client/validate-stock', validationPayload);
+      } catch (err) {
+        alert(err.response?.data?.message || "Stock validation failed. Please check your cart.");
+        return; // Stop checkout
+      }
+
       const { data: { key } } = await api.get('/api/getkey');
       const { data: { order } } = await api.post('/api/checkout', {
         amount: totalAmount,

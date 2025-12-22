@@ -61,10 +61,10 @@ export const createCoupon = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    // Check if code exists
-    const existing = await CouponModel.findOne({ code: code.toUpperCase() });
+    // Check if code exists for this seller
+    const existing = await CouponModel.findOne({ sellerId, code: code.toUpperCase() });
     if (existing) {
-      return res.status(400).json({ success: false, message: "Coupon code already exists" });
+      return res.status(400).json({ success: false, message: "Coupon code already exists for your store" });
     }
 
     const coupon = new CouponModel({

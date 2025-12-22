@@ -37,6 +37,8 @@ const sellerschema = new mongoose.Schema({
   inactiveNotificationSentAt: { type: Date }, // Avoid duplicate reminders
   region: { type: String }, // Region for sorting/filtering
   approved: { type: Boolean, default: false },
+  holidayMode: { type: Boolean, default: false },
+  about: { type: String, default: '' },
 
   status: {
     type: String,

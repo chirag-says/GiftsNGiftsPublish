@@ -858,6 +858,7 @@ export const saveBankDetailsEnhanced = async (req, res) => {
       bankDetails.ifscCode = ifscCode;
       bankDetails.branchName = branchName;
       bankDetails.upiId = upiId;
+      bankDetails.cancelledChequeUrl = cancelledChequeUrl;
       await bankDetails.save();
     } else {
       bankDetails = new BankDetailsModel({
@@ -867,7 +868,8 @@ export const saveBankDetailsEnhanced = async (req, res) => {
         accountNumber,
         ifscCode,
         branchName,
-        upiId
+        upiId,
+        cancelledChequeUrl
       });
       await bankDetails.save();
     }

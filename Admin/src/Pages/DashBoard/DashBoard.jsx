@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { FiCalendar, FiActivity } from "react-icons/fi"; // Added for extra visual flair
 import { CircularProgress } from "@mui/material";
@@ -11,6 +12,7 @@ import UserStats from "../../Components/DashbordBoxes/UserStats.jsx";
 import QuickActions from "../../Components/DashbordBoxes/QuickActions.jsx";
 
 function DashBoard() {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalOrders: 0,
         totalRevenue: 0,
@@ -144,7 +146,10 @@ function DashBoard() {
                         <h2 className="text-2xl font-bold text-gray-800">
                             Recent Orders
                         </h2>
-                        <button className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500 hover:opacity-80 transition-opacity">
+                        <button 
+                            onClick={() => navigate('/orders')}
+                            className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500 hover:opacity-80 transition-opacity"
+                        >
                             View All Transactions &rarr;
                         </button>
                     </div>

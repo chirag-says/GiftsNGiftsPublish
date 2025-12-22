@@ -8,7 +8,7 @@ const personalizationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["gift_wrapping", "greeting_card", "custom_message", "add_on_service"],
+    enum: ["gift_wrapping", "greeting_card", "custom_message", "add_on_service", "text", "select", "image", "date"],
     required: true
   },
   name: {
@@ -25,6 +25,12 @@ const personalizationSchema = new mongoose.Schema({
   image: {
     type: String
   },
+  maxLength: {
+    type: Number
+  },
+  options: [{
+    type: String
+  }],
   isActive: {
     type: Boolean,
     default: true

@@ -11,18 +11,25 @@ const shippingSettingsSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  expressShippingRate: {
+    type: Number,
+    default: 100
+  },
   freeShippingThreshold: {
     type: Number,
     default: 500
   },
   processingTime: {
-    type: Number, // in days
-    default: 2
+    type: String,
+    default: "1-2"
   },
   deliveryPartners: [{
     name: String,
     isActive: Boolean,
-    priority: Number
+    priority: Number,
+    deliveryTime: String,
+    baseRate: Number,
+    logo: String
   }],
   shippingZones: [{
     zoneName: String,
@@ -30,29 +37,39 @@ const shippingSettingsSchema = new mongoose.Schema({
     rate: Number,
     deliveryDays: Number
   }],
-  packageDimensions: {
-    defaultWeight: Number,
-    defaultLength: Number,
-    defaultWidth: Number,
-    defaultHeight: Number
-  },
+  packageDimensions: [{
+    name: String,
+    length: Number,
+    width: Number,
+    height: Number,
+    maxWeight: Number,
+    isDefault: Boolean
+  }],
   pickupAddress: {
     name: String,
     phone: String,
-    address: String,
+    email: String,
+    addressLine1: String,
+    addressLine2: String,
     city: String,
     state: String,
-    pincode: String
+    pincode: String,
+    landmark: String
   },
   returnAddress: {
     name: String,
     phone: String,
-    address: String,
+    addressLine1: String,
     city: String,
     state: String,
     pincode: String,
     sameAsPickup: { type: Boolean, default: true }
   },
+  defaultPickupTime: {
+    type: String,
+    default: "10:00"
+  },
+  workingDays: [String],
   pickupSchedule: [{
     day: String,
     timeSlot: String,

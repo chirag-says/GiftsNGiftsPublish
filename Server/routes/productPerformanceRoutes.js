@@ -1,13 +1,17 @@
 import express from "express";
 import addproductmodel from "../model/addproduct.js";
 import orderModel from "../model/order.js";
+import authseller from "../middleware/authseller.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", authseller, async (req, res) => {
   try {
-    const products = await addproductmodel.find().lean();
-    const orders = await orderModel.find().lean();
+    const sellerId = req.sellerId;
+    const products = await addproductmodel.find({ sellerId }).lean();
+    
+    // Find orders that contain items from this seller
+    const orders = await orderModel.find({ "items.sellerId": sellerId }).lean();
 
     const productStats = products.map(product => {
       let totalSales = 0;

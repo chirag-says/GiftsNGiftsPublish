@@ -29,6 +29,9 @@ const bankDetailsSchema = new mongoose.Schema({
   upiId: {
     type: String
   },
+  cancelledChequeUrl: {
+    type: String
+  },
   isPrimary: {
     type: Boolean,
     default: true

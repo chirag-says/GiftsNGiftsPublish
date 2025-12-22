@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
-import { LuPackage, LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
+import { LuPackage, LuDownload, LuFileSpreadsheet, LuFileText, LuSearch } from "react-icons/lu";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { useSellerOrders } from "../../hooks/useSellerOrders.js";
@@ -25,6 +25,7 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   const [openRow, setOpenRow] = useState(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedRange, setSelectedRange] = useState(initialRange || null);
+  const [searchQuery, setSearchQuery] = useState("");
   // NEW STATE: For sorting
   const [sort, setSort] = useState(SORT_OPTIONS.NONE);
   const exportMenuRef = useRef(null);
@@ -66,15 +67,26 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   };
 
   const filteredOrders = useMemo(() => {
-    const byRange = filterOrdersByRange(orders, selectedRange);
-    const byStatus = filterOrdersByStatus(byRange, statusKey);
+    let result = filterOrdersByRange(orders, selectedRange);
+    result = filterOrdersByStatus(result, statusKey);
+
+    // Apply Search
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(order => 
+        order._id.toLowerCase().includes(lowerQuery) ||
+        order.shippingAddress?.name?.toLowerCase().includes(lowerQuery) ||
+        order.shippingAddress?.phone?.includes(lowerQuery) ||
+        order.shippingAddress?.pin?.toString().includes(lowerQuery)
+      );
+    }
 
     // Apply Sorting logic
     if (sort === SORT_OPTIONS.NONE) {
-      return byStatus;
+      return result;
     }
 
-    const sorted = [...byStatus].sort((a, b) => {
+    const sorted = [...result].sort((a, b) => {
       const totalA = a.totalAmount;
       const totalB = b.totalAmount;
 
@@ -88,7 +100,7 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
 
     return sorted;
 
-  }, [orders, selectedRange, statusKey, sort]); // Include 'sort' in dependencies
+  }, [orders, selectedRange, statusKey, sort, searchQuery]); // Include 'sort' and 'searchQuery' in dependencies
 
   const meta = statusKey ? ORDER_STATUS_META[statusKey] : null;
 
@@ -140,7 +152,22 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
         </div>
 
         {/* Export and Sort Controls Container */}
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
+          
+          {/* Search Input */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <LuSearch className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search ID, Name, Phone..."
+              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-64"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           {/* Sorting Select Field */}
           <div className="relative">
             <select
@@ -269,7 +296,12 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
                       </td>
 
                       <td className="px-4 py-4 max-w-[200px]">
-                        <span className="text-gray-600 text-sm truncate block">{order.shippingAddress?.address}</span>
+                        <span 
+                          className="text-gray-600 text-sm truncate block cursor-help" 
+                          title={order.shippingAddress?.address}
+                        >
+                          {order.shippingAddress?.address}
+                        </span>
                       </td>
 
                       <td className="px-4 py-4 text-center">
@@ -305,10 +337,41 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
                       </td>
                     </tr>
 
-                    {/* Expanded Product Details (omitted for brevity) */}
+                    {/* Expanded Product Details */}
                     {openRow === i && (
                       <tr>
                         <td colSpan="10" className="bg-gray-50/50 px-6 py-5">
+                          
+                          {/* NEW: Full Shipping Details Section */}
+                          <div className="mb-6 bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+                            <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                              <span className="w-1 h-4 bg-indigo-500 rounded-full"></span>
+                              Shipping Information
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Recipient Name</p>
+                                <p className="text-gray-900 font-medium">{order.shippingAddress?.name}</p>
+                              </div>
+                              <div className="md:col-span-2">
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Full Address</p>
+                                <p className="text-gray-900">{order.shippingAddress?.address}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">City & State</p>
+                                <p className="text-gray-900">{order.shippingAddress?.city}, {order.shippingAddress?.state}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Pincode</p>
+                                <p className="text-gray-900 font-medium">{order.shippingAddress?.pin}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Contact Number</p>
+                                <p className="text-gray-900 font-medium">{order.shippingAddress?.phone}</p>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
                             <div className="px-5 py-3 bg-gray-50/80 border-b border-gray-100">
                               <h4 className="text-sm font-semibold text-gray-700">Order Items</h4>

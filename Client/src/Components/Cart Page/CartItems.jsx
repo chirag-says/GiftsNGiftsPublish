@@ -79,7 +79,8 @@ function CartItems({ product, cartItemId, onRemove, onUpdateQuantity, quantity, 
 
             <button
               onClick={() => onUpdateQuantity(cartItemId, quantity + 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all"
+              disabled={quantity >= product.stock}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
             > + </button>
           </div>
 

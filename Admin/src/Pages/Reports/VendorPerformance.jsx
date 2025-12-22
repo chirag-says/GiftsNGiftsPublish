@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import api from "../../utils/api";
+import { downloadCSV } from "../../utils/exportUtils";
 import { Admincontext } from "../../Components/context/admincontext";
 import {
     Button, Card, CardContent, LinearProgress, Table, TableBody, TableCell,
@@ -108,7 +109,7 @@ function VendorPerformance() {
                 </div>
                 <div className="flex gap-2">
                     <Button startIcon={<FiRefreshCw />} onClick={fetchVendors} disabled={loading}>Refresh</Button>
-                    <Button variant="outlined" startIcon={<FiDownload />}>Export</Button>
+                    <Button variant="outlined" startIcon={<FiDownload />} onClick={() => downloadCSV(vendors, 'vendor_performance')}>Export</Button>
                 </div>
             </div>
 

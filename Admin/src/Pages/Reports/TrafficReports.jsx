@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import api from "../../utils/api";
+import { downloadCSV } from "../../utils/exportUtils";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, TextField } from "@mui/material";
 import { MdShowChart, MdDevices, MdPublic, MdTimer } from "react-icons/md";
@@ -81,7 +82,7 @@ function TrafficReports() {
                 </div>
                 <div className="flex gap-2">
                     <Button startIcon={<FiRefreshCw />} onClick={fetchData} disabled={loading}>Refresh</Button>
-                    <Button variant="outlined" startIcon={<FiDownload />}>Export</Button>
+                    <Button variant="outlined" startIcon={<FiDownload />} onClick={() => downloadCSV(traffic, 'traffic_report')}>Export</Button>
                 </div>
             </div>
 

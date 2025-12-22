@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import api from "../../utils/api";
+import { downloadCSV } from "../../utils/exportUtils";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress } from "@mui/material";
 import { MdPeople, MdPersonAdd, MdRepeat, MdLocationOn } from "react-icons/md";
@@ -61,7 +62,7 @@ function CustomerInsights() {
                 </div>
                 <div className="flex gap-2">
                     <Button startIcon={<FiRefreshCw />} onClick={fetchData} disabled={loading}>Refresh</Button>
-                    <Button variant="outlined" startIcon={<FiDownload />}>Export</Button>
+                    <Button variant="outlined" startIcon={<FiDownload />} onClick={() => downloadCSV(insights.topLocations || [], 'customer_insights')}>Export</Button>
                 </div>
             </div>
 

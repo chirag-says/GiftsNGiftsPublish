@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import api from "../../utils/api";
+import { downloadCSV } from "../../utils/exportUtils";
 import Tooltip from "@mui/material/Tooltip";
 import { LuTrash2, LuSettings, LuLayers, LuTag, LuImage, LuPercent } from "react-icons/lu";
 import { Button, TextField, IconButton, Tabs, Tab, Box } from "@mui/material";
@@ -191,7 +192,7 @@ function CategoryList() {
           <h3 className="text-lg font-semibold">Bulk Operations</h3>
           <p className="max-w-md text-center mb-6">Import/Export categories via CSV. Update commissions in bulk.</p>
           <div className="flex gap-4">
-            <Button variant="outlined" color="primary">Export CSV</Button>
+            <Button variant="outlined" color="primary" onClick={() => downloadCSV(categories, 'categories')}>Export CSV</Button>
             <Button variant="contained" color="primary">Import CSV</Button>
           </div>
         </div>

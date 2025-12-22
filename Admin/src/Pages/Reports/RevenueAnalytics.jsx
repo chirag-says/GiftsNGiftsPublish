@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import api from "../../utils/api";
+import { downloadCSV } from "../../utils/exportUtils";
 import { Admincontext } from "../../Components/context/admincontext";
 import { Button, Card, CardContent, LinearProgress, Alert, FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material";
 import { MdTrendingUp, MdShoppingCart, MdAttachMoney, MdShowChart } from "react-icons/md";
@@ -59,7 +60,7 @@ function RevenueAnalytics() {
                     <TextField type="date" label="Start Date" size="small" InputLabelProps={{ shrink: true }} value={dateRange.start} onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })} />
                     <TextField type="date" label="End Date" size="small" InputLabelProps={{ shrink: true }} value={dateRange.end} onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })} />
                     <Button startIcon={<FiRefreshCw />} onClick={fetchData} disabled={loading}>Refresh</Button>
-                    <Button variant="outlined" startIcon={<FiDownload />}>Export</Button>
+                    <Button variant="outlined" startIcon={<FiDownload />} onClick={() => downloadCSV(data, 'revenue_analytics')}>Export</Button>
                 </div>
             </div>
 

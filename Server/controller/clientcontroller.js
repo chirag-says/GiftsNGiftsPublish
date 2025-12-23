@@ -5,23 +5,22 @@ import sellermodel from "../model/sellermodel.js";
 
 export const productlist = async (req, res) => {
   try {
-    // 1. Get IDs of active sellers (not on holiday, not suspended)
-    const activeSellers = await sellermodel.find({ 
-      holidayMode: { $ne: true },
-      status: { $ne: 'Suspended' },
-      isBlocked: { $ne: true }
+    // 1. Get IDs of unavailable sellers (holiday, suspended, blocked)
+    const unavailableSellers = await sellermodel.find({ 
+      $or: [
+        { holidayMode: true },
+        { status: 'Suspended' },
+        { isBlocked: true }
+      ]
     }).select('_id');
     
-    const activeSellerIds = activeSellers.map(s => s._id);
+    const unavailableSellerIds = unavailableSellers.map(s => s._id);
 
     const categories = await Category.find();
-    // 2. Filter products by active sellers OR no seller (Admin products)
+    // 2. Filter products: Exclude those from unavailable sellers
+    // This allows products from active sellers, deleted sellers, or no seller (Admin)
     const products = await addproductmodel.find({
-      $or: [
-        { sellerId: { $in: activeSellerIds } },
-        { sellerId: { $exists: false } },
-        { sellerId: null }
-      ]
+      sellerId: { $nin: unavailableSellerIds }
     });
 
     if (!products.length) {
@@ -36,24 +35,22 @@ export const productlist = async (req, res) => {
 
 export const getAllProductsByCategory = async (req, res) => {
   try {
-    // Get active sellers
-    const activeSellers = await sellermodel.find({ 
-      holidayMode: { $ne: true },
-      status: { $ne: 'Suspended' },
-      isBlocked: { $ne: true }
+    // Get unavailable sellers
+    const unavailableSellers = await sellermodel.find({ 
+      $or: [
+        { holidayMode: true },
+        { status: 'Suspended' },
+        { isBlocked: true }
+      ]
     }).select('_id');
-    const activeSellerIds = activeSellers.map(s => s._id);
+    const unavailableSellerIds = unavailableSellers.map(s => s._id);
 
     const categories = await Category.find();
     const result = await Promise.all(
       categories.map(async (category) => {
         const products = await addproductmodel.find({ 
           categoryname: category._id,
-          $or: [
-            { sellerId: { $in: activeSellerIds } },
-            { sellerId: { $exists: false } },
-            { sellerId: null }
-          ]
+          sellerId: { $nin: unavailableSellerIds }
         });
         return { category: category.categoryname, products };
       })
@@ -154,20 +151,18 @@ export const getOrderById = async (req, res) => {
 
 export const getSearchProduct = async (req, res) => {
   try {
-    // Get active sellers
-    const activeSellers = await sellermodel.find({ 
-      holidayMode: { $ne: true },
-      status: { $ne: 'Suspended' },
-      isBlocked: { $ne: true }
+    // Get unavailable sellers
+    const unavailableSellers = await sellermodel.find({ 
+      $or: [
+        { holidayMode: true },
+        { status: 'Suspended' },
+        { isBlocked: true }
+      ]
     }).select('_id');
-    const activeSellerIds = activeSellers.map(s => s._id);
+    const unavailableSellerIds = unavailableSellers.map(s => s._id);
 
     const products = await addproductmodel.find({
-      $or: [
-        { sellerId: { $in: activeSellerIds } },
-        { sellerId: { $exists: false } },
-        { sellerId: null }
-      ]
+      sellerId: { $nin: unavailableSellerIds }
     });
     res.status(200).json({ success: true, data: products });
   } catch (error) {

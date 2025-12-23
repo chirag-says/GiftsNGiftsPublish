@@ -305,6 +305,8 @@ export const ordercomplete = async (req, res) => {
 
 export const addproducts = async (req, res) => {
   try {
+    console.log("Add Product Request Body:", req.body);
+    console.log("Add Product Files:", req.files);
     const sellerId = req.sellerId;  // from token
 
     const {

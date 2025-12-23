@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import api from "../../utils/api";
 import { Admincontext } from '../../Components/context/admincontext';
 import { toast } from 'react-toastify';
@@ -22,8 +22,6 @@ const Card = ({ title, icon, children, subtitle }) => (
 
 function AccountSettings() {
   const { backendurl } = useContext(Admincontext);
-  // const token = useMemo(() => atoken || localStorage.getItem('atoken') || '', [atoken]); // No longer needed
-
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
   const [securityForm, setSecurityForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [meta, setMeta] = useState({ createdAt: '', updatedAt: '' });
@@ -32,7 +30,6 @@ function AccountSettings() {
   const [savingSecurity, setSavingSecurity] = useState(false);
 
   useEffect(() => {
-    // if (!token) return;
     const controller = new AbortController();
 
     const fetchProfile = async () => {
@@ -66,7 +63,7 @@ function AccountSettings() {
 
     fetchProfile();
     return () => controller.abort();
-  }, [backendurl, token]);
+  }, [backendurl]);
 
   const onProfileChange = ({ target }) => {
     setProfileForm((prev) => ({ ...prev, [target.name]: target.value }));
@@ -74,8 +71,6 @@ function AccountSettings() {
 
   const handleProfileSave = async (event) => {
     event.preventDefault();
-    // if (!token) return toast.error('Session expired. Please login again.');
-
     try {
       setSavingProfile(true);
       const { data } = await api.put('/api/admin/account/profile', profileForm);
@@ -94,8 +89,6 @@ function AccountSettings() {
 
   const handleSecuritySave = async (event) => {
     event.preventDefault();
-    // if (!token) return toast.error('Session expired. Please login again.');
-
     if (!securityForm.newPassword) {
       return toast.error('Enter a new password to continue');
     }

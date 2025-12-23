@@ -15,9 +15,13 @@ export const productlist = async (req, res) => {
     const activeSellerIds = activeSellers.map(s => s._id);
 
     const categories = await Category.find();
-    // 2. Filter products by active sellers
+    // 2. Filter products by active sellers OR no seller (Admin products)
     const products = await addproductmodel.find({
-      sellerId: { $in: activeSellerIds }
+      $or: [
+        { sellerId: { $in: activeSellerIds } },
+        { sellerId: { $exists: false } },
+        { sellerId: null }
+      ]
     });
 
     if (!products.length) {
@@ -45,7 +49,11 @@ export const getAllProductsByCategory = async (req, res) => {
       categories.map(async (category) => {
         const products = await addproductmodel.find({ 
           categoryname: category._id,
-          sellerId: { $in: activeSellerIds }
+          $or: [
+            { sellerId: { $in: activeSellerIds } },
+            { sellerId: { $exists: false } },
+            { sellerId: null }
+          ]
         });
         return { category: category.categoryname, products };
       })
@@ -72,9 +80,9 @@ export const placeorder = async (req, res) => {
         return res.status(404).json({ success: false, message: `Product not found: ${item.name || item.productId}` });
       }
 
-      // Check Seller Status
+      // Check Seller Status (Skip check if no seller - assume Admin/Legacy)
       const seller = product.sellerId;
-      if (!seller || seller.holidayMode || seller.status === 'Suspended' || seller.isBlocked) {
+      if (seller && (seller.holidayMode || seller.status === 'Suspended' || seller.isBlocked)) {
         return res.status(400).json({
           success: false,
           message: `Seller for "${product.title}" is currently unavailable.`
@@ -155,7 +163,11 @@ export const getSearchProduct = async (req, res) => {
     const activeSellerIds = activeSellers.map(s => s._id);
 
     const products = await addproductmodel.find({
-      sellerId: { $in: activeSellerIds }
+      $or: [
+        { sellerId: { $in: activeSellerIds } },
+        { sellerId: { $exists: false } },
+        { sellerId: null }
+      ]
     });
     res.status(200).json({ success: true, data: products });
   } catch (error) {
@@ -177,9 +189,9 @@ export const validateStock = async (req, res) => {
         return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
       }
 
-      // Check Seller Status
+      // Check Seller Status (Skip check if no seller - assume Admin/Legacy)
       const seller = product.sellerId;
-      if (!seller || seller.holidayMode || seller.status === 'Suspended' || seller.isBlocked) {
+      if (seller && (seller.holidayMode || seller.status === 'Suspended' || seller.isBlocked)) {
         return res.status(400).json({
           success: false,
           message: `Seller for "${product.title}" is currently unavailable.`

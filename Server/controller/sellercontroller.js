@@ -374,6 +374,10 @@ export const addproducts = async (req, res) => {
     }
 
     // ========== IMAGE UPLOAD ==========
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one product image is required' });
+    }
+
     const images = await Promise.all(
       req.files.map(file =>
         cloudinary.uploader.upload(file.path, { resource_type: "image" })
@@ -507,7 +511,7 @@ export const getSellerOrders = async (req, res) => {
       .sort({ placedAt: -1 });
 
     if (!orders.length) {
-      return res.status(404).json({ message: "No orders found for this seller." });
+      return res.status(200).json({ success: true, filteredOrders: [] });
     }
 
     // Optional: filter out only relevant items for that seller

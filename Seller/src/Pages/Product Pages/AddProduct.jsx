@@ -85,7 +85,7 @@ function AddProduct() {
   const fetchCategories = async () => {
     try {
       const response = await api.get(`/api/getcategories`);
-      setCategories(response.data);
+      setCategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setFormError('Unable to load categories. Please refresh the page.');
@@ -95,7 +95,7 @@ function AddProduct() {
   const fetchSubcategories = async () => {
     try {
       const response = await api.get(`/api/getsubcategories`);
-      setSubcategories(response.data);
+      setSubcategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching subcategories:', error);
       setFormError('Unable to load subcategories. Please refresh the page.');
@@ -121,7 +121,7 @@ function AddProduct() {
   // Filter Subcategories logic
   useEffect(() => {
     if (Product.categoryname) {
-      const filtered = subcategories.filter(
+      const filtered = (subcategories || []).filter(
         (sub) => sub.category?._id === Product.categoryname
       );
       setFilteredSubcategories(filtered);
@@ -234,7 +234,7 @@ function AddProduct() {
   };
 
   const imagePreviews = useMemo(
-    () => images.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    () => (images || []).map((file) => ({ file, url: URL.createObjectURL(file) })),
     [images]
   );
 
@@ -287,7 +287,12 @@ function AddProduct() {
 
       const response = await api.post(
         `/api/seller/addproducts`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       if (response.data.success) {
@@ -597,7 +602,7 @@ function AddProduct() {
                                         displayEmpty
                                     >
                                         <MenuItem value="" disabled>Select Subcategory</MenuItem>
-                                        {filteredSubcategories.map((sub) => (
+                                        {(filteredSubcategories || []).map((sub) => (
                                             <MenuItem key={sub._id} value={sub._id}>{sub.subcategory}</MenuItem>
                                         ))}
                                     </Select>

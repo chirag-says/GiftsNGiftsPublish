@@ -11,7 +11,7 @@ export const AdminProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await api.get('/api/admin/profile')
+        await api.get('/api/admin/account/profile')
           .then(() => setAuthenticated(true))
           .catch(() => setAuthenticated(false));
       } catch (error) {

@@ -10,24 +10,35 @@ function ProductList() {
 
   const [products, setProducts] = useState([]);
   const [filters, setFilters] = useState(null);
-  const [activeCategoryName, setActiveCategoryName] = useState(category || 'Birthday Wish List');
+  const [activeCategoryName, setActiveCategoryName] = useState(category || 'All Products');
 
   useEffect(() => {
     document.title = `${activeCategoryName} - GiftNgift`;
   }, [activeCategoryName]);
 
   useEffect(() => {
+    if (category) {
+      setActiveCategoryName(category);
+    } else {
+      setActiveCategoryName('All Products');
+    }
+
     const fetchCategoryProducts = async () => {
       try {
         const { data } = await api.get('/api/client/productsbycategory');
         if (data.success && Array.isArray(data.categories)) {
-          const categoryData = data.categories.find(cat => cat.category === category);
-          if (categoryData && Array.isArray(categoryData.products)) {
-            const approvedProducts = categoryData.products.filter(p => p.approved === true);
-            console.log("Approved Products:", approvedProducts);
-            setProducts(approvedProducts);
+          if (category) {
+            const categoryData = data.categories.find(cat => cat.category === category);
+            if (categoryData && Array.isArray(categoryData.products)) {
+              const approvedProducts = categoryData.products.filter(p => p.approved === true);
+              console.log("Approved Products:", approvedProducts);
+              setProducts(approvedProducts);
+            } else {
+              setProducts([]);
+            }
           } else {
-            setProducts([]);
+            const allProducts = data.categories.flatMap(cat => cat.products).filter(p => p.approved === true);
+            setProducts(allProducts);
           }
         }
       } catch (error) {
@@ -35,9 +46,7 @@ function ProductList() {
       }
     };
 
-    if (category) {
-      fetchCategoryProducts();
-    }
+    fetchCategoryProducts();
   }, [category]);
 
   const applyFilters = async (appliedFilters) => {

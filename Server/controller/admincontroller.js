@@ -93,8 +93,8 @@ export const loginAdmin = async (req, res) => {
     // Set HttpOnly cookie
     res.cookie('admin_token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-site cookie for production
+        secure: true, // Required for SameSite=None, works on localhost
+        sameSite: 'none', // Required for cross-origin (different ports)
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -113,8 +113,8 @@ export const logoutAdmin = async (req, res) => {
   try {
     res.clearCookie('admin_token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      secure: true,
+      sameSite: 'none'
     });
     res.json({ success: true, message: "Logged out successfully" });
   } catch (error) {

@@ -4,33 +4,89 @@ import CartItems from "../Cart Page/CartItems.jsx";
 import Totalprice from "../Cart Page/Totalprice.jsx";
 import api from "../../utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Divider, Paper } from "@mui/material";
+import { Button, Divider, Paper, CircularProgress } from "@mui/material";
 import { HiOutlineLocationMarker, HiOutlineShieldCheck, HiOutlineShoppingBag } from "react-icons/hi";
 
+/**
+ * SECURITY REFACTOR: 
+ * 1. Removed localStorage.getItem("selectedAddress") - PII vulnerability
+ * 2. Address is now fetched from authenticated backend API
+ * 3. Added fallback for page refresh using location.state.selectedAddressId
+ * 4. Added proper loading states
+ */
 function OrderSummery() {
   const navigate = useNavigate();
-  const { cartItems, setCartItems, fetchCart, clearCartAfterOrder } = useContext(AppContext);
+  const { cartItems, setCartItems, fetchCart, clearCartAfterOrder, isLoggedin } = useContext(AppContext);
   const location = useLocation();
+
+  // Get selected items and address ID from navigation state
   const selectedItems = location.state?.selectedItems;
+  const selectedAddressId = location.state?.selectedAddressId;
 
   const itemsToBuy = selectedItems
     ? cartItems.filter(item => selectedItems.includes(item.product._id))
     : cartItems;
 
   const [address, setAddress] = useState(null);
+  const [addressLoading, setAddressLoading] = useState(true);
+  const [addressError, setAddressError] = useState(null);
+
+  /**
+   * SECURITY: Fetch address from authenticated backend API
+   * This replaces the insecure localStorage.getItem("selectedAddress") pattern
+   */
+  const fetchShippingAddress = async () => {
+    setAddressLoading(true);
+    setAddressError(null);
+
+    try {
+      let response;
+
+      if (selectedAddressId) {
+        // Fetch specific address by ID (passed via navigation state)
+        response = await api.get(`/api/user/address/${selectedAddressId}`);
+      } else {
+        // Fallback: Fetch user's default shipping address
+        response = await api.get('/api/user/default-shipping-address');
+      }
+
+      if (response.data.success && response.data.address) {
+        setAddress(response.data.address);
+      } else {
+        setAddressError("No shipping address found. Please add an address.");
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("Error fetching address:", err);
+
+      if (err.response?.status === 401) {
+        setAddressError("Session expired. Please login again.");
+        navigate("/login", { state: { from: location } });
+        return;
+      }
+
+      setAddressError(err.response?.data?.message || "Failed to load shipping address.");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isLoggedin) {
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+
     fetchCart();
-    const savedAddress = JSON.parse(localStorage.getItem("selectedAddress"));
-    setAddress(savedAddress);
-  }, []);
+    fetchShippingAddress();
+  }, [isLoggedin]);
 
   const handleRemove = async (cartItemId) => {
     try {
       await api.delete(`/api/auth/delete/${cartItemId}`);
       setCartItems((prev) => prev.filter((item) => item.product._id !== cartItemId));
     } catch (err) {
-      console.error("Error removing item:", err);
+      if (import.meta.env.DEV) console.error("Error removing item:", err);
     }
   };
 
@@ -46,13 +102,13 @@ function OrderSummery() {
         )
       );
     } catch (err) {
-      alert(err.response?.data?.message || "Error updating quantity");
+      toast.error(err.response?.data?.message || "Error updating quantity");
     }
   };
 
   const buildOrderPayload = () => {
     if (!address) {
-      alert("Please select a shipping address.");
+      toast.error("Please select a shipping address.");
       throw new Error("Address missing");
     }
 
@@ -91,11 +147,11 @@ function OrderSummery() {
           quantity: item.quantity,
         }))
       };
-      
+
       try {
         await api.post('/api/client/validate-stock', validationPayload);
       } catch (err) {
-        alert(err.response?.data?.message || "Stock validation failed. Please check your cart.");
+        toast.error(err.response?.data?.message || "Stock validation failed. Please check your cart.");
         return; // Stop checkout
       }
 
@@ -120,6 +176,9 @@ function OrderSummery() {
             );
 
             if (res.data.success) {
+              // Store order ID for verification on success page
+              const orderId = res.data.order?._id;
+
               if (selectedItems && selectedItems.length < cartItems.length) {
                 // Partial cleanup
                 for (const item of itemsToBuy) {
@@ -129,10 +188,14 @@ function OrderSummery() {
               } else {
                 await clearCartAfterOrder();
               }
-              navigate("/payment-success");
+
+              // Navigate with order ID for backend verification
+              navigate("/payment-success", {
+                state: { orderId, paymentId: response.razorpay_payment_id }
+              });
             }
           } catch (error) {
-            alert("Order failed to save. Please contact support.");
+            toast.error("Order failed to save. Please contact support.");
           }
         },
         prefill: { name: address?.fullName, contact: address?.phoneNumber },
@@ -142,9 +205,21 @@ function OrderSummery() {
       const razor = new window.Razorpay(options);
       razor.open();
     } catch (error) {
-      alert("Payment initialization failed.");
+      toast.error("Payment initialization failed.");
     }
   };
+
+  // Loading state while fetching address
+  if (addressLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <CircularProgress sx={{ color: '#7d0492' }} />
+          <p className="mt-4 text-gray-600">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
@@ -175,7 +250,20 @@ function OrderSummery() {
                   Change
                 </Button>
               </div>
-              {address ? (
+
+              {addressError ? (
+                <div className="text-red-500 text-sm">
+                  <p className="italic">{addressError}</p>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate("/addaddress")}
+                    className="!mt-2"
+                  >
+                    Add Address
+                  </Button>
+                </div>
+              ) : address ? (
                 <div className="text-sm text-gray-600">
                   <p className="font-bold text-gray-900 mb-1">{address.fullName}</p>
                   <p>{address.address}</p>
@@ -219,7 +307,7 @@ function OrderSummery() {
                 fullWidth
                 variant="contained"
                 onClick={checkoutHandler}
-                disabled={itemsToBuy.length === 0 || !address}
+                disabled={itemsToBuy.length === 0 || !address || !!addressError}
                 className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-lg"
               >
                 Confirm and Pay
@@ -237,7 +325,7 @@ function OrderSummery() {
                   fullWidth
                   variant="contained"
                   onClick={checkoutHandler}
-                  disabled={itemsToBuy.length === 0 || !address}
+                  disabled={itemsToBuy.length === 0 || !address || !!addressError}
                   className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-xl hover:!bg-[#e68a00] transition-all transform hover:scale-[1.02]"
                 >
                   Complete Payment

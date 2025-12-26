@@ -77,7 +77,7 @@ export const updateProduct = async (req, res) => {
       const stock = parseInt(req.body.stock);
       product.stock = stock;
       product.isAvailable = stock > 0;
-      
+
       if (stock <= 0) {
         product.availability = "Out of Stock";
       } else if (stock < 5) {
@@ -112,7 +112,6 @@ export const getAllProducts = async (req, res) => {
     const sellerId = req.sellerId;
 
     const products = await addproductmodel.find({ sellerId });
-    console.log("p", products)
     if (!products) {
       return res.status(404).json("no product found")
     }
@@ -138,7 +137,7 @@ export const getProductById = async (req, res) => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       await ProductAnalytics.findOneAndUpdate(
         { productId: id, date: today },
         { $inc: { views: 1 } },
@@ -237,9 +236,9 @@ export const deleteProduct = async (req, res) => {
     // Optional: Check if product belongs to seller (if sellerId is available in req)
     // const sellerId = req.sellerId; 
     // const product = await addproductmodel.findOne({ _id: id, sellerId });
-    
+
     const del = await addproductmodel.findByIdAndDelete(id);
-    
+
     if (!del) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }

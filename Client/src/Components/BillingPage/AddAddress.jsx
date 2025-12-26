@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { TextField, Button, Radio } from '@mui/material';
+import { TextField, Button, Radio, CircularProgress } from '@mui/material';
 import api from "../../utils/api";
 import Totalprice from '../Cart Page/Totalprice.jsx';
 import { MdModeEdit, MdDelete, MdAddLocationAlt, MdOutlineHomeWork } from "react-icons/md";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
+/**
+ * SECURITY REFACTOR:
+ * 1. Removed localStorage.setItem("selectedAddress") - PII vulnerability
+ * 2. Now passes selectedAddressId via navigation state instead
+ * 3. Added proper loading states
+ * 4. Improved accessibility with proper button/role attributes
+ */
 function AddAddress() {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedItems = location.state?.selectedItems;
+
   const [profile, setProfile] = useState({ name: '', phone: '', email: '' });
   const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
@@ -25,17 +33,28 @@ function AddAddress() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  // const token = localStorage.getItem('token'); // No longer needed
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const getProfile = async () => {
+    setIsLoading(true);
     try {
       const { data } = await api.get('/api/user/profile');
       if (data.success) {
         setProfile(data.profile);
         setAddresses(data.profile.addresses || []);
+
+        // Auto-select default billing address if exists
+        const defaultAddr = data.profile.addresses?.find(addr => addr.isDefaultBilling);
+        if (defaultAddr && !selectedAddress) {
+          setSelectedAddress(defaultAddr);
+        }
       }
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      if (import.meta.env.DEV) console.error('Error fetching profile:', err);
+      toast.error("Failed to load addresses");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,6 +79,7 @@ function AddAddress() {
       return;
     }
 
+    setIsSaving(true);
     try {
       if (editAddressId) {
         const { data } = await api.put(`/api/user/updateaddress/${editAddressId}`,
@@ -78,6 +98,8 @@ function AddAddress() {
       setShowAddForm(false);
     } catch (err) {
       toast.error("Error saving address");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -90,6 +112,10 @@ function AddAddress() {
       );
       if (data.success) {
         toast.info("Address deleted");
+        // Clear selection if deleted address was selected
+        if (selectedAddress?._id === addressId) {
+          setSelectedAddress(null);
+        }
         getProfile();
       }
     } catch (error) {
@@ -102,14 +128,44 @@ function AddAddress() {
     setEditAddressId(null);
   };
 
+  /**
+   * SECURITY FIX: Pass address ID via navigation state instead of localStorage
+   * The OrderSummery component will fetch the address from the backend using this ID
+   */
   const handlePlaceOrder = () => {
     if (selectedAddress) {
-      localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress));
-      navigate("/ordersummery", { state: { selectedItems } });
+      navigate("/ordersummery", {
+        state: {
+          selectedItems,
+          selectedAddressId: selectedAddress._id  // Pass ID, not the full address object
+        }
+      });
     } else {
       toast.error("Please select a delivery address!");
     }
   };
+
+  const handleSelectAddress = (addr) => {
+    setSelectedAddress(addr);
+  };
+
+  const handleKeyDown = (e, addr) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleSelectAddress(addr);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <CircularProgress sx={{ color: '#fb541b' }} />
+          <p className="mt-4 text-gray-600">Loading addresses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-6 sm:py-10">
@@ -135,26 +191,35 @@ function AddAddress() {
               </div>
 
               {/* Address List */}
-              <div className="space-y-4">
+              <div className="space-y-4" role="radiogroup" aria-label="Select delivery address">
                 {addresses.length > 0 ? (
                   addresses.map((addr) => (
                     <div
                       key={addr._id}
-                      onClick={() => setSelectedAddress(addr)}
-                      className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-300 transition-all cursor-pointer ${selectedAddress?._id === addr._id
-                        ? " bg-orange-50/20"
-                        : "border-gray-100 hover:border-gray-200"
+                      role="radio"
+                      aria-checked={selectedAddress?._id === addr._id}
+                      tabIndex={0}
+                      onClick={() => handleSelectAddress(addr)}
+                      onKeyDown={(e) => handleKeyDown(e, addr)}
+                      className={`relative flex items-start gap-4 p-4 sm:p-5 rounded-xl border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#fb541b] focus:ring-offset-2 ${selectedAddress?._id === addr._id
+                        ? "border-[#fb541b] bg-orange-50/30"
+                        : "border-gray-200 hover:border-gray-300"
                         }`}
                     >
                       <Radio
                         checked={selectedAddress?._id === addr._id}
                         className="!p-0 !mt-1"
                         sx={{ '&.Mui-checked': { color: '#fb541b' } }}
+                        tabIndex={-1}
+                        inputProps={{ 'aria-hidden': true }}
                       />
 
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900">{addr.fullName}</span>
+                          {addr.isDefaultBilling && (
+                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold uppercase tracking-widest">Default</span>
+                          )}
                           <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-bold uppercase tracking-widest">Home</span>
                         </div>
                         <p className="text-sm text-gray-700 font-medium mb-1">{addr.phoneNumber}</p>
@@ -175,14 +240,18 @@ function AddAddress() {
 
                       <div className="flex flex-col gap-2">
                         <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); setEditAddressId(addr._id); setNewAddress({ ...addr }); setShowAddForm(true); }}
                           className="text-gray-400 hover:text-blue-500 p-1 transition-colors"
+                          aria-label={`Edit address for ${addr.fullName}`}
                         >
                           <MdModeEdit size={20} />
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
                           className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                          aria-label={`Delete address for ${addr.fullName}`}
                         >
                           <MdDelete size={20} />
                         </button>
@@ -218,10 +287,20 @@ function AddAddress() {
                     <TextField label="Country" name="country" value={newAddress.country} onChange={handleAddressChange} fullWidth size="small" required />
 
                     <div className="md:col-span-2 flex items-center gap-4 mt-4">
-                      <Button type="submit" variant="contained" className="!bg-[#fb541b] !px-8 !py-2.5 !rounded-lg !font-bold !capitalize !shadow-none">
-                        {editAddressId ? 'Save Changes' : 'Save Address'}
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        className="!bg-[#fb541b] !px-8 !py-2.5 !rounded-lg !font-bold !capitalize !shadow-none"
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : editAddressId ? 'Save Changes' : 'Save Address'}
                       </Button>
-                      <Button variant="text" className="!text-gray-400 !capitalize hover:!bg-transparent" onClick={() => { resetForm(); setShowAddForm(false); }}>
+                      <Button
+                        type="button"
+                        variant="text"
+                        className="!text-gray-400 !capitalize hover:!bg-transparent"
+                        onClick={() => { resetForm(); setShowAddForm(false); }}
+                      >
                         Cancel
                       </Button>
                     </div>

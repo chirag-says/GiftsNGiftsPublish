@@ -384,7 +384,7 @@ export const resetpassword = async (req, res) => {
     }
 
     if (user.resetotp == "" || user.resetotp !== otp) {
-      return res.json({ success: false, message: "Invalis OTP" });
+      return res.json({ success: false, message: "Invalid OTP" });
     }
 
     if (user.resetotpexpireAt < Date.now()) {
@@ -426,13 +426,13 @@ export const Addtocart = async (req, res) => {
       (item) => item.productId.toString() === productId
     );
 
-    const newQuantity = existingItem 
-      ? existingItem.quantity + parseInt(quantity, 10) 
+    const newQuantity = existingItem
+      ? existingItem.quantity + parseInt(quantity, 10)
       : parseInt(quantity, 10);
 
     if (newQuantity > product.stock) {
-      return res.status(400).json({ 
-        message: `Cannot add ${quantity} items. Only ${product.stock} in stock. You already have ${existingItem ? existingItem.quantity : 0} in cart.` 
+      return res.status(400).json({
+        message: `Cannot add ${quantity} items. Only ${product.stock} in stock. You already have ${existingItem ? existingItem.quantity : 0} in cart.`
       });
     }
 
@@ -750,7 +750,7 @@ export const verifyRegistrationOtp = async (req, res) => {
 
     // Generate token for auto-login after verification
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -758,8 +758,8 @@ export const verifyRegistrationOtp = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: "Email verified successfully",
       token,
       user: { id: user._id, name: user.name, email: user.email }

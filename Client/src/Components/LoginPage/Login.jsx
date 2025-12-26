@@ -185,7 +185,7 @@ const Login = () => {
   };
 
   useEffect(() => {
-    console.log("user", userData);
+    if (import.meta.env.DEV) console.log("user", userData);
   }, [userData]);
 
   return (

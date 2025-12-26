@@ -31,7 +31,7 @@ function ProductList() {
             const categoryData = data.categories.find(cat => cat.category === category);
             if (categoryData && Array.isArray(categoryData.products)) {
               const approvedProducts = categoryData.products.filter(p => p.approved === true);
-              console.log("Approved Products:", approvedProducts);
+              if (import.meta.env.DEV) console.log("Approved Products:", approvedProducts);
               setProducts(approvedProducts);
             } else {
               setProducts([]);
@@ -81,7 +81,7 @@ function ProductList() {
 
       setProducts(response.data.data);
     } catch (error) {
-      console.log("Error applying filters:", error);
+      if (import.meta.env.DEV) console.log("Error applying filters:", error);
     }
   };
 

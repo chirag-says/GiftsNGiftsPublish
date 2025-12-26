@@ -6,6 +6,7 @@ import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import { Button, Divider } from "@mui/material";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import { toast } from 'react-toastify';
 
 function Cartpage() {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ function Cartpage() {
         prevItems.map((item) => item.product._id === productId ? { ...item, quantity: newQty } : item)
       );
     } catch (err) {
-      alert(err.response?.data?.message || "Error updating quantity");
+      toast.error(err.response?.data?.message || "Error updating quantity");
     }
   };
 
@@ -128,7 +129,7 @@ function Cartpage() {
                 fullWidth
                 onClick={() => {
                   if (selectedItems.length === 0) {
-                    alert("Please select at least one item to checkout.");
+                    toast.warning("Please select at least one item to checkout.");
                     return;
                   }
                   navigate("/addaddress", { state: { selectedItems } });

@@ -34,9 +34,12 @@ import ErrorPage from "./Components/ErrorPage/ErrorPage.jsx";
 import ChatWidget from "./Components/Chatbot/ChatWidget.jsx";
 import ScrollToTop from "./Components/ScrollToTop.jsx";
 
+// ARCHITECTURAL: Global Error Boundary to catch crashes
+import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary.jsx";
+
 function App() {
   return (
-    <>
+    <ErrorBoundary>
       <ScrollToTop />
       <Header />
       <Routes>
@@ -61,19 +64,19 @@ function App() {
         <Route path="/support-policy" element={<Support_Policy />} />
         <Route path="/shipping-info" element={<ShippingInfo />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/contact-us" element={<ContactUs />} /> 
+        <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/help-center" element={<HelpCenter />} />
-        <Route path="/order-tracking" element={<OrderTracking />} /> 
-        <Route path="/terms-of-use" element={<TermsOfUse />} /> 
-        <Route path="/faqs" element={<FAQs/>} /> 
-        <Route path="/disclaimer" element={<Desclaimer/>} /> 
-         <Route path="/bulk-orders" element={<BulkOrders/>} /> 
-         <Route path="/refund-policy" element={<RefundPlicy/>} />
-         <Route path="*" element={<ErrorPage />} />
+        <Route path="/order-tracking" element={<OrderTracking />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
+        <Route path="/faqs" element={<FAQs />} />
+        <Route path="/disclaimer" element={<Desclaimer />} />
+        <Route path="/bulk-orders" element={<BulkOrders />} />
+        <Route path="/refund-policy" element={<RefundPlicy />} />
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
       <Footer />
       <ChatWidget />
-    </>
+    </ErrorBoundary>
   );
 }
 

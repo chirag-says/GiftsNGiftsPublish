@@ -56,7 +56,7 @@ export const useChatbot = ({ backendurl, userData }) => {
         metadata: buildMetadataSnapshot()
       };
 
-      console.log('[Chatbot] Connecting to:', `${backendurl}/api/chatbot/session`);
+      if (import.meta.env.DEV) console.log('[Chatbot] Connecting to:', `${backendurl}/api/chatbot/session`);
 
       // Add a timeout to the request
       const { data } = await axios.post(`${backendurl}/api/chatbot/session`, payload, {
@@ -66,7 +66,7 @@ export const useChatbot = ({ backendurl, userData }) => {
 
       if (abortRef.current) return;
 
-      console.log('[Chatbot] Session established:', data.session?.sessionId);
+      if (import.meta.env.DEV) console.log('[Chatbot] Session established:', data.session?.sessionId);
       sessionIdRef.current = data.session.sessionId;
       localStorage.setItem('chatbotSessionId', data.session.sessionId);
       setSession(data.session);
@@ -150,7 +150,7 @@ export const useChatbot = ({ backendurl, userData }) => {
 
     // If user logged out (had userId, now doesn't)
     if (prevId && !userId) {
-      console.log('[Chatbot] User logged out, resetting session');
+      if (import.meta.env.DEV) console.log('[Chatbot] User logged out, resetting session');
       // Clear stored session
       localStorage.removeItem('chatbotSessionId');
       sessionIdRef.current = '';
@@ -174,7 +174,7 @@ export const useChatbot = ({ backendurl, userData }) => {
 
     // If user logged in (didn't have userId, now has)
     if (!prevId && userId) {
-      console.log('[Chatbot] User logged in, refreshing session');
+      if (import.meta.env.DEV) console.log('[Chatbot] User logged in, refreshing session');
       // Clear old session and get new one linked to user
       localStorage.removeItem('chatbotSessionId');
       sessionIdRef.current = '';

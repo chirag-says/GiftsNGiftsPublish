@@ -4,10 +4,34 @@ import BankDetailsModel from "../model/bankDetails.js";
 import addproductmodel from "../model/addproduct.js";
 import sellermodel from "../model/sellermodel.js";
 
+/**
+ * SECURITY HELPER: Get authenticated seller ID
+ * 
+ * IDOR PROTECTION: This function STRICTLY uses req.sellerId from the auth middleware.
+ * It does NOT accept sellerId from req.body to prevent attackers from viewing
+ * other sellers' financial data by manipulating the request body.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {string|null} - Seller ID or null if not authenticated
+ */
+const getAuthenticatedSellerId = (req, res) => {
+  const sellerId = req.sellerId;
+  if (!sellerId) {
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized: Authentication required"
+    });
+    return null;
+  }
+  return sellerId;
+};
+
+
 // ============ OVERVIEW / EARNINGS ============
 export const getEarningsOverview = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { period = "all" } = req.query;
 
     // Build date filter based on period
@@ -121,7 +145,7 @@ export const getEarningsOverview = async (req, res) => {
 // ============ SETTLEMENTS ============
 export const getSettlements = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { status = "all" } = req.query;
 
     // Get completed orders grouped by week for settlements
@@ -221,7 +245,7 @@ export const getSettlements = async (req, res) => {
 // ============ TRANSACTIONS (All types) ============
 export const getAllTransactions = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { page = 1, limit = 20, type = "all" } = req.query;
 
     const commissionRate = 10;
@@ -343,7 +367,7 @@ export const getAllTransactions = async (req, res) => {
 // Get Pending Payments
 export const getPendingPayments = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
 
     const orders = await orderModel.find({
       "items.sellerId": sellerId,
@@ -389,7 +413,7 @@ export const getPendingPayments = async (req, res) => {
 // Get Transaction History
 export const getTransactionHistory = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
     let query = { "items.sellerId": sellerId };
@@ -460,7 +484,7 @@ export const getTransactionHistory = async (req, res) => {
 // Get Payout Requests
 export const getPayoutRequests = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
 
     const payouts = await PayoutModel.find({ sellerId }).sort({ requestedAt: -1 });
 
@@ -502,7 +526,7 @@ export const getPayoutRequests = async (req, res) => {
 // Request Payout
 export const requestPayout = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { amount, paymentMethod, notes } = req.body;
 
     if (!amount || amount <= 0) {
@@ -551,7 +575,7 @@ export const requestPayout = async (req, res) => {
 // Get Commission Details
 export const getCommissionDetails = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const commissionRate = 10; // Default 10%
 
     const orders = await orderModel.find({
@@ -601,7 +625,7 @@ export const getCommissionDetails = async (req, res) => {
 // Get Bank Details
 export const getBankDetails = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
 
     const bankDetails = await BankDetailsModel.findOne({ sellerId });
 
@@ -615,7 +639,7 @@ export const getBankDetails = async (req, res) => {
 // Save/Update Bank Details
 export const saveBankDetails = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { accountHolderName, bankName, accountNumber, ifscCode, branchName, upiId } = req.body;
 
     if (!accountHolderName || !bankName || !accountNumber || !ifscCode) {
@@ -655,7 +679,7 @@ export const saveBankDetails = async (req, res) => {
 // Get Invoices
 export const getInvoices = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { page = 1, limit = 20 } = req.query;
 
     const orders = await orderModel.find({
@@ -720,7 +744,7 @@ export const getInvoices = async (req, res) => {
 // Get GST Breakdown Details
 export const getGstBreakdown = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
 
     const seller = await sellermodel.findById(sellerId);
 
@@ -760,7 +784,7 @@ export const getGstBreakdown = async (req, res) => {
 // Update GST Breakdown (Admin only - can be used for setting penalty/adjustments)
 export const updateGstBreakdown = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const gstData = req.body;
 
     const seller = await sellermodel.findById(sellerId);
@@ -795,7 +819,7 @@ export const updateGstBreakdown = async (req, res) => {
 // Get Bank Details (Enhanced)
 export const getBankDetailsEnhanced = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
 
     // Get from seller model first
     const seller = await sellermodel.findById(sellerId);
@@ -825,7 +849,7 @@ export const getBankDetailsEnhanced = async (req, res) => {
 // Save Bank Details (Enhanced with Cancel Cheque)
 export const saveBankDetailsEnhanced = async (req, res) => {
   try {
-    const sellerId = req.sellerId || req.body.sellerId;
+    const sellerId = getAuthenticatedSellerId(req, res); if (!sellerId) return;
     const { accountHolderName, bankName, accountNumber, ifscCode, branchName, upiId, cancelledChequeUrl } = req.body;
 
     if (!accountHolderName || !bankName || !accountNumber || !ifscCode) {

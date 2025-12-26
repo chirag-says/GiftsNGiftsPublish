@@ -1,20 +1,38 @@
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 
+/**
+ * Cart Authentication Middleware
+ * 
+ * SECURITY FIX: Migrated from header-based auth to HttpOnly cookie
+ * This prevents XSS attacks from stealing authentication tokens
+ */
 const auth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // SECURITY: ONLY read from HttpOnly cookie - no header fallback
+  const token = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided' });
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required. Please login.'
+    });
   }
 
-  const token = authHeader.split(' ')[1];
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use same secret used during login
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { id: decoded.id };
+    req.userId = decoded.id; // For compatibility with other middlewares
     next();
   } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Session expired. Please login again.'
+      });
+    }
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid session. Please login again.'
+    });
   }
 };
 

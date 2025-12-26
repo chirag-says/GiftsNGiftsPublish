@@ -6,13 +6,23 @@ import api from "../../utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Divider, Paper, CircularProgress } from "@mui/material";
 import { HiOutlineLocationMarker, HiOutlineShieldCheck, HiOutlineShoppingBag } from "react-icons/hi";
+import { toast } from "react-toastify";
 
 /**
- * SECURITY REFACTOR: 
- * 1. Removed localStorage.getItem("selectedAddress") - PII vulnerability
- * 2. Address is now fetched from authenticated backend API
- * 3. Added fallback for page refresh using location.state.selectedAddressId
- * 4. Added proper loading states
+ * SECURITY REFACTOR (v2.0):
+ * 
+ * CRITICAL FIX #1 - Price Manipulation Prevention:
+ * - REMOVED: Client-side price calculation sent to /api/checkout
+ * - NOW: Send only item IDs and quantities to backend
+ * - Backend fetches REAL prices from database and calculates total
+ * 
+ * CRITICAL FIX #2 - Volatile State Protection:
+ * - REMOVED: Fallback to full cart when selectedItems is undefined
+ * - NOW: Redirect to /cartlist if navigation state is missing
+ * - Prevents accidental bulk purchases on page refresh
+ * 
+ * SECURITY FIX #3 - PII Protection:
+ * - Address fetched from authenticated backend API (not localStorage)
  */
 function OrderSummery() {
   const navigate = useNavigate();
@@ -23,13 +33,29 @@ function OrderSummery() {
   const selectedItems = location.state?.selectedItems;
   const selectedAddressId = location.state?.selectedAddressId;
 
+  /**
+   * SECURITY FIX #2: Redirect Protection for Volatile State
+   * 
+   * If the user refreshes the page or navigates directly to /ordersummery,
+   * location.state will be undefined. Instead of defaulting to the ENTIRE cart
+   * (which could cause accidental bulk purchases), we redirect back to cart.
+   */
+  useEffect(() => {
+    if (!location.state || !location.state.selectedItems) {
+      toast.warning("Your session expired. Please select items again.");
+      navigate("/cartlist", { replace: true });
+    }
+  }, []);
+
+  // Only proceed if we have valid selected items
   const itemsToBuy = selectedItems
     ? cartItems.filter(item => selectedItems.includes(item.product._id))
-    : cartItems;
+    : []; // Empty array - component will redirect before this is used
 
   const [address, setAddress] = useState(null);
   const [addressLoading, setAddressLoading] = useState(true);
   const [addressError, setAddressError] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   /**
    * SECURITY: Fetch address from authenticated backend API
@@ -77,8 +103,11 @@ function OrderSummery() {
       return;
     }
 
-    fetchCart();
-    fetchShippingAddress();
+    // Only fetch if we have valid state
+    if (location.state?.selectedItems) {
+      fetchCart();
+      fetchShippingAddress();
+    }
   }, [isLoggedin]);
 
   const handleRemove = async (cartItemId) => {
@@ -116,12 +145,13 @@ function OrderSummery() {
       productId: item.product._id,
       name: item.product.title || item.product.name,
       quantity: item.quantity,
-      price: item.product.price,
+      price: item.product.price, // For display only - backend will verify
       sellerId: item.product.sellerId
     }));
 
     return {
       items,
+      // NOTE: totalAmount will be RECALCULATED by backend for order storage
       totalAmount: items.reduce((total, item) => total + item.price * item.quantity, 0),
       shippingAddress: {
         name: address.fullName,
@@ -135,52 +165,72 @@ function OrderSummery() {
     };
   };
 
+  /**
+   * SECURITY FIX #1: Secure Checkout Handler
+   * 
+   * BEFORE (VULNERABLE):
+   *   const totalAmount = itemsToBuy.reduce(...); // Client calculates
+   *   api.post('/api/checkout', { amount: totalAmount }); // Hackable!
+   * 
+   * AFTER (SECURE):
+   *   api.post('/api/checkout', { items }); // Send only IDs + quantities
+   *   // Backend fetches real prices from DB and calculates total
+   */
   const checkoutHandler = async () => {
-    const totalAmount = itemsToBuy.reduce((t, i) => t + i.product.price * i.quantity, 0);
+    if (isProcessingPayment) return; // Prevent double-click
+    setIsProcessingPayment(true);
 
     try {
-      // Validate stock before payment
-      const validationPayload = {
+      // Build secure payload: ONLY product IDs and quantities
+      const securePayload = {
         items: itemsToBuy.map((item) => ({
           productId: item.product._id,
-          name: item.product.title || item.product.name,
           quantity: item.quantity,
         }))
       };
 
-      try {
-        await api.post('/api/client/validate-stock', validationPayload);
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Stock validation failed. Please check your cart.");
-        return; // Stop checkout
+      // Step 1: Get Razorpay key
+      const { data: { key } } = await api.get('/api/getkey');
+
+      // Step 2: Create order with SERVER-SIDE price calculation
+      // Backend will fetch real prices from database and calculate total
+      const { data } = await api.post('/api/checkout', securePayload);
+
+      if (!data.success || !data.order) {
+        throw new Error(data.error || "Failed to create payment order");
       }
 
-      const { data: { key } } = await api.get('/api/getkey');
-      const { data: { order } } = await api.post('/api/checkout', {
-        amount: totalAmount,
-      });
+      const { order, breakdown } = data;
 
+      // Optional: Show user what the server calculated (for transparency)
+      if (import.meta.env.DEV) {
+        console.log("[Secure Checkout] Server-calculated total:", breakdown?.total);
+      }
+
+      // Step 3: Open Razorpay with SERVER-CALCULATED amount
       const options = {
         key,
-        amount: order.amount,
+        amount: order.amount, // This is the server-calculated amount in paise
         currency: "INR",
         name: "GiftnGifts",
         description: "Secure Order Payment",
         order_id: order.id,
         handler: async function (response) {
           try {
-            const orderData = { ...buildOrderPayload(), paymentId: response.razorpay_payment_id };
-            const res = await api.post(
-              '/api/client/place-order',
-              orderData
-            );
+            const orderData = {
+              ...buildOrderPayload(),
+              paymentId: response.razorpay_payment_id,
+              razorpayOrderId: order.id, // For backend verification
+              serverCalculatedTotal: breakdown?.total // For reconciliation
+            };
+
+            const res = await api.post('/api/client/place-order', orderData);
 
             if (res.data.success) {
-              // Store order ID for verification on success page
               const orderId = res.data.order?._id;
 
+              // Clear purchased items from cart
               if (selectedItems && selectedItems.length < cartItems.length) {
-                // Partial cleanup
                 for (const item of itemsToBuy) {
                   await api.delete(`/api/auth/delete/${item.product._id}`);
                 }
@@ -189,23 +239,41 @@ function OrderSummery() {
                 await clearCartAfterOrder();
               }
 
-              // Navigate with order ID for backend verification
+              // Navigate to success page with order ID for verification
               navigate("/payment-success", {
                 state: { orderId, paymentId: response.razorpay_payment_id }
               });
             }
           } catch (error) {
             toast.error("Order failed to save. Please contact support.");
+            if (import.meta.env.DEV) console.error("Order save error:", error);
           }
         },
-        prefill: { name: address?.fullName, contact: address?.phoneNumber },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPayment(false);
+            toast.info("Payment cancelled");
+          }
+        },
+        prefill: {
+          name: address?.fullName,
+          contact: address?.phoneNumber
+        },
         theme: { color: "#7d0492" },
       };
 
       const razor = new window.Razorpay(options);
+      razor.on('payment.failed', function (response) {
+        setIsProcessingPayment(false);
+        toast.error("Payment failed. Please try again.");
+        if (import.meta.env.DEV) console.error("Payment failed:", response.error);
+      });
       razor.open();
+
     } catch (error) {
-      toast.error("Payment initialization failed.");
+      setIsProcessingPayment(false);
+      toast.error(error.message || "Payment initialization failed.");
+      if (import.meta.env.DEV) console.error("Checkout error:", error);
     }
   };
 
@@ -307,10 +375,16 @@ function OrderSummery() {
                 fullWidth
                 variant="contained"
                 onClick={checkoutHandler}
-                disabled={itemsToBuy.length === 0 || !address || !!addressError}
+                disabled={itemsToBuy.length === 0 || !address || !!addressError || isProcessingPayment}
                 className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-lg"
               >
-                Confirm and Pay
+                {isProcessingPayment ? (
+                  <span className="flex items-center gap-2">
+                    <CircularProgress size={20} color="inherit" /> Processing...
+                  </span>
+                ) : (
+                  "Confirm and Pay"
+                )}
               </Button>
             </div>
           </div>
@@ -325,10 +399,16 @@ function OrderSummery() {
                   fullWidth
                   variant="contained"
                   onClick={checkoutHandler}
-                  disabled={itemsToBuy.length === 0 || !address || !!addressError}
+                  disabled={itemsToBuy.length === 0 || !address || !!addressError || isProcessingPayment}
                   className="!bg-[#ff9f00] !py-4 !rounded-xl !font-bold !text-lg !shadow-xl hover:!bg-[#e68a00] transition-all transform hover:scale-[1.02]"
                 >
-                  Complete Payment
+                  {isProcessingPayment ? (
+                    <span className="flex items-center gap-2">
+                      <CircularProgress size={20} color="inherit" /> Processing...
+                    </span>
+                  ) : (
+                    "Complete Payment"
+                  )}
                 </Button>
               </div>
 

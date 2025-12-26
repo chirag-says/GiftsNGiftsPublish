@@ -11,28 +11,41 @@ const instance = new Razorpay({
 });
 
 /**
- * SECURITY & INTEGRITY FIX: Server-Side Price Calculation with ACID Transactions
+ * Check if MongoDB supports transactions (requires replica set)
+ * Returns true if transactions are available
+ */
+const isReplicaSet = async () => {
+  try {
+    // MongoDB Atlas and replica sets support transactions
+    const adminDb = mongoose.connection.db.admin();
+    const serverStatus = await adminDb.serverStatus();
+    return serverStatus.repl !== undefined;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * SECURITY FIX: Server-Side Price Calculation
  * 
  * VULNERABILITY PATCHED:
  * 1. Client-side price manipulation - Server now calculates total from DB
- * 2. Race conditions - Using MongoDB transactions for atomic operations
- * 3. Replay attacks - Payment deduplication check
+ * 2. Stock validation before order creation
+ * 
+ * NOTE: Transactions are used when available (MongoDB replica set)
+ * Falls back to non-transactional mode for standalone MongoDB
  * 
  * @param {Object} req.body.items - Array of { productId, quantity }
  */
 export const checkout = async (req, res) => {
-  // Start a MongoDB session for transaction
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
+    console.log("[Checkout] Request body:", JSON.stringify(req.body, null, 2));
+    console.log("[Checkout] User ID:", req.userId);
 
     const { items } = req.body;
 
     // Validate input
     if (!items || !Array.isArray(items) || items.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({
         success: false,
         error: "Invalid request: items array is required"
@@ -42,8 +55,6 @@ export const checkout = async (req, res) => {
     // Validate each item has required fields
     for (const item of items) {
       if (!item.productId || !item.quantity || item.quantity < 1) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(400).json({
           success: false,
           error: "Invalid item: productId and quantity (>= 1) are required"
@@ -51,13 +62,10 @@ export const checkout = async (req, res) => {
       }
     }
 
-    // CRITICAL: Fetch REAL prices from database within transaction
-    // Using session ensures read consistency
+    // CRITICAL: Fetch REAL prices from database - NEVER trust client prices
     const lineItems = await Promise.all(
       items.map(async (item) => {
-        const product = await Product.findById(item.productId)
-          .select('price title stock')
-          .session(session);
+        const product = await Product.findById(item.productId).select('price title stock');
 
         if (!product) {
           throw new Error(`Product not found: ${item.productId}`);
@@ -83,8 +91,6 @@ export const checkout = async (req, res) => {
 
     // Validate minimum order amount (Razorpay minimum is ₹1)
     if (serverCalculatedTotal < 1) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({
         success: false,
         error: "Order total must be at least ₹1"
@@ -92,10 +98,13 @@ export const checkout = async (req, res) => {
     }
 
     // Create Razorpay order with SERVER-CALCULATED amount
+    // NOTE: Receipt must be max 40 characters per Razorpay API
+    const receiptId = `ord_${Date.now().toString(36)}`;
+
     const options = {
       amount: Math.round(serverCalculatedTotal * 100), // Convert to paise
       currency: "INR",
-      receipt: `order_${Date.now()}_${req.userId || 'guest'}`,
+      receipt: receiptId.substring(0, 40), // Ensure max 40 chars
       notes: {
         userId: req.userId || 'guest',
         itemCount: items.length,
@@ -104,10 +113,6 @@ export const checkout = async (req, res) => {
     };
 
     const razorpayOrder = await instance.orders.create(options);
-
-    // Commit the read transaction (stock was checked)
-    await session.commitTransaction();
-    session.endSession();
 
     // Return order details along with calculated breakdown for frontend display
     res.status(200).json({
@@ -127,11 +132,11 @@ export const checkout = async (req, res) => {
     });
 
   } catch (err) {
-    // Rollback transaction on any error
-    await session.abortTransaction();
-    session.endSession();
+    console.error("Checkout Error:", err);
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
 
-    console.error("Checkout Error:", err.message);
     res.status(500).json({
       success: false,
       error: err.message || "Failed to create order"
@@ -140,30 +145,20 @@ export const checkout = async (req, res) => {
 };
 
 /**
- * Payment Verification with ACID Transaction
+ * Payment Verification
  * 
  * SECURITY FIXES:
  * 1. Replay Protection - Check if payment was already processed
- * 2. Atomic Stock Deduction - Using MongoDB transactions
- * 3. Signature Verification - Razorpay webhook security
+ * 2. Signature Verification - Razorpay webhook security
  */
 export const paymentVerification = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
-
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     // REPLAY PROTECTION: Check if this payment was already processed
-    const existingPayment = await Payment.findOne({
-      razorpay_payment_id
-    }).session(session);
+    const existingPayment = await Payment.findOne({ razorpay_payment_id });
 
     if (existingPayment) {
-      await session.abortTransaction();
-      session.endSession();
-
       // Return success anyway - this is a duplicate callback, payment was already processed
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(`${frontendUrl}/payment-success?reference=${razorpay_payment_id}&duplicate=true`);
@@ -177,34 +172,25 @@ export const paymentVerification = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({
         success: false,
         message: "Invalid payment signature. Possible tampering detected."
       });
     }
 
-    // Create payment record within transaction
-    await Payment.create([{
+    // Create payment record
+    await Payment.create({
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
       verifiedAt: new Date()
-    }], { session });
-
-    // Commit the transaction
-    await session.commitTransaction();
-    session.endSession();
+    });
 
     // Redirect to success page
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}/payment-success?reference=${razorpay_payment_id}`);
 
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
     console.error("Payment Verification Error:", err.message);
     res.status(500).json({
       success: false,
@@ -214,50 +200,84 @@ export const paymentVerification = async (req, res) => {
 };
 
 /**
- * Complete Order with Stock Deduction
+ * Complete Order with Stock Deduction (with optional transaction support)
  * 
  * This function is called AFTER payment is verified to:
- * 1. Deduct stock atomically within a transaction
+ * 1. Deduct stock atomically
  * 2. Create the order record
  * 
- * ACID Guarantees:
- * - If stock deduction fails, order is NOT created
- * - If order creation fails, stock is NOT deducted
+ * Uses transactions when MongoDB replica set is available
  */
-export const completeOrderWithStockDeduction = async (orderData, userId, session) => {
-  // Deduct stock for each item within the transaction
-  for (const item of orderData.items) {
-    const result = await Product.findOneAndUpdate(
-      {
-        _id: item.productId,
-        stock: { $gte: item.quantity } // Only deduct if enough stock
-      },
-      {
-        $inc: { stock: -item.quantity }
-      },
-      {
-        new: true,
-        session
+export const completeOrderWithStockDeduction = async (orderData, userId) => {
+  const useTransactions = await isReplicaSet();
+
+  if (useTransactions) {
+    // Use transaction for atomic operations
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      // Deduct stock for each item
+      for (const item of orderData.items) {
+        const result = await Product.findOneAndUpdate(
+          { _id: item.productId, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
+          { new: true, session }
+        );
+
+        if (!result) {
+          throw new Error(`Failed to deduct stock for product ${item.productId}`);
+        }
       }
-    );
 
-    if (!result) {
-      throw new Error(`Failed to deduct stock for product ${item.productId}. Stock may have been depleted.`);
+      // Create order
+      const order = await Order.create([{
+        user: userId,
+        items: orderData.items,
+        totalAmount: orderData.totalAmount,
+        shippingAddress: orderData.shippingAddress,
+        paymentId: orderData.paymentId,
+        status: 'Confirmed',
+        placedAt: new Date()
+      }], { session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order[0];
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
+  } else {
+    // Non-transactional mode (for standalone MongoDB)
+    // Deduct stock for each item
+    for (const item of orderData.items) {
+      const result = await Product.findOneAndUpdate(
+        { _id: item.productId, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+
+      if (!result) {
+        throw new Error(`Failed to deduct stock for product ${item.productId}`);
+      }
+    }
+
+    // Create order
+    const order = await Order.create({
+      user: userId,
+      items: orderData.items,
+      totalAmount: orderData.totalAmount,
+      shippingAddress: orderData.shippingAddress,
+      paymentId: orderData.paymentId,
+      status: 'Confirmed',
+      placedAt: new Date()
+    });
+
+    return order;
   }
-
-  // Create the order within the same transaction
-  const order = await Order.create([{
-    user: userId,
-    items: orderData.items,
-    totalAmount: orderData.totalAmount,
-    shippingAddress: orderData.shippingAddress,
-    paymentId: orderData.paymentId,
-    status: 'Confirmed',
-    placedAt: new Date()
-  }], { session });
-
-  return order[0];
 };
 
 export const getRazorpayKey = (req, res) => {

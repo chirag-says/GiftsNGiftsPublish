@@ -12,7 +12,7 @@ const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
-  const { backendurl, setIsLoggedin, setUserdata, onLoginSuccess, userData } =
+  const { backendurl, setIsLoggedin, setUserdata, onLoginSuccess, userData, isLoggedin } =
     useContext(AppContext);
 
   const [state, setState] = useState("Login"); // Login or Sign Up
@@ -34,6 +34,14 @@ const Login = () => {
     // Ensure inputRefs exist before clearing
     inputRefs.current.forEach((input) => { if (input) input.value = "" });
   }, [state]);
+
+  // REDIRECT LOGGED-IN USERS: If already authenticated, redirect away from login page
+  useEffect(() => {
+    if (isLoggedin) {
+      // User is already logged in, redirect to home or previous page
+      navigate(from, { replace: true });
+    }
+  }, [isLoggedin, navigate, from]);
 
   // Focus handling for OTP fields
   const handleInput = (e, index) => {

@@ -1,13 +1,29 @@
+/**
+ * Authentication Controller
+ * REFACTORED: Contains only authentication-related logic
+ * SECURITY FIX: Using crypto.randomInt() for secure OTP generation
+ * 
+ * Cart logic moved to: cartController.js
+ * Wishlist logic moved to: wishlistController.js
+ */
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import usermodel from "../model/mongobd_usermodel.js";
 import transporter from "../config/nodemailer.js";
-import Cart from "../model/cart.js";
-import Wishlist from "../model/wishlist.js";
-import Product from "../model/addproduct.js";
 import Profile from "../model/userprofile.js";
-// import otpGenerator from "otp-generator"; // Ensure this is imported if used, though not in your provided snippet list it seems used in loginRequestOtp
 
+/**
+ * SECURITY: Generate cryptographically secure 6-digit OTP
+ * Uses crypto.randomInt() instead of Math.random()
+ */
+const generateSecureOTP = () => {
+  return String(crypto.randomInt(100000, 999999));
+};
+
+/**
+ * Request OTP for login
+ */
 export const loginRequestOtp = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -24,14 +40,13 @@ export const loginRequestOtp = async (req, res) => {
         .json({ success: false, message: "Your account is blocked. Contact support." });
     }
 
-    // Simple numeric OTP generation if otp-generator is not installed/imported
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY FIX: Use cryptographically secure OTP
+    const otp = generateSecureOTP();
 
     user.verifyotp = otp;
     user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    // Reusing your existing mail logic
     const mailOption = {
       from: process.env.SENDER_EMAIL,
       to: email,
@@ -46,6 +61,9 @@ export const loginRequestOtp = async (req, res) => {
   }
 };
 
+/**
+ * Verify login OTP and create session
+ */
 export const verifyLoginOtp = async (req, res) => {
   const { email, otp } = req.body;
   try {
@@ -83,7 +101,10 @@ export const verifyLoginOtp = async (req, res) => {
   }
 };
 
-// for register function----
+/**
+ * Register new user
+ * TYPO FIX: hashedpasswoed -> hashedPassword
+ */
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -96,7 +117,6 @@ export const register = async (req, res) => {
   try {
     const existinguser = await usermodel.findOne({ email });
 
-    //check user exsit or not--
     if (existinguser) {
       return res.json({
         success: false,
@@ -104,22 +124,21 @@ export const register = async (req, res) => {
       });
     }
 
-    const hashedpasswoed = await bcrypt.hash(password, 10);
+    // TYPO FIX: Renamed from hashedpasswoed to hashedPassword
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    //create new user--- and save it --
-    const user = new usermodel({ name, email, password: hashedpasswoed });
+    const user = new usermodel({ name, email, password: hashedPassword });
     await user.save();
 
     const profile = new Profile({
       user: user._id,
-      phone: "", // optionally set default
+      phone: "",
       addresses: [],
       name: name,
       email: email,
     });
     await profile.save();
 
-    //create token------
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -131,7 +150,7 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    //send welcome email (non-blocking - don't wait for it)
+    // Send welcome email in background - don't block registration
     const mailOption = {
       from: process.env.SENDER_EMAIL,
       to: email,
@@ -139,12 +158,13 @@ export const register = async (req, res) => {
       text: `Welcome to GiftNGifts! Your account has been created successfully with email: ${email}`,
     };
 
-    // Send email in background - don't block registration
     transporter.sendMail(mailOption).catch(err => {
-      console.log("Welcome email failed:", err.message);
+      // Log only in development, not in production
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Welcome email failed:", err.message);
+      }
     });
 
-    // Return success with user data for auto-login
     return res.json({
       success: true,
       token,
@@ -163,7 +183,9 @@ export const register = async (req, res) => {
   }
 };
 
-//for login function------
+/**
+ * Login user (initiates OTP flow)
+ */
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -199,13 +221,12 @@ export const login = async (req, res) => {
       });
     }
 
-    // Instead of creating token here, generate OTP and send it
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY FIX: Use cryptographically secure OTP
+    const otp = generateSecureOTP();
     user.verifyotp = otp;
-    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000; // 10 mins expiry
+    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    // Send OTP via email (reuse your transporter)
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: user.email,
@@ -225,7 +246,9 @@ export const login = async (req, res) => {
   }
 };
 
-//for logout functtion----
+/**
+ * Logout user (clear cookie)
+ */
 export const logout = async (req, res) => {
   try {
     res.clearCookie("token", {
@@ -242,7 +265,9 @@ export const logout = async (req, res) => {
   }
 };
 
-//OTP  verify send by email---
+/**
+ * Send verification OTP to email
+ */
 export const sendverifyotp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -256,9 +281,10 @@ export const sendverifyotp = async (req, res) => {
       return res.json({ success: false, message: "Account already verified" });
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY FIX: Use cryptographically secure OTP
+    const otp = generateSecureOTP();
     user.verifyotp = otp;
-    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+    user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
     await user.save();
 
     const mailOption = {
@@ -276,7 +302,9 @@ export const sendverifyotp = async (req, res) => {
   }
 };
 
-// OTP  with veryfing account----
+/**
+ * Verify email with OTP
+ */
 export const verifyingEmail = async (req, res) => {
   const { userId, otp } = req.body;
 
@@ -306,7 +334,9 @@ export const verifyingEmail = async (req, res) => {
   }
 };
 
-//check if user is authenticated------
+/**
+ * Check if user is authenticated
+ */
 export const isAuthenticated = async (req, res) => {
   try {
     const user = await usermodel.findById(req.body.userId);
@@ -326,7 +356,9 @@ export const isAuthenticated = async (req, res) => {
   }
 };
 
-//send password reset OTP-------
+/**
+ * Send password reset OTP
+ */
 export const sendResetpassword = async (req, res) => {
   const { email } = req.body;
 
@@ -345,15 +377,13 @@ export const sendResetpassword = async (req, res) => {
       });
     }
 
-    // Generate SIX-digit OTP------
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY FIX: Use cryptographically secure OTP
+    const otp = generateSecureOTP();
 
     user.resetotp = otp;
     user.resetotpexpireAt = Date.now() + 15 * 60 * 60 * 1000;
-    //save the otp--
     await user.save();
 
-    //send to the email----
     const mailOption = {
       from: process.env.SENDER_EMAIL,
       to: user.email,
@@ -368,7 +398,9 @@ export const sendResetpassword = async (req, res) => {
   }
 };
 
-//Reset User password-----
+/**
+ * Reset user password with OTP verification
+ */
 export const resetpassword = async (req, res) => {
   const { email, otp, newpassword } = req.body;
   if (!email || !otp || !newpassword) {
@@ -391,9 +423,8 @@ export const resetpassword = async (req, res) => {
       return res.json({ success: false, message: "OTP Expired" });
     }
 
-    //all of the valid then reste password--
-    const hashedpassword = await bcrypt.hash(newpassword, 10);
-    user.password = hashedpassword;
+    const hashedPassword = await bcrypt.hash(newpassword, 10);
+    user.password = hashedPassword;
     user.resetotp = "";
     user.resetotpexpireAt = 0;
 
@@ -408,325 +439,9 @@ export const resetpassword = async (req, res) => {
   }
 };
 
-export const Addtocart = async (req, res) => {
-  const { productId, quantity } = req.body;
-  const userId = req.user.id;
-
-  try {
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    let cart = await Cart.findOne({ userId });
-
-    if (!cart) cart = new Cart({ userId, items: [] });
-
-    const existingItem = cart.items.find(
-      (item) => item.productId.toString() === productId
-    );
-
-    const newQuantity = existingItem
-      ? existingItem.quantity + parseInt(quantity, 10)
-      : parseInt(quantity, 10);
-
-    if (newQuantity > product.stock) {
-      return res.status(400).json({
-        message: `Cannot add ${quantity} items. Only ${product.stock} in stock. You already have ${existingItem ? existingItem.quantity : 0} in cart.`
-      });
-    }
-
-    if (existingItem) {
-      existingItem.quantity = newQuantity;
-    } else {
-      cart.items.push({
-        productId: product._id,
-        sellerId: product.sellerId,
-        quantity: parseInt(quantity, 10),
-      });
-    }
-
-    await cart.save();
-    await cart.populate("items.productId items.sellerId");
-
-    const formatted = cart.items
-      .filter((item) => item.productId)
-      .map((item) => ({
-        product: {
-          _id: item.productId._id,
-          title: item.productId.title,
-          price: item.productId.price,
-          oldprice: item.productId.oldprice,
-          discount: item.productId.discount,
-          brand: item.productId.brand,
-          image: item.productId.images?.[0]?.url || "",
-          sellerId: item.sellerId,
-          stock: item.productId.stock
-        },
-        quantity: item.quantity,
-      }));
-
-    res.json({ cart: formatted });
-  } catch (err) {
-    console.error("Error in Addtocart:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//get the cart---
-export const GetCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
-
-    if (!cart || cart.items.length === 0) {
-      return res.json({ cart: [] });
-    }
-
-    const formatted = cart.items
-      .filter((item) => item.productId)
-      .map((item) => ({
-        product: {
-          _id: item.productId._id,
-          title: item.productId.title,
-          price: item.productId.price,
-          oldprice: item.productId.oldprice,
-          discount: item.productId.discount,
-          brand: item.productId.brand,
-          image: item.productId.images[0]?.url || "",
-          sellerId: item.productId.sellerId,
-          stock: item.productId.stock
-        },
-        quantity: item.quantity,
-      }));
-
-    res.json({ cart: formatted });
-  } catch (err) {
-    console.error("Get Cart Error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//Add to Wishlist------
-export const AddToWishlist = async (req, res) => {
-  const { productId } = req.body;
-  const userId = req.user.id;
-
-  try {
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    let wishlist = await Wishlist.findOne({ userId });
-    if (!wishlist) wishlist = new Wishlist({ userId, products: [] });
-
-    const alreadyInWishlist = wishlist.products.includes(productId);
-    if (!alreadyInWishlist) {
-      wishlist.products.push(productId);
-    }
-
-    await wishlist.save();
-    await wishlist.populate("products");
-
-    const formatted = wishlist.products.map((product) => ({
-      _id: product._id,
-      title: product.title,
-      price: product.price,
-      oldprice: product.oldprice,
-      discount: product.discount,
-      brand: product.brand,
-      image: product.images[0]?.url || "",
-    }));
-
-    res.json({ wishlist: formatted });
-  } catch (err) {
-    console.error("Add to Wishlist Error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//get the wishlist----
-export const GetWishlist = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const wishlist = await Wishlist.findOne({ userId }).populate("products");
-
-    if (!wishlist || wishlist.products.length === 0) {
-      return res.json({ wishlist: [] });
-    }
-
-    const formatted = wishlist.products.map((product) => ({
-      _id: product._id,
-      title: product.title,
-      price: product.price,
-      oldprice: product.oldprice,
-      discount: product.discount,
-      brand: product.brand,
-      image: product.images[0]?.url || "",
-      sellerId: product.sellerId,
-    }));
-
-    res.json({ wishlist: formatted });
-  } catch (err) {
-    console.error("Get Wishlist Error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//Delete from add to cart---
-export const DeleteFromCart = async (req, res) => {
-  const userId = req.user.id;
-  const { productId } = req.params;
-
-  try {
-    const cart = await Cart.findOne({ userId });
-
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    const updatedItems = cart.items.filter(
-      (item) => item.productId.toString() !== productId
-    );
-
-    if (updatedItems.length === cart.items.length) {
-      return res.status(404).json({ message: "Item not found in cart" });
-    }
-
-    cart.items = updatedItems;
-
-    await cart.save();
-    await cart.populate("items.productId");
-
-    const formatted = cart.items
-      .filter((item) => item.productId)
-      .map((item) => ({
-        product: {
-          _id: item.productId._id,
-          title: item.productId.title,
-          price: item.productId.price,
-          oldprice: item.productId.oldprice,
-          discount: item.productId.discount,
-          brand: item.productId.brand,
-          image: item.productId.images[0]?.url || "",
-          sellerId: item.productId.sellerId
-        },
-        quantity: item.quantity,
-      }));
-
-    res.json({ message: "Item removed from cart", cart: formatted });
-  } catch (err) {
-    console.error("DeleteFromCart Error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-// delete wishlist product--
-export const RemoveFromWishlist = async (req, res) => {
-  const userId = req.user.id;
-  const { productId } = req.params;
-
-  try {
-    const wishlist = await Wishlist.findOne({ userId });
-
-    if (!wishlist) {
-      return res.status(404).json({ message: "Wishlist not found" });
-    }
-
-    const updatedProducts = wishlist.products.filter(
-      (id) => id.toString() !== productId
-    );
-
-    if (updatedProducts.length === wishlist.products.length) {
-      return res.status(404).json({ message: "Item not found in wishlist" });
-    }
-
-    wishlist.products = updatedProducts;
-
-    await wishlist.save();
-    await wishlist.populate("products");
-
-    const formatted = wishlist.products.map((product) => ({
-      product: {
-        _id: product._id,
-        title: product.title,
-        price: product.price,
-        oldprice: product.oldprice,
-        discount: product.discount,
-        brand: product.brand,
-        image: product.images[0]?.url || "",
-      },
-    }));
-
-    res.json({ message: "Item removed from wishlist", wishlist: formatted });
-  } catch (err) {
-    console.error("RemoveFromWishlist Error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//Toggle cart------
-export const ToggleCartQuantity = async (req, res) => {
-  const { productId, quantity } = req.body;
-  const userId = req.user.id;
-
-  try {
-    if (isNaN(quantity) || quantity < 1) {
-      return res.status(400).json({ message: "Quantity must be at least 1" });
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    // Check stock availability
-    if (quantity > product.stock) {
-      return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
-    }
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
-    const item = cart.items.find(
-      (item) => item.productId.toString() === productId
-    );
-    if (!item) return res.status(404).json({ message: "Product not in cart" });
-
-    item.quantity = quantity;
-
-    await cart.save();
-    await cart.populate("items.productId");
-
-    res.status(200).json({
-      cart: cart.items.map((item) => ({
-        product: item.productId,
-        quantity: item.quantity,
-        price: item.productId.price,
-        sellerId: item.productId.sellerId
-      })),
-    });
-  } catch (error) {
-    console.error("Update Cart Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// Fix for clearUserCart
-export const clearUserCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    // Mongoose findOneAndDelete to clear the specific user's cart
-    await Cart.findOneAndDelete({ userId: userId }); // Matching model/cart.js field "userId"
-
-    return res.status(200).json({ success: true, message: "Cart cleared." });
-  } catch (err) {
-    console.error("Error clearing cart:", err);
-    return res.status(500).json({ success: false, message: "Server error." });
-  }
-};
-
-// ==========================================
-// NEW AUTH FUNCTIONS (Fixing Missing Exports)
-// ==========================================
-
+/**
+ * Verify registration OTP
+ */
 export const verifyRegistrationOtp = async (req, res) => {
   const { email, otp } = req.body;
   try {
@@ -748,7 +463,6 @@ export const verifyRegistrationOtp = async (req, res) => {
     user.verifyotpexpAt = 0;
     await user.save();
 
-    // Generate token for auto-login after verification
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {
@@ -771,6 +485,9 @@ export const verifyRegistrationOtp = async (req, res) => {
   }
 };
 
+/**
+ * Resend registration OTP
+ */
 export const resendRegistrationOtp = async (req, res) => {
   const { email } = req.body;
   try {
@@ -783,9 +500,10 @@ export const resendRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Account already verified" });
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY FIX: Use cryptographically secure OTP
+    const otp = generateSecureOTP();
     user.verifyotp = otp;
-    user.verifyotpexpAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    user.verifyotpexpAt = Date.now() + 24 * 60 * 60 * 1000;
     await user.save();
 
     const mailOption = {
@@ -803,6 +521,9 @@ export const resendRegistrationOtp = async (req, res) => {
   }
 };
 
+/**
+ * Logout user (session management)
+ */
 export const logoutUser = async (req, res) => {
   try {
     res.clearCookie('token', {
@@ -817,9 +538,12 @@ export const logoutUser = async (req, res) => {
   }
 };
 
+/**
+ * Get current authenticated user
+ */
 export const getMe = async (req, res) => {
   try {
-    const userId = req.userId; // Set by userAuth middleware
+    const userId = req.userId;
     const user = await usermodel.findById(userId).select("-password");
 
     if (!user) {
@@ -833,7 +557,6 @@ export const getMe = async (req, res) => {
         name: user.name,
         email: user.email,
         isAccountVerified: user.isAccountVerify,
-        // Add other fields if needed
       }
     });
   } catch (error) {

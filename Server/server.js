@@ -97,8 +97,11 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-console.log('CORS allowed origins:', allowedOrigins);
-console.log('CORS wildcard hosts:', wildcardHosts);
+// SECURITY: Only log CORS config in development
+if (process.env.NODE_ENV !== 'production') {
+  console.log('CORS allowed origins:', allowedOrigins);
+  console.log('CORS wildcard hosts:', wildcardHosts);
+}
 
 app.use(cors(corsOptions));
 

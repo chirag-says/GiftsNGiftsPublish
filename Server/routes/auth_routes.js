@@ -1,4 +1,10 @@
+/**
+ * Authentication Routes
+ * REFACTORED: Imports from separated controllers for Single Responsibility
+ */
 import express from "express";
+
+// Auth-only controller
 import {
     register,
     login,
@@ -8,23 +14,30 @@ import {
     isAuthenticated,
     sendResetpassword,
     resetpassword,
-    Addtocart,
-    AddToWishlist,
-    GetWishlist,
-    GetCart,
-    DeleteFromCart,
-    RemoveFromWishlist,
-    ToggleCartQuantity,
     loginRequestOtp,
     verifyLoginOtp,
-    clearUserCart,
-    // New Registration OTP Functions
     verifyRegistrationOtp,
     resendRegistrationOtp,
-    // Session management
     logoutUser,
     getMe
 } from "../controller/auth_controller.js";
+
+// REFACTORED: Cart functions from separate controller
+import {
+    Addtocart,
+    GetCart,
+    DeleteFromCart,
+    ToggleCartQuantity,
+    clearUserCart
+} from "../controller/cartController.js";
+
+// REFACTORED: Wishlist functions from separate controller
+import {
+    AddToWishlist,
+    GetWishlist,
+    RemoveFromWishlist
+} from "../controller/wishlistController.js";
+
 import userAuth from "../middleware/userAuth.js";
 
 const router = express.Router();
@@ -44,8 +57,8 @@ router.post('/login-request-otp', loginRequestOtp);
 router.post("/verify-login-otp", verifyLoginOtp);
 
 // ============ SESSION MANAGEMENT ============
-router.get('/me', userAuth, getMe);           // NEW: Get current user (replaces localStorage check)
-router.post('/logout-session', logoutUser);    // NEW: Proper logout (clears cookie)
+router.get('/me', userAuth, getMe);
+router.post('/logout-session', logoutUser);
 
 // ============ CART ROUTES ============
 router.post('/Cart', userAuth, Addtocart)

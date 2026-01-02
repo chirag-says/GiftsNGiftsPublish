@@ -32,8 +32,10 @@ const phoneSchema = z.string()
     .regex(/^[6-9]\d{9}$/, 'Invalid phone number format')
     .optional();
 
-// Sanitized text (prevents XSS by stripping dangerous characters)
-const sanitizedTextSchema = z.string()
+// Sanitized text factory (prevents XSS by stripping HTML tags)
+// Usage: createSanitizedText(maxLength)
+const createSanitizedText = (maxLen = 1000) => z.string()
+    .max(maxLen)
     .transform(val => val.replace(/<[^>]*>/g, '').trim());
 
 // Price validation
@@ -191,17 +193,67 @@ export const createReviewSchema = z.object({
     body: z.object({
         productId: objectIdSchema,
         rating: z.coerce.number().int().min(1).max(5),
-        comment: sanitizedTextSchema.max(2000).optional(),
-        title: sanitizedTextSchema.max(200).optional(),
+        comment: createSanitizedText(2000).optional(),
+        title: createSanitizedText(200).optional(),
         userName: z.string().min(1).max(100).trim()
     })
 });
 
-// ============ ORDER SCHEMAS ============
-
 export const orderIdParamSchema = z.object({
     params: z.object({
         orderId: objectIdSchema
+    })
+});
+
+// Order ID in params as 'id' (for /order/:id routes)
+export const orderIdAsIdSchema = z.object({
+    params: z.object({
+        id: objectIdSchema
+    })
+});
+
+// Place Order Schema
+export const placeOrderSchema = z.object({
+    body: z.object({
+        items: z.array(z.object({
+            productId: objectIdSchema,
+            name: z.string().max(200).optional(),
+            price: z.coerce.number().positive().max(10000000),
+            quantity: z.coerce.number().int().positive().max(100),
+            image: z.string().max(500).optional(),
+            sellerId: objectIdSchema.optional()
+        })).min(1, 'At least one item required').max(50, 'Max 50 items per order'),
+        totalAmount: z.coerce.number().positive().max(100000000),
+        shippingAddress: z.object({
+            name: z.string().min(1).max(100),
+            phone: z.string().min(10).max(15),
+            street: z.string().min(1).max(300),
+            city: z.string().min(1).max(100),
+            state: z.string().min(1).max(100),
+            pincode: z.string().min(5).max(10),
+            landmark: z.string().max(200).optional()
+        }),
+        image: z.string().max(500).optional(),
+        paymentId: z.string().max(100).optional()
+    })
+});
+
+// Search Query Schema - sanitizes and limits search input
+export const searchQuerySchema = z.object({
+    query: z.object({
+        q: z.string().max(100).optional(),
+        query: z.string().max(100).optional()
+    })
+});
+
+// Validate Stock Schema
+export const validateStockSchema = z.object({
+    body: z.object({
+        items: z.array(z.object({
+            productId: objectIdSchema,
+            name: z.string().max(200).optional(),
+            quantity: z.coerce.number().int().positive().max(100)
+        })).min(1).max(50)
     })
 });
 

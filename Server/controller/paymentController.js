@@ -4,6 +4,12 @@ import mongoose from 'mongoose';
 import Payment from '../model/payment.js';
 import Product from '../model/addproduct.js';
 import Order from '../model/order.js';
+import {
+  reserveStock,
+  releaseReservation,
+  confirmStockPurchase
+} from '../services/stockReservationService.js';
+import { handleError } from '../utils/errorHandler.js';
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -26,14 +32,13 @@ const isReplicaSet = async () => {
 };
 
 /**
- * SECURITY FIX: Server-Side Price Calculation
+ * SECURITY HARDENED CHECKOUT
  * 
- * VULNERABILITY PATCHED:
- * 1. Client-side price manipulation - Server now calculates total from DB
- * 2. Stock validation before order creation
- * 
- * NOTE: Transactions are used when available (MongoDB replica set)
- * Falls back to non-transactional mode for standalone MongoDB
+ * FEATURES:
+ * 1. Server-side price calculation (never trust client prices)
+ * 2. STOCK RESERVATION - Stock is reserved immediately to prevent overselling
+ * 3. Atomic operations using MongoDB transactions when available
+ * 4. 10-minute reservation timeout with auto-release
  * 
  * @param {Object} req.body.items - Array of { productId, quantity }
  */
@@ -43,12 +48,21 @@ export const checkout = async (req, res) => {
     console.log("[Checkout] User ID:", req.userId);
 
     const { items } = req.body;
+    const userId = req.userId || 'guest';
 
     // Validate input
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
         error: "Invalid request: items array is required"
+      });
+    }
+
+    // Limit items per checkout
+    if (items.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: "Maximum 50 items per checkout"
       });
     }
 
@@ -63,28 +77,35 @@ export const checkout = async (req, res) => {
     }
 
     // CRITICAL: Fetch REAL prices from database - NEVER trust client prices
-    const lineItems = await Promise.all(
-      items.map(async (item) => {
-        const product = await Product.findById(item.productId).select('price title stock');
+    const lineItems = [];
+    for (const item of items) {
+      const product = await Product.findById(item.productId).select('price title stock reservedStock');
 
-        if (!product) {
-          throw new Error(`Product not found: ${item.productId}`);
-        }
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          error: `Product not found: ${item.productId}`
+        });
+      }
 
-        if (product.stock < item.quantity) {
-          throw new Error(`Insufficient stock for ${product.title}. Available: ${product.stock}, Requested: ${item.quantity}`);
-        }
+      // Calculate AVAILABLE stock (total - reserved)
+      const availableStock = product.stock - (product.reservedStock || 0);
 
-        return {
-          productId: item.productId,
-          title: product.title,
-          unitPrice: product.price,
-          quantity: item.quantity,
-          lineTotal: product.price * item.quantity,
-          currentStock: product.stock
-        };
-      })
-    );
+      if (availableStock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          error: `Insufficient stock for ${product.title}. Available: ${availableStock}, Requested: ${item.quantity}`
+        });
+      }
+
+      lineItems.push({
+        productId: item.productId,
+        title: product.title,
+        unitPrice: product.price,
+        quantity: item.quantity,
+        lineTotal: product.price * item.quantity
+      });
+    }
 
     // Calculate server-side total using TRUSTED database prices
     const serverCalculatedTotal = lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
@@ -97,16 +118,15 @@ export const checkout = async (req, res) => {
       });
     }
 
-    // Create Razorpay order with SERVER-CALCULATED amount
-    // NOTE: Receipt must be max 40 characters per Razorpay API
+    // Create Razorpay order FIRST to get the order ID for reservation tracking
     const receiptId = `ord_${Date.now().toString(36)}`;
 
     const options = {
       amount: Math.round(serverCalculatedTotal * 100), // Convert to paise
       currency: "INR",
-      receipt: receiptId.substring(0, 40), // Ensure max 40 chars
+      receipt: receiptId.substring(0, 40),
       notes: {
-        userId: req.userId || 'guest',
+        userId: userId,
         itemCount: items.length,
         calculatedAt: new Date().toISOString()
       }
@@ -114,7 +134,26 @@ export const checkout = async (req, res) => {
 
     const razorpayOrder = await instance.orders.create(options);
 
-    // Return order details along with calculated breakdown for frontend display
+    // SECURITY: Reserve stock immediately to prevent overselling
+    const reservationResult = await reserveStock(
+      items.map(item => ({ productId: item.productId, quantity: item.quantity })),
+      razorpayOrder.id,
+      userId
+    );
+
+    if (!reservationResult.success) {
+      // Couldn't reserve stock - likely sold out during checkout
+      console.error("Stock reservation failed:", reservationResult.errors);
+      return res.status(400).json({
+        success: false,
+        error: "Some items are no longer available",
+        details: reservationResult.errors
+      });
+    }
+
+    console.log(`✅ Checkout created. Order: ${razorpayOrder.id}, Reserved: ${reservationResult.reservedItems.length} items`);
+
+    // Return order details
     res.status(200).json({
       success: true,
       order: razorpayOrder,
@@ -128,28 +167,26 @@ export const checkout = async (req, res) => {
         })),
         total: serverCalculatedTotal,
         totalInPaise: options.amount
+      },
+      reservationInfo: {
+        expiresIn: '10 minutes',
+        message: 'Complete payment within 10 minutes to secure your items'
       }
     });
 
   } catch (err) {
     console.error("Checkout Error:", err);
-    console.error("Error name:", err.name);
-    console.error("Error message:", err.message);
-    console.error("Error stack:", err.stack);
-
-    res.status(500).json({
-      success: false,
-      error: err.message || "Failed to create order"
-    });
+    handleError(res, err, "Failed to create order");
   }
 };
 
 /**
  * Payment Verification
  * 
- * SECURITY FIXES:
+ * SECURITY FEATURES:
  * 1. Replay Protection - Check if payment was already processed
  * 2. Signature Verification - Razorpay webhook security
+ * 3. STOCK CONFIRMATION - Converts reserved stock to actual deduction
  */
 export const paymentVerification = async (req, res) => {
   try {
@@ -172,10 +209,23 @@ export const paymentVerification = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
+      // Payment failed - release the reservation
+      await releaseReservation(razorpay_order_id);
+
       return res.status(400).json({
         success: false,
         message: "Invalid payment signature. Possible tampering detected."
       });
+    }
+
+    // SECURITY: Confirm stock purchase - converts reservation to actual deduction
+    const confirmResult = await confirmStockPurchase(razorpay_order_id);
+
+    if (!confirmResult.success) {
+      console.error("Stock confirmation failed:", confirmResult.error);
+      // Don't fail the payment - stock was reserved, just log the issue
+    } else {
+      console.log(`✅ Stock confirmed for order ${razorpay_order_id}:`, confirmResult.confirmedItems.length, 'items');
     }
 
     // Create payment record
@@ -183,7 +233,8 @@ export const paymentVerification = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      verifiedAt: new Date()
+      verifiedAt: new Date(),
+      stockConfirmed: confirmResult.success
     });
 
     // Redirect to success page
@@ -192,10 +243,7 @@ export const paymentVerification = async (req, res) => {
 
   } catch (err) {
     console.error("Payment Verification Error:", err.message);
-    res.status(500).json({
-      success: false,
-      error: err.message || "Payment verification failed"
-    });
+    handleError(res, err, "Payment verification failed");
   }
 };
 

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import usermodel from "../model/mongobd_usermodel.js";
+import { isTokenBlacklisted, getBlacklistReason } from "../utils/tokenBlacklist.js";
 
 /**
  * Secure Cookie Configuration for User
@@ -18,9 +19,10 @@ export const USER_COOKIE_OPTIONS = {
  * 
  * SECURITY FEATURES:
  * 1. ONLY reads JWT from HttpOnly cookie (no localStorage/header fallback)
- * 2. Explicit role verification from JWT payload
- * 3. Database validation of user existence and block status
- * 4. Pure cookie-based auth for XSS protection
+ * 2. TOKEN BLACKLIST CHECK - Enables proper session revocation
+ * 3. Explicit role verification from JWT payload
+ * 4. Database validation of user existence and block status
+ * 5. Pure cookie-based auth for XSS protection
  */
 const userAuth = async (req, res, next) => {
     try {
@@ -31,6 +33,16 @@ const userAuth = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 message: 'Not Authorized. Please login.'
+            });
+        }
+
+        // SECURITY: Check if token is blacklisted (logged out)
+        if (isTokenBlacklisted(token)) {
+            const reason = getBlacklistReason(token);
+            console.warn(`🛡️ Blocked blacklisted token. Reason: ${reason}, IP: ${req.ip}`);
+            return res.status(401).json({
+                success: false,
+                message: 'Session has been terminated. Please login again.'
             });
         }
 
@@ -93,6 +105,7 @@ const userAuth = async (req, res, next) => {
         req.userId = decoded.id;
         req.user = { id: decoded.id, name: user.name, email: user.email };
         req.userRole = decoded.role || 'user';
+        req.token = token; // Store token for potential blacklisting on logout
 
         next();
     } catch (error) {

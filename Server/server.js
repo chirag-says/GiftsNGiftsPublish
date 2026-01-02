@@ -59,12 +59,21 @@ scheduleSellerInactivitySweep();
 ========================= */
 app.use(
   helmet({
-    // Content Security Policy - allows Cloudinary images
+    // Content Security Policy - HARDENED
+    // SECURITY: Removed 'unsafe-inline' and 'unsafe-eval'
+    // For frontend compatibility, use nonce-based scripts or specific hashes
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        // Scripts: Only allow self and specific trusted domains
+        // In development, we allow unsafe-inline. In production, use nonces.
+        scriptSrc: process.env.NODE_ENV === 'production'
+          ? ["'self'", "https://checkout.razorpay.com", "https://api.razorpay.com"]
+          : ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com", "https://api.razorpay.com"],
+        // Styles: Allow Google Fonts, self. Inline styles need nonce in production.
+        styleSrc: process.env.NODE_ENV === 'production'
+          ? ["'self'", "https://fonts.googleapis.com"]
+          : ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: [
           "'self'",
@@ -77,12 +86,16 @@ app.use(
         connectSrc: [
           "'self'",
           "https://api.razorpay.com",
+          "https://lumberjack.razorpay.com",
           "https://res.cloudinary.com",
           "https://*.cloudinary.com"
         ],
         frameSrc: ["'self'", "https://api.razorpay.com"],
         objectSrc: ["'none'"],
-        upgradeInsecureRequests: []
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"], // Clickjacking protection
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
       }
     },
     // X-Frame-Options: Prevent clickjacking
@@ -160,11 +173,20 @@ const sensitiveAuthLimiter = rateLimit({
 });
 
 /* =========================
-   PARSERS
+   PARSERS - Route-Specific Payload Limits
+   SECURITY: Differentiated limits to prevent payload-based DoS
 ========================= */
-app.use(express.json({ limit: "10mb" })); // Limit payload size
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Default parser with conservative limit
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
+
+// SECURITY: Stricter limits for sensitive routes (applied BEFORE routes)
+// 20KB limit for auth/user routes (no need for large payloads)
+const strictPayloadLimit = express.json({ limit: "20kb" });
+app.use("/api/auth", strictPayloadLimit);
+app.use("/api/user", strictPayloadLimit);
 
 /* =========================
    🛡️ SECURITY: NoSQL Injection Prevention

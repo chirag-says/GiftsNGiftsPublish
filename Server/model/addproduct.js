@@ -64,6 +64,18 @@ const addproductSchema = new mongoose.Schema({
   // ⭐ Stock Fields
   stock: { type: Number, required: true, default: 0 },
 
+  // SECURITY: Reserved stock for pending payments (prevents overselling)
+  reservedStock: { type: Number, default: 0 },
+
+  // Track individual reservations for timeout cleanup
+  reservations: [{
+    razorpayOrderId: String,
+    userId: String,
+    quantity: Number,
+    createdAt: { type: Date, default: Date.now },
+    expiresAt: Date
+  }],
+
   availability: {
     type: String,
     enum: ["In Stock", "Low Stock", "Out of Stock"],
@@ -77,16 +89,21 @@ const addproductSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // ⭐ Auto-update availability before saving
+// SECURITY: Considers both stock and reservedStock
 addproductSchema.pre("save", function (next) {
-  this.stock = parseInt(this.stock);
+  this.stock = parseInt(this.stock) || 0;
+  this.reservedStock = parseInt(this.reservedStock) || 0;
 
-  this.isAvailable = this.stock > 0;
+  // Available stock = total stock - reserved stock
+  const availableStock = this.stock - this.reservedStock;
 
-  if (this.stock <= 0) {
-    this.stock = 0;
+  this.isAvailable = availableStock > 0;
+
+  if (availableStock <= 0) {
+    if (this.stock <= 0) this.stock = 0;
     this.availability = "Out of Stock";
   }
-  else if (this.stock < 5) {
+  else if (availableStock < 5) {
     this.availability = "Low Stock";
   }
   else {

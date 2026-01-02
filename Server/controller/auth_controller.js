@@ -12,6 +12,7 @@ import jwt from "jsonwebtoken";
 import usermodel from "../model/mongobd_usermodel.js";
 import transporter from "../config/nodemailer.js";
 import Profile from "../model/userprofile.js";
+import { blacklistToken } from "../utils/tokenBlacklist.js";
 
 /**
  * SECURITY: Generate cryptographically secure 6-digit OTP
@@ -262,10 +263,19 @@ export const login = async (req, res) => {
 };
 
 /**
- * Logout user (clear cookie)
+ * Logout user (clear cookie + blacklist token)
+ * 
+ * SECURITY: Token is now blacklisted server-side, making it
+ * immediately invalid even if the cookie isn't properly cleared.
  */
 export const logout = async (req, res) => {
   try {
+    // SECURITY: Blacklist the current token
+    const token = req.cookies?.token;
+    if (token) {
+      blacklistToken(token, 'user_logout');
+    }
+
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -538,9 +548,17 @@ export const resendRegistrationOtp = async (req, res) => {
 
 /**
  * Logout user (session management)
+ * 
+ * SECURITY: Token is blacklisted server-side for proper session revocation.
  */
 export const logoutUser = async (req, res) => {
   try {
+    // SECURITY: Blacklist the current token
+    const token = req.cookies?.token || req.token;
+    if (token) {
+      blacklistToken(token, 'user_logout');
+    }
+
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

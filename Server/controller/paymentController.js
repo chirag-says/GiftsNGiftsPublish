@@ -283,3 +283,158 @@ export const completeOrderWithStockDeduction = async (orderData, userId) => {
 export const getRazorpayKey = (req, res) => {
   res.status(200).json({ key: process.env.RAZORPAY_KEY_ID });
 };
+
+/**
+ * Razorpay Webhook Handler
+ * 
+ * SECURITY: Cryptographic Signature Verification
+ * 
+ * This endpoint handles server-to-server callbacks from Razorpay.
+ * It verifies the webhook signature using HMAC SHA256 to prevent:
+ * 1. Webhook spoofing (fake payment confirmations)
+ * 2. Payment fraud
+ * 3. Man-in-the-middle attacks
+ * 
+ * @route POST /api/webhook/razorpay
+ */
+export const razorpayWebhook = async (req, res) => {
+  try {
+    // Get signature from header
+    const signature = req.headers['x-razorpay-signature'];
+
+    if (!signature) {
+      console.warn('🛡️ Webhook rejected: Missing signature');
+      return res.status(401).json({ success: false, message: 'Missing signature' });
+    }
+
+    // SECURITY: Verify webhook signature
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error('🔴 RAZORPAY_WEBHOOK_SECRET not configured');
+      return res.status(500).json({ success: false, message: 'Webhook configuration error' });
+    }
+
+    // The body must be the raw JSON string for signature verification
+    const body = JSON.stringify(req.body);
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(body)
+      .digest('hex');
+
+    // Timing-safe comparison to prevent timing attacks
+    const signatureBuffer = Buffer.from(signature, 'utf-8');
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
+
+    if (signatureBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+      console.warn(`🛡️ Webhook signature mismatch! IP: ${req.ip}`);
+      console.warn(`Expected: ${expectedSignature.substring(0, 20)}...`);
+      console.warn(`Received: ${signature.substring(0, 20)}...`);
+      return res.status(401).json({ success: false, message: 'Invalid signature' });
+    }
+
+    // Signature verified - process the event
+    const { event, payload } = req.body;
+
+    console.log(`✅ Verified Razorpay webhook: ${event}`);
+
+    switch (event) {
+      case 'payment.captured':
+        await handlePaymentCaptured(payload.payment?.entity);
+        break;
+
+      case 'payment.failed':
+        await handlePaymentFailed(payload.payment?.entity);
+        break;
+
+      case 'order.paid':
+        await handleOrderPaid(payload.order?.entity, payload.payment?.entity);
+        break;
+
+      case 'refund.processed':
+        await handleRefundProcessed(payload.refund?.entity);
+        break;
+
+      default:
+        console.log(`Unhandled webhook event: ${event}`);
+    }
+
+    // Always respond 200 OK to acknowledge receipt
+    // (Razorpay will retry if we don't respond with 2xx)
+    res.status(200).json({ success: true, received: true });
+
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    // Still return 200 to prevent retries for processing errors
+    res.status(200).json({ success: false, error: 'Processing error' });
+  }
+};
+
+/**
+ * Handle payment.captured event
+ */
+const handlePaymentCaptured = async (payment) => {
+  if (!payment) return;
+
+  const { id, order_id, amount, status } = payment;
+
+  // Check for duplicate processing
+  const existing = await Payment.findOne({ razorpay_payment_id: id });
+  if (existing) {
+    console.log(`Payment ${id} already processed (webhook duplicate)`);
+    return;
+  }
+
+  // Create payment record
+  await Payment.create({
+    razorpay_order_id: order_id,
+    razorpay_payment_id: id,
+    amount: amount / 100, // Convert paise to rupees
+    status,
+    verifiedAt: new Date(),
+    source: 'webhook'
+  });
+
+  console.log(`✅ Payment ${id} captured via webhook`);
+};
+
+/**
+ * Handle payment.failed event
+ */
+const handlePaymentFailed = async (payment) => {
+  if (!payment) return;
+
+  console.log(`❌ Payment failed: ${payment.id}, reason: ${payment.error_reason}`);
+
+  // Log failed payment for analytics
+  await Payment.findOneAndUpdate(
+    { razorpay_order_id: payment.order_id },
+    {
+      status: 'failed',
+      failureReason: payment.error_reason,
+      failedAt: new Date()
+    },
+    { upsert: true }
+  );
+};
+
+/**
+ * Handle order.paid event
+ */
+const handleOrderPaid = async (order, payment) => {
+  if (!order || !payment) return;
+
+  console.log(`✅ Order ${order.id} marked as paid`);
+  // Additional order processing logic can be added here
+};
+
+/**
+ * Handle refund.processed event
+ */
+const handleRefundProcessed = async (refund) => {
+  if (!refund) return;
+
+  console.log(`🔄 Refund processed: ${refund.id}, amount: ${refund.amount / 100}`);
+  // Update order status, notify customer, etc.
+};

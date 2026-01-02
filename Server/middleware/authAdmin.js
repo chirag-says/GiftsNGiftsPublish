@@ -2,12 +2,28 @@ import jwt from 'jsonwebtoken';
 import Admin from '../model/adminModel.js';
 
 /**
+ * Secure Cookie Configuration
+ * OWASP Compliance: HttpOnly, Secure, SameSite
+ */
+export const SECURE_COOKIE_OPTIONS = {
+  httpOnly: true,                                           // Prevents JavaScript access (XSS protection)
+  secure: process.env.NODE_ENV === 'production',            // HTTPS only in production
+  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // CSRF protection
+  maxAge: 7 * 24 * 60 * 60 * 1000,                         // 7 days
+  path: '/'
+};
+
+/**
  * Admin Authentication Middleware
  * 
- * SECURITY FIX: Removed Authorization header fallback
- * ONLY reads JWT from HttpOnly cookie to maximize security
+ * SECURITY FEATURES:
+ * 1. ONLY reads JWT from HttpOnly cookie (no header fallback)
+ * 2. Explicit role verification from JWT payload
+ * 3. Database validation of admin existence and status
+ * 4. Rate limiting at route level (see server.js)
  * 
- * Why: If we allow header fallback, attackers can exploit XSS to steal
+ * Why no header fallback:
+ * If we allow Authorization header, attackers can exploit XSS to steal
  * tokens from localStorage and send them via headers, bypassing HttpOnly protection.
  */
 const adminAuth = async (req, res, next) => {
@@ -23,10 +39,36 @@ const adminAuth = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired. Please login again."
+        });
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid session. Please login again."
+        });
+      }
+      throw jwtError;
+    }
+
+    // SECURITY: Strict role verification from JWT
+    if (!decoded.role || decoded.role !== 'admin') {
+      console.warn(`🛡️ Admin auth failed: Invalid role. Token role: ${decoded.role}, IP: ${req.ip}`);
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin privileges required."
+      });
+    }
 
     // Verify admin exists and is not blocked
-    const admin = await Admin.findById(decoded.id);
+    const admin = await Admin.findById(decoded.id).select('isBlocked email name');
     if (!admin) {
       return res.status(401).json({
         success: false,
@@ -41,24 +83,13 @@ const adminAuth = async (req, res, next) => {
       });
     }
 
-    // Attach admin ID to request
+    // Attach admin info to request
     req.adminId = decoded.id;
     req.admin = admin;
+    req.adminRole = decoded.role;
 
     next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: "Session expired. Please login again."
-      });
-    }
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid session. Please login again."
-      });
-    }
     console.error("Admin Auth Middleware Error:", error);
     res.status(401).json({
       success: false,

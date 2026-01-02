@@ -60,21 +60,59 @@ export const addProduct = async (req, res) => {
 
 
 // 2. UPDATE PRODUCT (Handles Stock Updates)
+// SECURITY: IDOR Protection + Mass Assignment Prevention
 export const updateProduct = async (req, res) => {
   try {
-    const product = await addproductmodel.findById(req.params.id);
+    const productId = req.params.id;
+    const sellerId = req.sellerId;
+
+    // SECURITY: IDOR Protection - Verify product ownership
+    // Must include sellerId in query to prevent unauthorized access
+    const product = await addproductmodel.findOne({
+      _id: productId,
+      sellerId: sellerId  // CRITICAL: Only allow owner to update
+    });
+
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or you don't have permission to edit it"
+      });
     }
 
-    // Update dynamic fields
-    Object.keys(req.body).forEach(key => {
-      product[key] = req.body[key];
+    // SECURITY: Mass Assignment Prevention
+    // ONLY allow specific fields to be updated - explicit whitelist
+    const ALLOWED_UPDATE_FIELDS = [
+      'title', 'description', 'price', 'oldprice', 'discount',
+      'stock', 'brand', 'size', 'ingredients', 'additional_details',
+      'categoryname', 'subcategory',
+      // Product specifications
+      'productDimensions', 'itemWeight', 'itemDimensionsLxWxH',
+      'netQuantity', 'genericName', 'asin', 'itemPartNumber',
+      'dateFirstAvailable', 'manufacturer', 'packer', 'department',
+      'countryOfOrigin', 'bestSellerRank', 'materialComposition',
+      'outerMaterial', 'length', 'careInstructions', 'aboutThisItem'
+    ];
+
+    // BLOCKED FIELDS - These should NEVER be updatable via this endpoint:
+    // sellerId, _id, createdAt, approved, isFeatured, views
+
+    // Apply only whitelisted fields
+    ALLOWED_UPDATE_FIELDS.forEach(field => {
+      if (req.body[field] !== undefined) {
+        product[field] = req.body[field];
+      }
     });
 
     // Recalculate availability if stock changes
     if (req.body.stock !== undefined) {
       const stock = parseInt(req.body.stock);
+      if (isNaN(stock) || stock < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Stock must be a non-negative number"
+        });
+      }
       product.stock = stock;
       product.isAvailable = stock > 0;
 
@@ -101,7 +139,8 @@ export const updateProduct = async (req, res) => {
     return res.status(200).json({ success: true, data: product });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Update Product Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update product" });
   }
 };
 
@@ -230,22 +269,37 @@ export const filterProducts = async (req, res) => {
 };
 
 
+/**
+ * Delete Product
+ * SECURITY: IDOR Protection - Sellers can only delete their own products
+ */
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    // Optional: Check if product belongs to seller (if sellerId is available in req)
-    // const sellerId = req.sellerId; 
-    // const product = await addproductmodel.findOne({ _id: id, sellerId });
+    const sellerId = req.sellerId;
 
-    const del = await addproductmodel.findByIdAndDelete(id);
+    // SECURITY: Verify product ownership before deletion
+    // findOneAndDelete atomically checks ownership and deletes
+    const deletedProduct = await addproductmodel.findOneAndDelete({
+      _id: id,
+      sellerId: sellerId  // CRITICAL: Only allow owner to delete
+    });
 
-    if (!del) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+    if (!deletedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or you don't have permission to delete it"
+      });
     }
 
-    res.json({ success: true, message: "Product deleted successfully", data: del });
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+      deletedId: deletedProduct._id
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    console.error("Delete Product Error:", error);
+    res.status(500).json({ success: false, message: 'Failed to delete product' });
   }
 };
 

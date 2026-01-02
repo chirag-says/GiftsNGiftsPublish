@@ -2,6 +2,9 @@ import addproductmodel from "../model/addproduct.js";
 import Category from "../model/Category.js";
 import orderModel from "../model/order.js";
 import Review from "../model/review.js";
+import { v2 as cloudinary } from "cloudinary";
+import sellermodel from "../model/sellermodel.js";
+import fs from "fs";
 
 // Get My Categories (Categories seller has products in)
 export const getMyCategories = async (req, res) => {
@@ -234,5 +237,105 @@ export const getCategorySuggestions = async (req, res) => {
   } catch (error) {
     console.error("Category Suggestions Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+/**
+ * Add Category (Seller Version)
+ * 
+ * Allows approved sellers to add categories.
+ * This is separate from the admin version and uses seller authentication.
+ */
+export const addSellerCategory = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { categoryname, altText } = req.body;
+
+    if (!sellerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Check if seller is approved
+    const seller = await sellermodel.findById(sellerId);
+    if (!seller || !seller.approved) {
+      return res.status(403).json({
+        success: false,
+        message: "Only approved sellers can add categories"
+      });
+    }
+
+    // Validate inputs
+    if (!categoryname || !categoryname.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Category name is required"
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Category image is required"
+      });
+    }
+
+    // Check if category already exists
+    const existingCategory = await Category.findOne({
+      categoryname: { $regex: new RegExp(`^${categoryname.trim()}$`, 'i') }
+    });
+
+    if (existingCategory) {
+      // Clean up uploaded file
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
+        success: false,
+        message: "Category already exists"
+      });
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+      folder: "categories",
+      resource_type: "image"
+    });
+
+    // Create new category
+    const newCategory = new Category({
+      categoryname: categoryname.trim(),
+      images: [{
+        url: uploadResult.secure_url,
+        altText: altText || categoryname.trim()
+      }],
+      createdBySeller: sellerId // Track who created it
+    });
+
+    await newCategory.save();
+
+    // Clean up local temp file
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Category added successfully",
+      category: newCategory
+    });
+
+  } catch (error) {
+    console.error("Add Seller Category Error:", error);
+    // Clean up on error
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({
+      success: false,
+      message: "Failed to add category"
+    });
   }
 };

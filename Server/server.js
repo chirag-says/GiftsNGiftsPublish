@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -112,18 +113,23 @@ app.use(
    Fixes: Protection vs. Bots, DDoS, Brute-force
 ========================= */
 
-// Global API rate limiter: 100 requests per 15 minutes per IP
+// Global API rate limiter
+// Development: More lenient for testing
+// Production: Stricter for security
+const isDev = process.env.NODE_ENV !== 'production';
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: isDev ? 500 : 100, // 500 in dev, 100 in production
   message: {
     success: false,
     message: "Too many requests from this IP, please try again after 15 minutes."
   },
-  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false, // Disable `X-RateLimit-*` headers
-  // Skip rate limiting for trusted proxies in production
+  standardHeaders: true,
+  legacyHeaders: false,
   skip: (req) => {
+    // Skip rate limiting in development
+    if (isDev) return true;
     // Don't rate limit health checks
     return req.path === "/" || req.path === "/health";
   }
@@ -161,33 +167,65 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
 /* =========================
-   ✅ CORS CONFIG
+   🛡️ SECURITY: NoSQL Injection Prevention
+   Sanitizes user inputs to prevent MongoDB operator injection attacks
+   e.g., prevents { "$gt": "" } in req.body, req.query, req.params
 ========================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:5176",
+app.use(mongoSanitize({
+  replaceWith: '_', // Replace prohibited characters with underscore
+  onSanitize: ({ req, key }) => {
+    console.warn(`🛡️ NoSQL Injection attempt blocked. Key: ${key}, IP: ${req.ip}`);
+  }
+}));
 
+/* =========================
+   ✅ CORS CONFIG - PRODUCTION HARDENED
+   
+   SECURITY: Strict origin whitelisting
+   - Production: ONLY whitelisted domains allowed
+   - Development: Allow localhost for development flexibility
+========================= */
+const isProduction = process.env.NODE_ENV === 'production';
+
+const allowedOrigins = [
+  // Development origins (only used in non-production)
+  ...(isProduction ? [] : [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+  ]),
+  // Production origins - ALWAYS allowed
   "https://giftngifts.in",
   "https://www.giftngifts.in",
-
   "https://giftsngifts.in",
-  "https://www.giftsngifts.in"
+  "https://www.giftsngifts.in",
+  // Add admin/seller subdomains if needed
+  "https://admin.giftsngifts.in",
+  "https://seller.giftsngifts.in"
 ];
 
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow server requests, curl, postman
+      // Allow server-to-server requests (no origin header)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // ⚠️ Log but don't block (for debugging)
-      console.warn("⚠️ CORS origin not listed:", origin);
+      // SECURITY: In production, BLOCK non-whitelisted origins
+      if (isProduction) {
+        console.warn(`🛡️ CORS BLOCKED: Unauthorized origin attempt from ${origin}`);
+        return callback(new Error('CORS policy: Origin not allowed'), false);
+      }
+
+      // Development only: Allow with warning
+      console.warn(`⚠️ CORS origin not whitelisted (dev mode): ${origin}`);
       return callback(null, true);
     },
     credentials: true,
@@ -195,9 +233,12 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
-      "token",
-      "stoken"
+      "X-Requested-With",
+      "Accept",
+      "Origin"
     ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 600, // Cache preflight for 10 minutes
     optionsSuccessStatus: 204
   })
 );
@@ -281,15 +322,61 @@ app.use((req, res) => {
 
 /* =========================
    🛡️ GLOBAL ERROR HANDLER
+   
+   SECURITY: Error Information Disclosure Prevention
+   - Production: Generic messages only (no stack traces, no internal details)
+   - Development: Full error details for debugging
+   - All errors logged internally with full context
 ========================= */
 app.use((err, req, res, next) => {
-  console.error("🔴 Server Error:", err.message);
-  res.status(err.status || 500).json({
+  // Generate unique error ID for correlation
+  const errorId = `ERR_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 6)}`.toUpperCase();
+
+  // INTERNAL LOGGING: Full details for debugging (secure logs only)
+  console.error('='.repeat(60));
+  console.error(`🔴 ERROR ID: ${errorId}`);
+  console.error(`🔴 Timestamp: ${new Date().toISOString()}`);
+  console.error(`🔴 Path: ${req.method} ${req.originalUrl}`);
+  console.error(`🔴 IP: ${req.ip}`);
+  console.error(`🔴 User-Agent: ${req.get('User-Agent')}`);
+  console.error(`🔴 Error Name: ${err.name}`);
+  console.error(`🔴 Error Message: ${err.message}`);
+  console.error(`🔴 Stack Trace:`);
+  console.error(err.stack);
+  console.error('='.repeat(60));
+
+  // Determine HTTP status code
+  const statusCode = err.status || err.statusCode || 500;
+
+  // SECURITY: Client response - hide sensitive details in production
+  const clientResponse = {
     success: false,
-    message: process.env.NODE_ENV === "production"
-      ? "Internal server error"
-      : err.message
-  });
+    errorId // Allow users to report this ID for support
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    // Production: Generic error messages only
+    if (statusCode >= 500) {
+      clientResponse.message = 'An internal server error occurred. Please try again later.';
+    } else if (statusCode === 401) {
+      clientResponse.message = 'Authentication required. Please login.';
+    } else if (statusCode === 403) {
+      clientResponse.message = 'Access denied.';
+    } else if (statusCode === 404) {
+      clientResponse.message = 'Resource not found.';
+    } else if (statusCode === 429) {
+      clientResponse.message = 'Too many requests. Please try again later.';
+    } else {
+      clientResponse.message = 'Request could not be processed.';
+    }
+  } else {
+    // Development: Include error details for debugging
+    clientResponse.message = err.message;
+    clientResponse.error = err.name;
+    // Don't include full stack trace even in dev for security
+  }
+
+  res.status(statusCode).json(clientResponse);
 });
 
 /* =========================

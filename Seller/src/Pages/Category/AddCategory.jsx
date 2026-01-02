@@ -39,7 +39,7 @@ function AddCategory({ onClose }) {
 
     try {
       const response = await api.post(
-        "/api/addcategory",
+        "/api/seller-panel/categories/add",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

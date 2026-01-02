@@ -10,6 +10,9 @@ const router = express.Router();
 router.get('/:id', async (req, res) => {
   try {
     const cleanId = req.params.id.trim(); // remove any spaces/newlines
+    if (!mongoose.Types.ObjectId.isValid(cleanId)) {
+      return res.status(400).json({ message: 'Invalid product identifier supplied.' });
+    }
     const product = await Product.findById(cleanId);
     
     if (!product) {

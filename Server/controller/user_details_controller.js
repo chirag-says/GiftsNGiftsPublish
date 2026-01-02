@@ -73,15 +73,38 @@ export const createProfile = async (req, res) => {
   }
 };
 
+/**
+ * Update User Profile
+ * 
+ * SECURITY: Mass Assignment Prevention
+ * Only explicitly whitelisted fields can be updated.
+ * 
+ * BLOCKED FIELDS (never modifiable via this endpoint):
+ * - role, isBlocked, isAdmin, isAccountVerify
+ * - _id, user, createdAt, updatedAt
+ */
 export const UpdateProfile = async (req, res) => {
   try {
-    const { userId, name, phone, email } = req.body;
+    // SECURITY: Explicit destructuring - ONLY these fields are allowed
+    const { name, phone, email } = req.body;
+    const userId = req.userId || req.body.userId;
 
-    // Build update object with only provided fields
+    // SECURITY: Validate input types to prevent injection
+    if (name !== undefined && typeof name !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid name format' });
+    }
+    if (phone !== undefined && typeof phone !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid phone format' });
+    }
+    if (email !== undefined && typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    // Build update object with only allowed fields
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
+    if (name !== undefined) updateData.name = String(name).trim().slice(0, 100);
+    if (phone !== undefined) updateData.phone = String(phone).trim().slice(0, 15);
+    if (email !== undefined) updateData.email = String(email).trim().toLowerCase().slice(0, 255);
 
     let profile = await Profile.findOne({ user: userId });
 
@@ -94,15 +117,17 @@ export const UpdateProfile = async (req, res) => {
 
       profile = new Profile({
         user: userId,
-        name: name || user.name || '',
-        email: email || user.email || '',
-        phone: phone || '',
+        name: updateData.name || user.name || '',
+        email: updateData.email || user.email || '',
+        phone: updateData.phone || '',
         addresses: []
       });
       await profile.save();
     } else {
-      // Update existing profile
-      Object.assign(profile, updateData);
+      // Update existing profile with safe fields only
+      if (updateData.name !== undefined) profile.name = updateData.name;
+      if (updateData.phone !== undefined) profile.phone = updateData.phone;
+      if (updateData.email !== undefined) profile.email = updateData.email;
       await profile.save();
     }
 

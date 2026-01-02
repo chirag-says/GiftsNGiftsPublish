@@ -82,7 +82,7 @@ export const verifyLoginOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "OTP expired" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id, role: 'user' }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -139,7 +139,7 @@ export const register = async (req, res) => {
     });
     await profile.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: 'user' }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -187,30 +187,46 @@ export const register = async (req, res) => {
  * Login user (initiates OTP flow)
  */
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const emailInput = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  const passwordInput = typeof req.body.password === "string" ? req.body.password : "";
 
-  if (!email || !password) {
-    return res.json({
+  if (!emailInput || !passwordInput) {
+    return res.status(400).json({
       success: false,
-      message: "password and email required",
+      message: "Email and password are required.",
     });
   }
+
+  if (emailInput.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+    return res.status(400).json({
+      success: false,
+      message: "Provide a valid email address.",
+    });
+  }
+
+  if (passwordInput.length > 128) {
+    return res.status(400).json({
+      success: false,
+      message: "Password is too long.",
+    });
+  }
+
   try {
-    const user = await usermodel.findOne({ email });
+    const user = await usermodel.findOne({ email: emailInput });
 
     if (!user) {
-      return res.json({
+      return res.status(401).json({
         success: false,
-        message: "invalid Email",
+        message: "Invalid credentials.",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(passwordInput, user.password);
 
     if (!isMatch) {
-      return res.json({
+      return res.status(401).json({
         success: false,
-        message: "invalid password",
+        message: "Invalid credentials.",
       });
     }
 
@@ -221,7 +237,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // SECURITY FIX: Use cryptographically secure OTP
     const otp = generateSecureOTP();
     user.verifyotp = otp;
     user.verifyotpexpAt = Date.now() + 10 * 60 * 1000;
@@ -234,14 +249,14 @@ export const login = async (req, res) => {
       text: `Your OTP is: ${otp}`,
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "OTP sent to your email. Please verify to login.",
     });
   } catch (error) {
-    res.json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -463,7 +478,7 @@ export const verifyRegistrationOtp = async (req, res) => {
     user.verifyotpexpAt = 0;
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id, role: 'user' }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {
       httpOnly: true,

@@ -15,11 +15,11 @@ import { sendEmail } from "../config/mail.js";
 
 const getAdminIdFromRequest = (req) => {
   let token;
-  
+
   // Check for token in Authorization header
   if (req.headers?.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
-  } 
+  }
   // Check for token in cookies
   else if (req.cookies && req.cookies.admin_token) {
     token = req.cookies.admin_token;
@@ -52,7 +52,7 @@ export const registerAdmin = async (req, res) => {
       password: hashedPassword,
     });
 
-    const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: newAdmin._id, role: 'admin' }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -86,16 +86,16 @@ export const loginAdmin = async (req, res) => {
       return res.json({ success: false, message: "Invalid email or password" });
     }
 
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
     // Set HttpOnly cookie
     res.cookie('admin_token', token, {
-        httpOnly: true,
-        secure: true, // Required for SameSite=None, works on localhost
-        sameSite: 'none', // Required for cross-origin (different ports)
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      httpOnly: true,
+      secure: true, // Required for SameSite=None, works on localhost
+      sameSite: 'none', // Required for cross-origin (different ports)
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     res.json({
@@ -524,14 +524,14 @@ export const deleteReview = async (req, res) => {
 // 1. Get All Sellers (Updated with ID Search & Region Filter)
 export const getAllSellers = async (req, res) => {
   try {
-    const { search, region } = req.query; 
+    const { search, region } = req.query;
 
     const query = {};
-    
+
     // 3. Region Filter
-    if(region && region !== 'all') {
-        // Case-insensitive regex match for region
-        query.region = { $regex: region, $options: "i" };
+    if (region && region !== 'all') {
+      // Case-insensitive regex match for region
+      query.region = { $regex: region, $options: "i" };
     }
 
     // 1. & 2. Search by Name OR Unique ID OR Email
@@ -542,8 +542,8 @@ export const getAllSellers = async (req, res) => {
         { email: { $regex: search, $options: "i" } }
       ];
       // Search by Phone if numeric
-      if(!isNaN(search)){
-         query.$or.push({ phone: Number(search) });
+      if (!isNaN(search)) {
+        query.$or.push({ phone: Number(search) });
       }
     }
 
@@ -551,10 +551,10 @@ export const getAllSellers = async (req, res) => {
     const sortLogic = region ? { region: 1 } : { createdAt: -1 };
 
     const sellers = await sellermodel.find(query).select("-password").sort(sortLogic);
-    
+
     // ... (Keep your existing code for calculating stats/orders if you had it here)
 
-    res.json({ success: true, sellers }); 
+    res.json({ success: true, sellers });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -563,22 +563,22 @@ export const getAllSellers = async (req, res) => {
 
 // 4. NEW FUNCTION: Check Inactive Vendors and Mail Admin
 export const checkInactiveVendors = async (req, res) => {
-    try {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+  try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
 
-        // Find active sellers who haven't logged in for > 30 days
-        const inactiveSellers = await sellermodel.find({
-            lastLogin: { $lt: oneMonthAgo },
-            status: 'Active' 
-        });
+    // Find active sellers who haven't logged in for > 30 days
+    const inactiveSellers = await sellermodel.find({
+      lastLogin: { $lt: oneMonthAgo },
+      status: 'Active'
+    });
 
-        if (inactiveSellers.length === 0) {
-            return res.json({ success: true, message: "No inactive vendors found." });
-        }
+    if (inactiveSellers.length === 0) {
+      return res.json({ success: true, message: "No inactive vendors found." });
+    }
 
-        // Create HTML Table for Email
-        let tableRows = inactiveSellers.map(seller => `
+    // Create HTML Table for Email
+    let tableRows = inactiveSellers.map(seller => `
             <tr>
                 <td>${seller.uniqueId || 'N/A'}</td>
                 <td>${seller.name}</td>
@@ -588,7 +588,7 @@ export const checkInactiveVendors = async (req, res) => {
             </tr>
         `).join('');
 
-        const emailContent = `
+    const emailContent = `
             <h2>Inactive Vendor Alert</h2>
             <p>The following vendors have been inactive (no login) for more than 30 days:</p>
             <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
@@ -607,20 +607,20 @@ export const checkInactiveVendors = async (req, res) => {
             </table>
         `;
 
-        // Send Email to Admin
-        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
-        await sendEmail(ADMIN_EMAIL, "Alert: Monthly Inactive Vendors Report", emailContent);
+    // Send Email to Admin
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
+    await sendEmail(ADMIN_EMAIL, "Alert: Monthly Inactive Vendors Report", emailContent);
 
-        res.json({ 
-            success: true, 
-            message: `Report sent for ${inactiveSellers.length} inactive sellers.`,
-            count: inactiveSellers.length 
-        });
+    res.json({
+      success: true,
+      message: `Report sent for ${inactiveSellers.length} inactive sellers.`,
+      count: inactiveSellers.length
+    });
 
-    } catch (error) {
-        console.error("Inactive Vendor Check Error:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
+  } catch (error) {
+    console.error("Inactive Vendor Check Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;

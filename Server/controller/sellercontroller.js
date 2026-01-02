@@ -149,8 +149,8 @@ export const loginseller = async (req, res) => {
     seller.lastLogin = Date.now();
     await seller.save();
 
-    // SECURITY: JWT with expiry (7 days)
-    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // SECURITY: JWT with role and expiry (7 days)
+    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
     res.cookie("stoken", token, {
@@ -200,7 +200,8 @@ export const verifyOtp = async (req, res) => {
     seller.otpExpire = null;
     await seller.save();
 
-    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // SECURITY: JWT with role for auth middleware verification
+    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("stoken", token, {
       httpOnly: true,
@@ -462,7 +463,7 @@ export const updateSellerProfile = async (req, res) => {
     seller.phone = phone || seller.phone;
     seller.nickName = nickName || seller.nickName;
     seller.about = about || seller.about;
-    
+
     // Handle boolean explicitly
     if (holidayMode !== undefined) {
       seller.holidayMode = holidayMode;
@@ -519,12 +520,12 @@ export const getSellerOrders = async (req, res) => {
     // Optional: filter out only relevant items for that seller
     const filteredOrders = orders.map(order => {
       const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId);
-      
+
       // Determine status for this seller's portion of the order
       // If items have individual status, use that. Otherwise fallback to global order status.
       // We'll take the status of the first item as the representative status for the seller's bundle
-      const sellerStatus = sellerItems.length > 0 && sellerItems[0].status 
-        ? sellerItems[0].status 
+      const sellerStatus = sellerItems.length > 0 && sellerItems[0].status
+        ? sellerItems[0].status
         : order.status;
 
       return {
@@ -577,10 +578,10 @@ export const getSellerDashboardStats = async (req, res) => {
     orders.forEach(order => {
       // Only count items belonging to this seller
       const sellerItems = order.items.filter(item => item.sellerId?.toString() === sellerId.toString());
-      
+
       if (sellerItems.length > 0) {
         totalOrders += 1; // Count unique orders containing seller's products
-        
+
         // Sum up revenue from seller's items only
         const orderRevenue = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         totalSales += orderRevenue;
@@ -606,27 +607,45 @@ export const getSellerDashboardStats = async (req, res) => {
 
 
 // Update Order Status
+// SECURITY: IDOR protected + Status validation
 export const updateSellerOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
-    const sellerId = req.sellerId || req.body.sellerId;
 
+    // SECURITY: Only use authenticated sellerId, never from body
+    const sellerId = req.sellerId;
+
+    if (!sellerId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    // SECURITY: Whitelist allowed status values to prevent injection
+    const ALLOWED_STATUSES = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Allowed values: ${ALLOWED_STATUSES.join(', ')}`
+      });
+    }
+
+    // SECURITY: IDOR Protection - Only find orders containing seller's items
     const order = await orderModel.findOne({
       _id: orderId,
       "items.sellerId": sellerId
     });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found for this seller" });
+      return res.status(404).json({ success: false, message: "Order not found or access denied" });
     }
 
+    // Only update status for this seller's items
     order.items.forEach((item) => {
       if (item.sellerId.toString() === sellerId.toString()) {
         item.status = status;
       }
     });
-    
+
     // Update global status based on all items
     const allDelivered = order.items.every(item => item.status === 'Delivered');
     const allCancelled = order.items.every(item => item.status === 'Cancelled');
@@ -638,13 +657,12 @@ export const updateSellerOrderStatus = async (req, res) => {
     } else if (status !== 'Pending' && status !== 'Cancelled' && order.status === 'Pending') {
       order.status = 'Processing';
     }
-    // Otherwise keep existing global status (e.g. Processing)
 
     await order.save();
     return res.json({ success: true, message: "Order status updated", order });
   } catch (error) {
     console.error("Update status error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Failed to update order status" });
   }
 };
 

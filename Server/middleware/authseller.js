@@ -3,9 +3,25 @@ import "dotenv/config";
 import sellermodel from "../model/sellermodel.js";
 
 /**
+ * Secure Cookie Configuration for Seller
+ * OWASP Compliance: HttpOnly, Secure, SameSite
+ */
+export const SELLER_COOKIE_OPTIONS = {
+  httpOnly: true,                                           // Prevents JavaScript access (XSS protection)
+  secure: process.env.NODE_ENV === 'production',            // HTTPS only in production
+  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // CSRF protection
+  maxAge: 7 * 24 * 60 * 60 * 1000,                         // 7 days
+  path: '/'
+};
+
+/**
  * Seller Authentication Middleware
- * SECURITY: Reads JWT EXCLUSIVELY from HttpOnly cookie
- * No header/localStorage fallback - pure cookie-based auth
+ * 
+ * SECURITY FEATURES:
+ * 1. ONLY reads JWT from HttpOnly cookie (no header/localStorage fallback)
+ * 2. Explicit role verification from JWT payload
+ * 3. Database validation of seller existence, status, and verification
+ * 4. Blocks suspended/blocked accounts
  */
 const authseller = async (req, res, next) => {
   try {
@@ -20,7 +36,33 @@ const authseller = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired. Please login again."
+        });
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid session. Please login again."
+        });
+      }
+      throw jwtError;
+    }
+
+    // SECURITY: Strict role verification from JWT
+    if (!decoded.role || decoded.role !== 'seller') {
+      console.warn(`🛡️ Seller auth failed: Invalid role. Token role: ${decoded.role}, IP: ${req.ip}`);
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Seller privileges required."
+      });
+    }
 
     // CRITICAL: Fetch seller and check status
     const seller = await sellermodel.findById(decoded.id)
@@ -61,21 +103,10 @@ const authseller = async (req, res, next) => {
     // Attach seller info to request
     req.sellerId = decoded.id;
     req.seller = seller;
+    req.sellerRole = decoded.role;
 
     next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: "Session expired. Please login again."
-      });
-    }
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid session. Please login again."
-      });
-    }
     console.error("Seller Auth Middleware Error:", error);
     res.status(401).json({
       success: false,
@@ -85,5 +116,3 @@ const authseller = async (req, res, next) => {
 };
 
 export default authseller;
-
-

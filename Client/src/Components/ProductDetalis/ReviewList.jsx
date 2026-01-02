@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 import Avatar from "@mui/material/Avatar";
 import Rating from "@mui/material/Rating";
 import TextField from "@mui/material/TextField";
@@ -12,69 +13,94 @@ import { MdVerified } from "react-icons/md";
 import { FaStar, FaStarHalfAlt, FaRegStar, FaQuoteLeft } from "react-icons/fa";
 
 /**
+ * SECURITY: Sanitize user-generated content
+ * DOMPurify removes any HTML/JavaScript to prevent XSS attacks
+ */
+const sanitize = (text) => {
+    if (!text) return '';
+    // DOMPurify.sanitize strips all HTML tags by default
+    // We force text-only output to be extra safe
+    return DOMPurify.sanitize(String(text), {
+        ALLOWED_TAGS: [], // No HTML tags allowed
+        ALLOWED_ATTR: []  // No attributes allowed
+    });
+};
+
+/**
  * ReviewCard Component
  * Individual review display with verified badge
+ * 
+ * SECURITY: All user-generated content is sanitized via DOMPurify
+ * to prevent Persistent XSS attacks from malicious review content.
  */
-export const ReviewCard = ({ review }) => (
-    <div className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
-        <div className="flex gap-4">
-            <Avatar sx={{
-                bgcolor: review.isVerifiedPurchase ? '#059669' : '#6366f1',
-                width: 48,
-                height: 48,
-                fontWeight: 'bold'
-            }}>
-                {review.userName?.charAt(0).toUpperCase()}
-            </Avatar>
-            <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <h4 className="font-semibold text-gray-800">{review.userName}</h4>
-                    {review.isVerifiedPurchase && (
-                        <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                            <MdVerified size={12} /> Verified
-                        </span>
+export const ReviewCard = ({ review }) => {
+    // SECURITY: Sanitize all user-generated content before rendering
+    const safeUserName = sanitize(review.userName);
+    const safeTitle = sanitize(review.title);
+    const safeComment = sanitize(review.comment);
+    const safeSellerResponse = sanitize(review.sellerResponse);
+
+    return (
+        <div className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
+            <div className="flex gap-4">
+                <Avatar sx={{
+                    bgcolor: review.isVerifiedPurchase ? '#059669' : '#6366f1',
+                    width: 48,
+                    height: 48,
+                    fontWeight: 'bold'
+                }}>
+                    {safeUserName?.charAt(0).toUpperCase()}
+                </Avatar>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <h4 className="font-semibold text-gray-800">{safeUserName}</h4>
+                        {review.isVerifiedPurchase && (
+                            <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                <MdVerified size={12} /> Verified
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="flex" role="img" aria-label={`${review.rating} out of 5 stars`}>
+                            {[...Array(5)].map((_, i) => (
+                                <FaStar
+                                    key={i}
+                                    className={`w-4 h-4 ${i < review.rating ? 'text-amber-400' : 'text-gray-300'}`}
+                                />
+                            ))}
+                        </div>
+                        {safeTitle && <span className="font-medium text-gray-700">{safeTitle}</span>}
+                    </div>
+                    <p className="text-xs text-gray-400 mb-3">
+                        {new Date(review.createdAt).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </p>
+                    {safeComment && (
+                        <p className="text-gray-700 leading-relaxed">{safeComment}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-4">
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-indigo-600 transition"
+                            aria-label={`Mark review as helpful. Currently ${review.helpful || 0} people found this helpful`}
+                        >
+                            <HiOutlineThumbUp /> Helpful ({review.helpful || 0})
+                        </button>
+                    </div>
+                    {safeSellerResponse && (
+                        <div className="mt-4 p-4 bg-indigo-50 rounded-xl border-l-4 border-indigo-400">
+                            <p className="text-indigo-600 text-xs font-semibold mb-1">Seller Response</p>
+                            <p className="text-sm text-gray-700">{safeSellerResponse}</p>
+                        </div>
                     )}
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                    <div className="flex" role="img" aria-label={`${review.rating} out of 5 stars`}>
-                        {[...Array(5)].map((_, i) => (
-                            <FaStar
-                                key={i}
-                                className={`w-4 h-4 ${i < review.rating ? 'text-amber-400' : 'text-gray-300'}`}
-                            />
-                        ))}
-                    </div>
-                    {review.title && <span className="font-medium text-gray-700">{review.title}</span>}
-                </div>
-                <p className="text-xs text-gray-400 mb-3">
-                    {new Date(review.createdAt).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}
-                </p>
-                {review.comment && (
-                    <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                )}
-                <div className="flex items-center gap-4 mt-4">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-indigo-600 transition"
-                        aria-label={`Mark review as helpful. Currently ${review.helpful || 0} people found this helpful`}
-                    >
-                        <HiOutlineThumbUp /> Helpful ({review.helpful || 0})
-                    </button>
-                </div>
-                {review.sellerResponse && (
-                    <div className="mt-4 p-4 bg-indigo-50 rounded-xl border-l-4 border-indigo-400">
-                        <p className="text-indigo-600 text-xs font-semibold mb-1">Seller Response</p>
-                        <p className="text-sm text-gray-700">{review.sellerResponse}</p>
-                    </div>
-                )}
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 /**
  * RatingBar Component

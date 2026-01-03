@@ -60,7 +60,8 @@ import {
   getMyCategories,
   getCategoryPerformance,
   getCategorySuggestions,
-  addSellerCategory
+  addSellerCategory,
+  addSellerSubcategory
 } from "../controller/categoryAnalyticsController.js";
 
 // Marketing Controllers
@@ -193,6 +194,8 @@ sellerPanelRouter.get("/categories/performance", authseller, getCategoryPerforma
 sellerPanelRouter.get("/categories/suggestions", authseller, getCategorySuggestions);
 // Seller can add categories (uses seller auth instead of admin auth)
 sellerPanelRouter.post("/categories/add", authseller, upload.single("image"), addSellerCategory);
+// Seller can add subcategories
+sellerPanelRouter.post("/subcategories/add", authseller, addSellerSubcategory);
 
 // ============ MARKETING ROUTES ============
 // Promotions - Coupons

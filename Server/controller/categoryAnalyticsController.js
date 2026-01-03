@@ -1,5 +1,6 @@
 import addproductmodel from "../model/addproduct.js";
 import Category from "../model/Category.js";
+import Subcategory from "../model/Subcategory.js";
 import orderModel from "../model/order.js";
 import Review from "../model/review.js";
 import { v2 as cloudinary } from "cloudinary";
@@ -327,6 +328,7 @@ export const addSellerCategory = async (req, res) => {
       category: newCategory
     });
 
+
   } catch (error) {
     console.error("Add Seller Category Error:", error);
     // Clean up on error
@@ -336,6 +338,94 @@ export const addSellerCategory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to add category"
+    });
+  }
+};
+
+/**
+ * Add Subcategory (Seller Version)
+ * 
+ * Allows approved sellers to add subcategories.
+ * This is separate from the admin version and uses seller authentication.
+ */
+export const addSellerSubcategory = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { subcategory, categoryId } = req.body;
+
+    if (!sellerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Check if seller is approved
+    const seller = await sellermodel.findById(sellerId);
+    if (!seller || !seller.approved) {
+      return res.status(403).json({
+        success: false,
+        message: "Only approved sellers can add subcategories"
+      });
+    }
+
+    // Validate inputs
+    if (!subcategory || !subcategory.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Subcategory name is required"
+      });
+    }
+
+    if (!categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: "Category ID is required"
+      });
+    }
+
+    // Check if category exists
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found"
+      });
+    }
+
+    // Check if subcategory already exists
+    const existingSubcategory = await Subcategory.findOne({
+      subcategory: { $regex: new RegExp(`^${subcategory.trim()}$`, 'i') },
+      category: categoryId
+    });
+
+    if (existingSubcategory) {
+      return res.status(400).json({
+        success: false,
+        message: "Subcategory already exists in this category"
+      });
+    }
+
+    // Create new subcategory
+    const newSubcategory = new Subcategory({
+      subcategory: subcategory.trim(),
+      category: categoryId,
+      createdBySeller: sellerId // Track who created it
+    });
+
+    await newSubcategory.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Subcategory added successfully",
+      subcategory: newSubcategory
+    });
+
+  } catch (error) {
+    console.error("Add Seller Subcategory Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add subcategory"
     });
   }
 };

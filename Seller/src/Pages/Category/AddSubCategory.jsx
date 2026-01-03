@@ -30,7 +30,7 @@ function AddSubCategory({ onSubCategoryAdded, className = "" }) {
     try {
       setLoading(true);
       const response = await api.post(
-        "/api/addsubcategory",
+        "/api/seller-panel/subcategories/add",
         {
           subcategory: subCategoryName.trim(),
           categoryId: selectedCategory,

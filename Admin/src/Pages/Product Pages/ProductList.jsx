@@ -93,7 +93,8 @@ function ProductList({ type }) {
   const removeproduct = async (_id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const response = await api.delete(`/api/product/deleteproduct/${_id}`);
+      // Use admin route for product deletion (admin auth)
+      const response = await api.delete(`/api/admin/products/${_id}`);
       if (response.data.success) {
         setProducts(products.filter((product) => product._id !== _id));
       }

@@ -44,7 +44,8 @@ import {
     getSellerInactivityReport,
     getAdminProfile,
     updateAdminProfile,
-    logoutAdmin
+    logoutAdmin,
+    adminDeleteProduct
 } from '../controller/admincontroller.js';
 import adminAuth from '../middleware/authAdmin.js';
 
@@ -79,6 +80,7 @@ router.get("/seller-products/:sellerId", adminAuth, getProductsBySeller);
 // Add these routes
 router.get('/products', adminAuth, getAdminProducts); // Accepts ?type=pending, etc.
 router.put('/toggle-featured/:id', adminAuth, toggleFeatured);
+router.delete('/products/:id', adminAuth, adminDeleteProduct); // Admin delete product
 router.get('/reviews/analytics', adminAuth, getReviewAnalytics);
 router.get('/reviews', adminAuth, getAllReviews);
 router.put('/review-status/:id', adminAuth, updateReviewStatus);

@@ -1170,3 +1170,41 @@ export const getReviewAnalytics = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+/**
+ * Admin Delete Product
+ * 
+ * Allows admins to delete any product (no ownership restriction)
+ * Used by the Admin Panel for product management
+ */
+export const adminDeleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required"
+      });
+    }
+
+    // Admin can delete any product
+    const deletedProduct = await addproductmodel.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+      deletedId: deletedProduct._id
+    });
+  } catch (error) {
+    console.error("Admin Delete Product Error:", error);
+    res.status(500).json({ success: false, message: 'Failed to delete product' });
+  }
+};

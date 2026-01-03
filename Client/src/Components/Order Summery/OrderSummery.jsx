@@ -155,11 +155,11 @@ function OrderSummery() {
       totalAmount: items.reduce((total, item) => total + item.price * item.quantity, 0),
       shippingAddress: {
         name: address.fullName,
-        pin: address.pin,
+        phone: address.phoneNumber,
+        street: address.address,      // Field name must match validation schema
         city: address.city,
         state: address.state,
-        phone: address.phoneNumber,
-        address: address.address,
+        pincode: address.pin,         // Field name must match validation schema
       },
       image: itemsToBuy[0]?.product.image || "",
     };

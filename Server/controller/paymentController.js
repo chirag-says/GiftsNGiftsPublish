@@ -16,20 +16,10 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-/**
- * Check if MongoDB supports transactions (requires replica set)
- * Returns true if transactions are available
- */
-const isReplicaSet = async () => {
-  try {
-    // MongoDB Atlas and replica sets support transactions
-    const adminDb = mongoose.connection.db.admin();
-    const serverStatus = await adminDb.serverStatus();
-    return serverStatus.repl !== undefined;
-  } catch {
-    return false;
-  }
-};
+// SECURITY: isReplicaSet() check REMOVED
+// MongoDB Transactions are now MANDATORY to prevent race conditions
+// If your database doesn't support transactions, the order will FAIL
+// This is intentional - we cannot risk overselling inventory
 
 /**
  * SECURITY HARDENED CHECKOUT
@@ -37,7 +27,7 @@ const isReplicaSet = async () => {
  * FEATURES:
  * 1. Server-side price calculation (never trust client prices)
  * 2. STOCK RESERVATION - Stock is reserved immediately to prevent overselling
- * 3. Atomic operations using MongoDB transactions when available
+ * 3. Atomic operations using MongoDB transactions (MANDATORY)
  * 4. 10-minute reservation timeout with auto-release
  * 
  * @param {Object} req.body.items - Array of { productId, quantity }
@@ -248,73 +238,38 @@ export const paymentVerification = async (req, res) => {
 };
 
 /**
- * Complete Order with Stock Deduction (with optional transaction support)
+ * Complete Order with Stock Deduction - TRANSACTIONS MANDATORY
+ * 
+ * SECURITY: This function uses MongoDB transactions to ensure atomic operations.
+ * If transactions are not supported (no replica set), the operation FAILS.
+ * This is intentional - we cannot risk overselling inventory.
  * 
  * This function is called AFTER payment is verified to:
  * 1. Deduct stock atomically
  * 2. Create the order record
- * 
- * Uses transactions when MongoDB replica set is available
  */
 export const completeOrderWithStockDeduction = async (orderData, userId) => {
-  const useTransactions = await isReplicaSet();
+  // SECURITY: Transactions are MANDATORY - no fallback
+  const session = await mongoose.startSession();
 
-  if (useTransactions) {
-    // Use transaction for atomic operations
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
+  try {
+    session.startTransaction();
 
-      // Deduct stock for each item
-      for (const item of orderData.items) {
-        const result = await Product.findOneAndUpdate(
-          { _id: item.productId, stock: { $gte: item.quantity } },
-          { $inc: { stock: -item.quantity } },
-          { new: true, session }
-        );
-
-        if (!result) {
-          throw new Error(`Failed to deduct stock for product ${item.productId}`);
-        }
-      }
-
-      // Create order
-      const order = await Order.create([{
-        user: userId,
-        items: orderData.items,
-        totalAmount: orderData.totalAmount,
-        shippingAddress: orderData.shippingAddress,
-        paymentId: orderData.paymentId,
-        status: 'Confirmed',
-        placedAt: new Date()
-      }], { session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return order[0];
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
-    }
-  } else {
-    // Non-transactional mode (for standalone MongoDB)
-    // Deduct stock for each item
+    // Deduct stock for each item within transaction
     for (const item of orderData.items) {
       const result = await Product.findOneAndUpdate(
         { _id: item.productId, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        { new: true }
+        { new: true, session }
       );
 
       if (!result) {
-        throw new Error(`Failed to deduct stock for product ${item.productId}`);
+        throw new Error(`Failed to deduct stock for product ${item.productId}. Insufficient stock or product not found.`);
       }
     }
 
-    // Create order
-    const order = await Order.create({
+    // Create order within same transaction
+    const order = await Order.create([{
       user: userId,
       items: orderData.items,
       totalAmount: orderData.totalAmount,
@@ -322,9 +277,28 @@ export const completeOrderWithStockDeduction = async (orderData, userId) => {
       paymentId: orderData.paymentId,
       status: 'Confirmed',
       placedAt: new Date()
-    });
+    }], { session });
 
-    return order;
+    // Commit transaction - all operations succeed or all fail
+    await session.commitTransaction();
+    session.endSession();
+
+    return order[0];
+
+  } catch (error) {
+    // Rollback all changes if any operation failed
+    await session.abortTransaction();
+    session.endSession();
+
+    // SECURITY: Log transaction failure for monitoring
+    console.error('🔴 TRANSACTION FAILED - Order creation rolled back:', error.message);
+
+    // Re-throw with clear message
+    if (error.message.includes('Transaction')) {
+      throw new Error('CRITICAL: MongoDB transactions not available. Order cannot be processed safely. Please configure a replica set.');
+    }
+
+    throw error;
   }
 };
 

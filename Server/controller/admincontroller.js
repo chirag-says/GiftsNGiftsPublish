@@ -11,6 +11,8 @@ import ExcelJS from 'exceljs';
 import PayoutModel from "../model/payout.js"; // Adjust path to your Payout model
 import { Coupon, Banner, Campaign, FlashSale, AffiliateSettings } from '../model/marketingModel.js';
 import { sendEmail } from "../config/mail.js";
+// SECURITY: Import token blacklist for proper session revocation
+import { blacklistToken } from '../utils/tokenBlacklist.js';
 // ... (Authentication functions remain the same) ...
 
 const getAdminIdFromRequest = (req) => {
@@ -111,13 +113,31 @@ export const loginAdmin = async (req, res) => {
 
 export const logoutAdmin = async (req, res) => {
   try {
+    // SECURITY: Extract token for blacklisting
+    let token = req.cookies?.admin_token;
+
+    // Also check Authorization header as fallback
+    if (!token && req.headers?.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    // SECURITY: Blacklist the token to immediately invalidate it
+    // This prevents the JWT from being reused even if someone intercepted it
+    if (token) {
+      blacklistToken(token, 'admin_logout');
+      console.log('🔒 Admin token blacklisted on logout');
+    }
+
+    // Clear the cookie
     res.clearCookie('admin_token', {
       httpOnly: true,
       secure: true,
       sameSite: 'none'
     });
+
     res.json({ success: true, message: "Logged out successfully" });
   } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

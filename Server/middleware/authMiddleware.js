@@ -1,53 +1,65 @@
-import jwt from 'jsonwebtoken';
-import Admin from '../model/adminModel.js';
-
 /**
- * Legacy Auth Middleware - DEPRECATED
+ * ⚠️ DEPRECATED - DO NOT USE ⚠️
  * 
- * SECURITY: This middleware used headers which is insecure.
- * Redirecting to the secure adminAuth pattern.
+ * =============================================================================
+ * SECURITY VULNERABILITY: INSECURE AUTHENTICATION
+ * =============================================================================
  * 
- * NOTE: This file exists for backwards compatibility.
- * New code should use authAdmin.js instead.
+ * This file is DEPRECATED and MUST NOT be used in production.
+ * 
+ * REASON FOR DEPRECATION:
+ * - Originally checked Authorization headers which is INSECURE for browser apps
+ * - Headers can be read by JavaScript and are vulnerable to XSS token theft
+ * - HttpOnly cookies are the secure standard for web authentication
+ * 
+ * SECURE ALTERNATIVES:
+ * - For Admin routes: Use '../middleware/authAdmin.js'
+ * - For Seller routes: Use '../middleware/authseller.js'  
+ * - For User routes: Use '../middleware/userAuth.js'
+ * 
+ * These secure middlewares:
+ * 1. Read tokens ONLY from HttpOnly cookies (not accessible via JavaScript)
+ * 2. Check the token blacklist for revoked sessions
+ * 3. Properly validate JWT signatures and expiry
+ * 
+ * ACTION REQUIRED:
+ * - Update any imports of this file to use the appropriate secure middleware
+ * - After confirming no code uses this file, DELETE IT
+ * 
+ * =============================================================================
  */
+
+// SECURITY: This middleware throws an error if invoked
+// This ensures any forgotten imports will fail loudly during testing
 const authMiddleware = async (req, res, next) => {
-  try {
-    // SECURITY: ONLY read from HttpOnly cookie - no header fallback
-    const token = req.cookies?.admin_token;
+  console.error('🔴 SECURITY ALERT: Deprecated authMiddleware was invoked!');
+  console.error('🔴 Request path:', req.method, req.originalUrl);
+  console.error('🔴 This middleware is INSECURE and must not be used.');
+  console.error('🔴 Please update the route to use authAdmin.js, authseller.js, or userAuth.js');
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Login required. Please sign in."
-      });
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Verify admin exists
-    const admin = await Admin.findById(decoded.id);
-    if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Admin not found."
-      });
-    }
-
-    req.adminId = decoded.id;
-    next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: "Session expired. Please login again."
-      });
-    }
-    res.status(401).json({
-      success: false,
-      message: "Invalid or expired token."
-    });
-  }
+  return res.status(500).json({
+    success: false,
+    message: "SECURITY ERROR: This authentication method is deprecated and disabled.",
+    action: "Please contact the development team. Reference: DEPRECATED_AUTH_MIDDLEWARE"
+  });
 };
 
+// Mark the export with a deprecation warning
 export default authMiddleware;
+
+// Additional named exports to catch other import patterns
+export const deprecatedAuthMiddleware = authMiddleware;
+
+/**
+ * MIGRATION GUIDE:
+ * 
+ * BEFORE (INSECURE):
+ * import authMiddleware from '../middleware/authMiddleware.js';
+ * router.get('/admin/data', authMiddleware, getData);
+ * 
+ * AFTER (SECURE):
+ * import adminAuth from '../middleware/authAdmin.js';
+ * router.get('/admin/data', adminAuth, getData);
+ * 
+ * The secure middlewares read tokens from HttpOnly cookies set during login.
+ */

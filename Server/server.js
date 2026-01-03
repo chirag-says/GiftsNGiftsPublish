@@ -59,21 +59,26 @@ scheduleSellerInactivitySweep();
 ========================= */
 app.use(
   helmet({
-    // Content Security Policy - HARDENED
-    // SECURITY: Removed 'unsafe-inline' and 'unsafe-eval'
-    // For frontend compatibility, use nonce-based scripts or specific hashes
+    // Content Security Policy - HARDENED (STRICT MODE)
+    // SECURITY: 'unsafe-inline' and 'unsafe-eval' REMOVED for ALL environments
+    // This prevents XSS attacks by blocking inline scripts and styles
+    // For frontend compatibility, use nonce-based scripts or move to external files
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // Scripts: Only allow self and specific trusted domains
-        // In development, we allow unsafe-inline. In production, use nonces.
-        scriptSrc: process.env.NODE_ENV === 'production'
-          ? ["'self'", "https://checkout.razorpay.com", "https://api.razorpay.com"]
-          : ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com", "https://api.razorpay.com"],
-        // Styles: Allow Google Fonts, self. Inline styles need nonce in production.
-        styleSrc: process.env.NODE_ENV === 'production'
-          ? ["'self'", "https://fonts.googleapis.com"]
-          : ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        // SECURITY: Scripts - NO 'unsafe-inline' allowed
+        // All inline scripts must be moved to external files or use nonces
+        scriptSrc: [
+          "'self'",
+          "https://checkout.razorpay.com",
+          "https://api.razorpay.com"
+        ],
+        // SECURITY: Styles - NO 'unsafe-inline' allowed
+        // All inline styles must be moved to external CSS files or use nonces
+        styleSrc: [
+          "'self'",
+          "https://fonts.googleapis.com"
+        ],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: [
           "'self'",

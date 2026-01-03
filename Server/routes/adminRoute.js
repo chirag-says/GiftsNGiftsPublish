@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-    registerAdmin,
+    // SECURITY: registerAdmin REMOVED - Admin accounts must be seeded manually
     loginAdmin,
     getAllOrders,
     getAllSellers,
@@ -39,7 +39,7 @@ import {
     createBanner,
     deleteBanner,
     updateAffiliateSettings,
-    
+
     checkInactiveVendors,
     getSellerInactivityReport,
     getAdminProfile,
@@ -50,8 +50,14 @@ import adminAuth from '../middleware/authAdmin.js';
 
 const router = express.Router();
 
-// --- Authentication ---
-router.post('/register', registerAdmin);
+// ========================= AUTHENTICATION =========================
+// SECURITY: Admin registration route REMOVED
+// Admin accounts must be created manually via database seeding:
+//   1. Use MongoDB Compass or CLI to insert admin document
+//   2. Hash password with bcrypt before inserting
+//   3. Example: db.admins.insertOne({ name: "Admin", email: "admin@example.com", password: "<bcrypt_hash>" })
+// This prevents unauthorized privilege escalation via public API.
+
 router.post('/login', loginAdmin);
 router.post('/logout', logoutAdmin);
 router.get('/account/profile', adminAuth, getAdminProfile);

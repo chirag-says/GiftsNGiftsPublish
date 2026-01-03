@@ -153,10 +153,11 @@ export const loginseller = async (req, res) => {
     const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
+    // Cross-origin cookie settings for frontend on different port
     res.cookie("stoken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,              // Required for SameSite=None (works on localhost too)
+      sameSite: "none",          // Required for cross-origin (different ports)
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/"
     });

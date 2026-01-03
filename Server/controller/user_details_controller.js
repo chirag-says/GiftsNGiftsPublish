@@ -339,7 +339,8 @@ export const updateAddress = async (req, res) => {
     }
 
     // SECURITY: Whitelist allowed fields for address update
-    const allowedFields = ['name', 'phone', 'street', 'city', 'state', 'pincode', 'landmark', 'type', 'isDefaultBilling'];
+    // These MUST match the AddressSchema in userprofile.js
+    const allowedFields = ['fullName', 'phoneNumber', 'address', 'city', 'state', 'pin', 'country', 'isDefaultBilling'];
     for (const field of allowedFields) {
       if (address[field] !== undefined) {
         targetAddress[field] = address[field];

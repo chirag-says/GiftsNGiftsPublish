@@ -83,7 +83,7 @@ function AddAddress() {
     try {
       if (editAddressId) {
         const { data } = await api.put(`/api/user/updateaddress/${editAddressId}`,
-          { userId: profile.user || profile._id, address: newAddress }
+          { address: newAddress }
         );
         if (data.success) toast.success("Address updated successfully");
       } else {
@@ -124,7 +124,16 @@ function AddAddress() {
   };
 
   const resetForm = () => {
-    setNewAddress({ fullName: '', phoneNumber: '', address: '', city: '', state: '', pin: '', country: '', isDefaultBilling: false });
+    setNewAddress({
+      fullName: '',
+      phoneNumber: '',
+      address: '',
+      city: '',
+      state: '',
+      pin: '',
+      country: '',
+      isDefaultBilling: false
+    });
     setEditAddressId(null);
   };
 

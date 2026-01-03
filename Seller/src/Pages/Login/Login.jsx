@@ -3,7 +3,7 @@ import api from '../../utils/api';
 import { toast } from 'react-toastify';
 import { Admincontext } from '../../Components/context/admincontext';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Store, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Store, ShieldCheck, KeyRound, ArrowLeft } from 'lucide-react';
 
 // SECURITY: Ensure axios sends cookies with every request
 
@@ -11,6 +11,15 @@ import { Eye, EyeOff, Store, ShieldCheck } from 'lucide-react';
 function Login() {
     const [isRegister, setIsRegister] = useState(false);
     const [isOtpScreen, setIsOtpScreen] = useState(false);
+
+    // Forgot Password States
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
+    const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: Enter Email, 2: Enter OTP & New Password
+    const [resetOtp, setResetOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
@@ -29,6 +38,87 @@ function Login() {
     // Use onLoginSuccess instead of setatoken
     const { onLoginSuccess } = useContext(Admincontext);
     const navigate = useNavigate();
+
+    // ========================= FORGOT PASSWORD HANDLERS =========================
+
+    // Step 1: Request OTP
+    const handleForgotPasswordRequest = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            toast.error("Please enter your email address");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const { data } = await api.post("/api/seller/forgot-password", { email });
+            if (data.success) {
+                toast.success(data.message || "OTP sent to your email");
+                setForgotPasswordStep(2);
+            } else {
+                toast.error(data.message || "Failed to send OTP");
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send OTP. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Step 2: Reset Password with OTP
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+
+        if (!resetOtp || !newPassword || !confirmPassword) {
+            toast.error("Please fill all fields");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("Passwords do not match");
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            toast.error("Password must be at least 8 characters");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const { data } = await api.post("/api/seller/reset-password", {
+                email,
+                otp: resetOtp,
+                newPassword
+            });
+
+            if (data.success) {
+                toast.success(data.message || "Password reset successfully!");
+                // Reset all forgot password states
+                setIsForgotPassword(false);
+                setForgotPasswordStep(1);
+                setResetOtp('');
+                setNewPassword('');
+                setConfirmPassword('');
+                setEmail('');
+            } else {
+                toast.error(data.message || "Failed to reset password");
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to reset password. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Back to Login from Forgot Password
+    const handleBackToLogin = () => {
+        setIsForgotPassword(false);
+        setForgotPasswordStep(1);
+        setResetOtp('');
+        setNewPassword('');
+        setConfirmPassword('');
+    };
 
     // Registration handler
     const registerSubmit = async (e) => {
@@ -101,23 +191,150 @@ function Login() {
 
                 {/* Header Section */}
                 <div className="text-center mb-8">
-                    {isOtpScreen ? (
+                    {isForgotPassword ? (
+                        <KeyRound className="mx-auto h-12 w-12 text-amber-500 mb-2" />
+                    ) : isOtpScreen ? (
                         <ShieldCheck className="mx-auto h-12 w-12 text-blue-500 mb-2" />
                     ) : (
                         <Store className="mx-auto h-12 w-12 text-indigo-600 mb-2" />
                     )}
                     <h2 className="text-3xl font-extrabold text-gray-900 mt-2">
-                        {isOtpScreen ? "Verify Your Account" : (isRegister ? "Become a Partner Seller" : "Seller Portal Login")}
+                        {isForgotPassword
+                            ? (forgotPasswordStep === 1 ? "Forgot Password" : "Reset Password")
+                            : isOtpScreen
+                                ? "Verify Your Account"
+                                : (isRegister ? "Become a Partner Seller" : "Seller Portal Login")}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        {isOtpScreen ? "Enter the 6-digit OTP sent to your email." : (isRegister ? "Enter your details to create your selling profile." : "Access your dashboard.")}
+                        {isForgotPassword
+                            ? (forgotPasswordStep === 1
+                                ? "Enter your registered email to receive a reset OTP."
+                                : "Enter the OTP and your new password.")
+                            : isOtpScreen
+                                ? "Enter the 6-digit OTP sent to your email."
+                                : (isRegister ? "Enter your details to create your selling profile." : "Access your dashboard.")}
                     </p>
                 </div>
 
                 {/* --- MAIN FORM CONTENT --- */}
 
-                {/* OTP SCREEN */}
-                {isOtpScreen ? (
+                {/* FORGOT PASSWORD SCREEN */}
+                {isForgotPassword ? (
+                    <>
+                        {forgotPasswordStep === 1 ? (
+                            /* Step 1: Enter Email */
+                            <>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="forgot-email" className="sr-only">Email Address</label>
+                                        <input
+                                            id="forgot-email"
+                                            type="email"
+                                            className={inputClass}
+                                            placeholder="Enter your registered email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    className={`${buttonClass} mt-6`}
+                                    onClick={handleForgotPasswordRequest}
+                                    type="submit"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? "Sending OTP..." : "Send Reset OTP"}
+                                </button>
+                            </>
+                        ) : (
+                            /* Step 2: Enter OTP & New Password */
+                            <>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="reset-otp" className="sr-only">Reset OTP</label>
+                                        <input
+                                            id="reset-otp"
+                                            className={`${inputClass} text-center text-xl tracking-widest`}
+                                            placeholder="6-Digit OTP"
+                                            value={resetOtp}
+                                            onChange={(e) => setResetOtp(e.target.value)}
+                                            maxLength={6}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="relative">
+                                        <label htmlFor="new-password" className="sr-only">New Password</label>
+                                        <input
+                                            id="new-password"
+                                            type={showNewPassword ? "text" : "password"}
+                                            className={inputClass}
+                                            placeholder="New Password (min 8 characters)"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                        />
+                                        <span
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-indigo-600 transition"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                        >
+                                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="confirm-password" className="sr-only">Confirm Password</label>
+                                        <input
+                                            id="confirm-password"
+                                            type="password"
+                                            className={inputClass}
+                                            placeholder="Confirm New Password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    className={`${buttonClass} mt-6`}
+                                    onClick={handleResetPassword}
+                                    type="submit"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? "Resetting..." : "Reset Password"}
+                                </button>
+
+                                {/* Resend OTP Option */}
+                                <p className="mt-4 text-center text-gray-500 text-sm">
+                                    Didn't receive the OTP?{" "}
+                                    <span
+                                        className="text-indigo-600 font-bold cursor-pointer hover:text-indigo-800 hover:underline transition duration-200"
+                                        onClick={() => {
+                                            setForgotPasswordStep(1);
+                                            setResetOtp('');
+                                        }}
+                                    >
+                                        Resend OTP
+                                    </span>
+                                </p>
+                            </>
+                        )}
+
+                        {/* Back to Login Link */}
+                        <p className="mt-6 text-center">
+                            <span
+                                className="inline-flex items-center gap-1 text-gray-600 cursor-pointer hover:text-indigo-600 transition duration-200"
+                                onClick={handleBackToLogin}
+                            >
+                                <ArrowLeft size={16} />
+                                Back to Login
+                            </span>
+                        </p>
+                    </>
+                ) : isOtpScreen ? (
                     <>
                         <label htmlFor="otp-input" className="sr-only">One-Time Password (OTP)</label>
                         <input
@@ -282,9 +499,21 @@ function Login() {
                             </div>
                         </div>
 
+                        {/* Forgot Password Link - Only show on Login, not Registration */}
+                        {!isRegister && (
+                            <div className="mt-2 text-right">
+                                <span
+                                    className="text-sm text-indigo-600 cursor-pointer hover:text-indigo-800 hover:underline transition duration-200"
+                                    onClick={() => setIsForgotPassword(true)}
+                                >
+                                    Forgot Password?
+                                </span>
+                            </div>
+                        )}
+
 
                         <button
-                            className={`${buttonClass} mt-6`}
+                            className={`${buttonClass} ${isRegister ? 'mt-6' : 'mt-4'}`}
                             onClick={isRegister ? registerSubmit : loginSubmit}
                             type="submit"
                         >

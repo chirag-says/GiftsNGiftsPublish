@@ -877,8 +877,8 @@ export const sellerForgotPassword = async (req, res) => {
     const seller = await sellermodel.findOne({ email: sanitizedEmail });
 
     if (!seller) {
-      // Don't reveal if email exists (security through obscurity)
-      return res.json({ success: true, message: "If the email exists, a password reset OTP has been sent" });
+      // Inform user that the email is not registered
+      return res.json({ success: false, message: "This email is not linked to any seller account" });
     }
 
     // Check if seller is blocked

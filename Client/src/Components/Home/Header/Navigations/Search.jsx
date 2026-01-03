@@ -21,6 +21,17 @@ const Search = () => {
     fetchData();
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowResult(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleChange = (e) => {
     const val = e.target.value;
     setInput(val);
@@ -35,6 +46,20 @@ const Search = () => {
     setShowResult(true);
   };
 
+  // Handle Enter key press - navigate and close dropdown
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && input.trim()) {
+      setShowResult(false); // Close dropdown
+      navigate(`/search-results?query=${input}`);
+    }
+  };
+
+  // Handle "View All Results" click
+  const handleViewAllResults = () => {
+    setShowResult(false); // Close dropdown
+    navigate(`/search-results?query=${input}`);
+  };
+
   return (
     <div className="w-full relative group" ref={wrapperRef}>
       <div className="flex items-center bg-gray-100 group-focus-within:bg-white group-focus-within:ring-2 ring-purple-200 transition-all rounded-full px-4 py-2">
@@ -46,7 +71,7 @@ const Search = () => {
           value={input}
           onChange={handleChange}
           onFocus={() => input && setShowResult(true)}
-          onKeyDown={(e) => e.key === "Enter" && navigate(`/search-results?query=${input}`)}
+          onKeyDown={handleKeyDown}
         />
       </div>
 
@@ -67,7 +92,7 @@ const Search = () => {
             </div>
           ))}
           <div
-            onClick={() => navigate(`/search-results?query=${input}`)}
+            onClick={handleViewAllResults}
             className="p-3 text-center text-xs text-[#7d0492] font-bold bg-gray-50 cursor-pointer hover:bg-purple-100"
           >
             View All Results

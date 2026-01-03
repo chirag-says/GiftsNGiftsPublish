@@ -49,7 +49,7 @@ function NavCategory() {
         {categories.map((cat) => (
           <li key={cat._id} className="relative group xl:px-3">
             {/* Main Category Link */}
-            <Link to="/productlist" state={{ category: cat.categoryname, categoryId: cat._id }}>
+            <Link to={`/productlist?category=${encodeURIComponent(cat.categoryname)}`}>
               <Button
                 className="!text-black !text-[13px] hover:!text-[#7d0492] flex items-center gap-1"
                 style={{ textTransform: "capitalize" }}
@@ -66,12 +66,7 @@ function NavCategory() {
                   {(subcategoriesByCategory[cat._id] || []).map((subcat) => (
                     <li key={subcat._id} className="list-none">
                       <Link
-                        to="/productlist"
-                        state={{
-                          category: cat.categoryname,
-                          subcategory: subcat.subcategory,
-                          subcategoryId: subcat._id
-                        }}
+                        to={`/productlist?category=${encodeURIComponent(cat.categoryname)}&subcategory=${encodeURIComponent(subcat.subcategory)}`}
                         className="text-[14px] text-gray-500 hover:text-[#7d0492] hover:translate-x-1 font-medium block py-1 transition-all duration-200"
                       >
                         {subcat.subcategory}

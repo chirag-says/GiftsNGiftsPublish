@@ -81,8 +81,7 @@ const NavCatSlider = () => {
           {categories.map((category, index) => (
             <SwiperSlide key={index}>
               <Link
-                to="/productlist"
-                state={{ category: category.categoryname }}
+                to={`/productlist?category=${encodeURIComponent(category.categoryname)}`}
                 className="group flex flex-col items-center cursor-pointer"
               >
                 {/* 2. Image Container - Gradient Ring Effect */}

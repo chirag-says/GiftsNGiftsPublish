@@ -102,8 +102,7 @@ const ProductSlider = () => {
             </div>
 
             <Link
-              to="/productlist"
-              state={{ category: cat.category }}
+              to={`/productlist?category=${encodeURIComponent(cat.category)}`}
               className="flex items-center gap-2 text-sm font-semibold text-purple-700 bg-purple-50 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors"
             >
               View All <FiArrowRight />
@@ -159,8 +158,8 @@ const ProductSlider = () => {
                         <div className="absolute top-3 right-3 z-10">
                           <button
                             className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm border transition-colors ${isInWishlist(product._id)
-                                ? "bg-red-50 border-red-100 text-red-500 hover:bg-red-100" // Active State
-                                : "bg-white border-gray-100 text-gray-400 hover:text-red-500 hover:bg-gray-50" // Inactive State
+                              ? "bg-red-50 border-red-100 text-red-500 hover:bg-red-100" // Active State
+                              : "bg-white border-gray-100 text-gray-400 hover:text-red-500 hover:bg-gray-50" // Inactive State
                               }`}
                             onClick={(e) => toggleWishlist(e, product)}
                             title={isInWishlist(product._id) ? "Remove from Wishlist" : "Add to Wishlist"}

@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from "../../utils/api";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import LeftFilter from './LeftFilter';
 
 function ProductList() {
   const location = useLocation();
-  const { category } = location.state || {};
+  const [searchParams] = useSearchParams();
+
+  // Read category from URL query params first, then fall back to navigation state
+  const categoryFromUrl = searchParams.get('category');
+  const categoryFromState = location.state?.category;
+  const category = categoryFromUrl || categoryFromState || null;
 
   const [products, setProducts] = useState([]);
   const [filters, setFilters] = useState(null);

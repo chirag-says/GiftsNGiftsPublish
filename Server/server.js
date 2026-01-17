@@ -94,6 +94,7 @@ app.use(
         mediaSrc: ["'self'", "https://res.cloudinary.com"],
         connectSrc: [
           "'self'",
+          "https://api.giftsngifts.in", 
           "https://api.razorpay.com",
           "https://lumberjack.razorpay.com",
           "https://res.cloudinary.com",
@@ -230,8 +231,6 @@ const allowedOrigins = [
     "http://127.0.0.1:5174",
   ]),
   // Production origins - ALWAYS allowed
-  "https://giftngifts.in",
-  "https://www.giftngifts.in",
   "https://giftsngifts.in",
   "https://www.giftsngifts.in",
   // Add admin/seller subdomains if needed
@@ -277,7 +276,10 @@ app.use(
 );
 
 // Preflight handler
-app.options("*", cors());
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 /* =========================
    STATIC FILES

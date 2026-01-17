@@ -1,0 +1,1053 @@
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import validator from "validator";
+import sellermodel from "../model/sellermodel.js";
+import addproductmodel from "../model/addproduct.js";
+import { v2 as cloudinary } from "cloudinary";
+import orderModel from "../model/order.js";
+import usermodel from "../model/mongobd_usermodel.js";
+import { sendEmail } from "../config/mail.js";
+import SellerNotification from "../model/sellerNotification.js";
+
+
+// ========================= REGISTER SELLER =========================
+export const registerseller = async (req, res) => {
+  try {
+    // Extract fields from request body
+    const { name, email, password, nickName, phone, street, city, state, pincode, region } = req.body;
+
+    if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode)
+      return res.json({ success: false, message: "All fields including Address are required." });
+
+    // SECURITY: Type check to prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.json({ success: false, message: "Invalid input format" });
+    }
+
+    // SECURITY: Sanitize and validate email
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
+      return res.json({ success: false, message: "Invalid email format" });
+    }
+
+    // SECURITY: Validate password strength
+    if (password.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    // Use sanitized email for query
+    const existing = await sellermodel.findOne({ email: sanitizedEmail });
+    if (existing) return res.json({ success: false, message: "Seller already exists" });
+
+    // UNIQUE ID GENERATION LOGIC
+    // Logic: GNGDEL + Last 3 Digits of Pincode + First letter of Shop/Brand Name (nickName)
+    const pinSuffix = pincode.toString().slice(-3);
+    const shopInitial = nickName.charAt(0).toUpperCase();
+
+    // Append 2 random digits to ensure database uniqueness
+    const randomDigits = Math.floor(10 + Math.random() * 90);
+    const generatedId = `GNGDEL${pinSuffix}${shopInitial}${randomDigits}`;
+
+    const hashed = await bcrypt.hash(password, 10);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const seller = await sellermodel.create({
+      uniqueId: generatedId,
+      name: name.trim(),
+      email: sanitizedEmail, // Use sanitized email
+      password: hashed,
+      nickName: nickName.trim(),
+      phone,
+      region: region,
+      otp,
+      otpExpire: Date.now() + 10 * 60 * 1000,
+      verified: false,
+      address: { street, city, state, pincode },
+      lastLogin: Date.now()
+    });
+
+    await sendEmail(sanitizedEmail, "Your OTP Verification Code", `
+            <h1>Welcome to GNG!</h1>
+            <p>Your OTP is <b>${otp}</b></p>
+            <p>Your Unique Seller ID is: <b>${generatedId}</b></p>
+        `);
+
+    res.json({
+      success: true,
+      message: "Registered successfully",
+      uniqueId: generatedId,
+      email: sanitizedEmail
+    });
+
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ success: false, message: "Registration failed. Please try again." });
+  }
+};
+
+// ========================= LOGIN SELLER =========================
+export const loginseller = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // SECURITY: Type check to prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    // SECURITY: Sanitize email
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) return res.json({ success: false, message: "Invalid credentials" });
+
+    // SECURITY: Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // SECURITY: Check if seller is suspended
+    if (seller.status === 'Suspended') {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended. Contact support."
+      });
+    }
+
+    if (!seller.verified) {
+      return res.json({
+        success: false,
+        message: "Please verify your email first",
+        requiresVerification: true,
+        email: sanitizedEmail
+      });
+    }
+
+    const match = await bcrypt.compare(password, seller.password);
+    if (!match) return res.json({ success: false, message: "Invalid credentials" });
+
+    // INACTIVITY CHECK LOGIC
+    let responseMessage = "Login successful";
+
+    if (seller.lastLogin) {
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 Days
+      const timeDiff = Date.now() - new Date(seller.lastLogin).getTime();
+
+      if (timeDiff > thirtyDaysInMs) {
+        responseMessage = "You have not done any transaction in one month. How can we assist you?";
+      }
+    }
+
+    // Update Last Login to current time
+    seller.lastLogin = Date.now();
+    await seller.save();
+
+    // SECURITY: JWT with role and expiry (7 days)
+    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
+    // Cross-origin cookie settings for frontend on different port
+    res.cookie("stoken", token, {
+      httpOnly: true,
+      secure: true,              // Required for SameSite=None (works on localhost too)
+      sameSite: "none",          // Required for cross-origin (different ports)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
+    });
+
+    res.json({
+      success: true,
+      message: responseMessage,
+      user: {
+        name: seller.name,
+        email: seller.email,
+        id: seller._id,
+        uniqueId: seller.uniqueId,
+        region: seller.region
+      }
+    });
+
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ success: false, message: "Login failed. Please try again." });
+  }
+};
+
+// (Keep verifyOtp, getSeller, etc. exactly as they were in your code)
+// ...
+// ========================= VERIFY OTP =========================
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const seller = await sellermodel.findOne({ email });
+
+    if (!seller)
+      return res.json({ success: false, message: "Seller not found" });
+
+    if (seller.otp !== otp || seller.otpExpire < Date.now())
+      return res.json({ success: false, message: "Invalid or expired OTP" });
+
+    seller.verified = true;
+    seller.otp = null;
+    seller.otpExpire = null;
+    await seller.save();
+
+    // SECURITY: JWT with role for auth middleware verification
+    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie("stoken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
+    });
+
+    res.json({
+      success: true,
+      message: "OTP verified",
+      user: {
+        name: seller.name,
+        email: seller.email,
+        id: seller._id,
+        uniqueId: seller.uniqueId,
+        region: seller.region
+      }
+    });
+
+  } catch (error) {
+    console.error("VERIFY OTP ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ========================= LOGIN SELLER =========================
+
+// export const loginseller = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     const seller = await sellermodel.findOne({ email });
+
+//     if (!seller)
+//       return res.json({ success: false, message: "Invalid credentials" });
+
+//     if (!seller.verified)
+//       return res.json({ success: false, message: "Please verify your email first" });
+
+//     const match = await bcrypt.compare(password, seller.password);
+
+//     if (!match)
+//       return res.json({ success: false, message: "Invalid credentials" });
+
+//     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET);
+
+//     res.json({
+//       success: true,
+//       token,
+//       message: "Login successful",
+//       user: {
+//         name: seller.name,
+//         email: seller.email,
+//         nickName: seller.nickName,
+//         id: seller._id
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error("LOGIN ERROR:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// List all users
+export const userlist = async (req, res) => {
+  try {
+    const users = await usermodel.find();
+    if (!users) {
+      return res.json({ success: false, message: "no users found" });
+    }
+    return res.json({ success: true, users });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+// Mark Order Complete
+export const ordercomplete = async (req, res) => {
+  try {
+    // const {sellerId,orderid } = req.sellerId;
+    const { sellerid, orderid } = req.body;
+    const orderdata = await orderModel.findById(orderid);
+
+    if (orderdata && orderdata.sellerid === sellerid) {
+      await orderModel.findByIdAndUpdate(orderid, {
+        completed: true,
+      });
+      return res.json({ success: true, message: "Order Completed" });
+    } else {
+      return res.json({ success: false, message: "Mark Failed" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const addproducts = async (req, res) => {
+  try {
+    console.log("Add Product Request Body:", req.body);
+    console.log("Add Product Files:", req.files);
+    const sellerId = req.sellerId;  // from token
+
+    const {
+      title, description, price, categoryname, subcategory,
+      oldprice, discount, ingredients, brand, additional_details,
+      size, stock,
+      // ⭐ Extra Product Specification Fields
+      productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
+      genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
+      materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
+      manufacturer, packer, department, countryOfOrigin
+    } = req.body;
+
+    // Basic required field validation
+    if (!title || !description || !price || !categoryname || !subcategory || !stock) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // ========== PRICE & DISCOUNT VALIDATION ==========
+    const numPrice = Number(price);
+    const numOldPrice = Number(oldprice) || numPrice;
+    const numDiscount = Number(discount) || 0;
+    const numStock = Number(stock);
+
+    // Validate price is positive
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return res.status(400).json({ success: false, message: 'Price must be a positive number' });
+    }
+
+    // Maximum price limit (prevent typos like 100000000)
+    if (numPrice > 10000000) {
+      return res.status(400).json({ success: false, message: 'Price exceeds maximum allowed limit (₹1 Crore)' });
+    }
+
+    // Validate old price >= current price
+    if (numOldPrice < numPrice) {
+      return res.status(400).json({ success: false, message: 'Original price cannot be less than current price' });
+    }
+
+    // Validate discount range (0-99%)
+    if (numDiscount < 0 || numDiscount > 99) {
+      return res.status(400).json({ success: false, message: 'Discount must be between 0 and 99%' });
+    }
+
+    // Validate discount calculation matches (with 10% tolerance for rounding)
+    if (numOldPrice > 0 && numDiscount > 0) {
+      const expectedPrice = Math.round(numOldPrice * (1 - numDiscount / 100));
+      const priceDifference = Math.abs(numPrice - expectedPrice);
+      const tolerance = numOldPrice * 0.1; // 10% tolerance
+
+      if (priceDifference > tolerance) {
+        return res.status(400).json({
+          success: false,
+          message: `Price mismatch: With ${numDiscount}% discount on ₹${numOldPrice}, expected price ~₹${expectedPrice}`
+        });
+      }
+    }
+
+    // Validate stock is non-negative
+    if (isNaN(numStock) || numStock < 0) {
+      return res.status(400).json({ success: false, message: 'Stock must be a non-negative number' });
+    }
+
+    // Validate stock maximum
+    if (numStock > 1000000) {
+      return res.status(400).json({ success: false, message: 'Stock exceeds maximum allowed limit' });
+    }
+
+    // ========== IMAGE UPLOAD ==========
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one product image is required' });
+    }
+
+    const images = await Promise.all(
+      req.files.map(file =>
+        cloudinary.uploader.upload(file.path, { resource_type: "image" })
+      )
+    );
+
+    const imageUrls = images.map(img => ({
+      url: img.secure_url,
+      altText: title,
+    }));
+
+    // ========== CREATE PRODUCT WITH VALIDATED VALUES ==========
+    const newProduct = new addproductmodel({
+      title: title.trim(),
+      description: description.trim(),
+      price: numPrice,           // Use validated number
+      categoryname,
+      subcategory,
+      oldprice: numOldPrice,     // Use validated number
+      discount: numDiscount,     // Use validated number
+      ingredients,
+      brand,
+      additional_details,
+      size,
+      stock: numStock,           // Use validated number
+      sellerId,
+      images: imageUrls,
+      // ⭐ Add Extra Fields
+      productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
+      genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
+      materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
+      manufacturer, packer, department, countryOfOrigin
+    });
+
+    await newProduct.save();
+
+    await sellermodel.findByIdAndUpdate(
+      sellerId,
+      {
+        lastProductPostedAt: new Date(),
+        inactiveSince: null,
+        inactiveNotificationSentAt: null
+      }
+    );
+
+    return res.status(201).json({ success: true, message: "Product added successfully" });
+
+  } catch (err) {
+    console.error("ADD PRODUCT ERROR:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getSellerProfile = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;   // ← FIXED
+
+    const seller = await sellermodel.findById(sellerId);
+
+    return res.status(200).json({ success: true, seller });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+};
+
+export const updateSellerProfile = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+
+    let seller = await sellermodel.findById(sellerId);
+    if (!seller) return res.status(404).json({ success: false, message: "Seller not found" });
+
+    // 1. Extract fields from req.body
+    const { name, email, phone, alternatePhone, street, city, state, pincode, nickName, about, holidayMode } = req.body;
+
+    // Update fields
+    seller.name = name || seller.name;
+    seller.email = email || seller.email;
+    seller.phone = phone || seller.phone;
+    seller.nickName = nickName || seller.nickName;
+    seller.about = about || seller.about;
+
+    // Handle boolean explicitly
+    if (holidayMode !== undefined) {
+      seller.holidayMode = holidayMode;
+    }
+
+    // 2. Update the specific field
+    seller.alternatePhone = alternatePhone || seller.alternatePhone;
+
+    seller.address = {
+      street: street || seller.address?.street,
+      city: city || seller.address?.city,
+      state: state || seller.address?.state,
+      pincode: pincode || seller.address?.pincode,
+    };
+
+    if (req.file) {
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        folder: "seller_profiles"
+      });
+      seller.image = uploaded.secure_url;
+    }
+
+    await seller.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      seller,
+    });
+
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getSellerOrders = async (req, res) => {
+  // const { sellerId } = req.body;
+  const sellerId = req.sellerId;
+  try {
+    const orders = await orderModel.find({
+      items: {
+        $elemMatch: { sellerId }
+      }
+    })
+      .populate("user", "name email")
+      .populate("items.productId", "title price brand images")
+      .sort({ placedAt: -1 });
+
+    if (!orders.length) {
+      return res.status(200).json({ success: true, filteredOrders: [] });
+    }
+
+    // Optional: filter out only relevant items for that seller
+    const filteredOrders = orders.map(order => {
+      const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId);
+
+      // Determine status for this seller's portion of the order
+      // If items have individual status, use that. Otherwise fallback to global order status.
+      // We'll take the status of the first item as the representative status for the seller's bundle
+      const sellerStatus = sellerItems.length > 0 && sellerItems[0].status
+        ? sellerItems[0].status
+        : order.status;
+
+      return {
+        _id: order._id,
+        user: order.user,
+        items: sellerItems,
+        totalAmount: sellerItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+        shippingAddress: order.shippingAddress,
+        placedAt: order.placedAt,
+        status: sellerStatus,
+        image: order.image,
+        paymentId: order.paymentId
+      };
+    });
+
+    res.status(200).json({ success: true, filteredOrders });
+  } catch (error) {
+    console.error("Error fetching seller orders:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+export const getSeller = async (req, res) => {
+  const sellerId = req.sellerId;
+  // const { sellerId } = req.body
+
+  const seller = await sellermodel.find({ _id: sellerId })
+
+  if (!seller.length) {
+    return res.status(404).json({ message: "seller not found" })
+
+  }
+
+  return res.status(200).json({ success: true, seller });
+
+}
+export const getSellerDashboardStats = async (req, res) => {
+  try {
+    // const { sellerId } = req.body;
+    const sellerId = req.sellerId;
+    // Get seller's products
+    const products = await addproductmodel.find({ sellerId });
+
+    // Get all orders where this seller's product exists
+    const orders = await orderModel.find({ "items.sellerId": sellerId });
+
+    let totalOrders = 0;
+    let totalSales = 0;
+    let totalRevenue = 0;
+
+    orders.forEach(order => {
+      // Only count items belonging to this seller
+      const sellerItems = order.items.filter(item => item.sellerId?.toString() === sellerId.toString());
+
+      if (sellerItems.length > 0) {
+        totalOrders += 1; // Count unique orders containing seller's products
+
+        // Sum up revenue from seller's items only
+        const orderRevenue = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        totalSales += orderRevenue;
+      }
+    });
+
+    totalRevenue = totalSales; // You can subtract expenses or fees here
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalOrders,
+        totalSales,
+        totalRevenue,
+        totalProducts: products.length
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch dashboard stats' });
+  }
+};
+
+
+// Update Order Status
+// SECURITY: IDOR protected + Status validation
+export const updateSellerOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    // SECURITY: Only use authenticated sellerId, never from body
+    const sellerId = req.sellerId;
+
+    if (!sellerId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    // SECURITY: Whitelist allowed status values to prevent injection
+    const ALLOWED_STATUSES = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Allowed values: ${ALLOWED_STATUSES.join(', ')}`
+      });
+    }
+
+    // SECURITY: IDOR Protection - Only find orders containing seller's items
+    const order = await orderModel.findOne({
+      _id: orderId,
+      "items.sellerId": sellerId
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found or access denied" });
+    }
+
+    // Only update status for this seller's items
+    order.items.forEach((item) => {
+      if (item.sellerId.toString() === sellerId.toString()) {
+        item.status = status;
+      }
+    });
+
+    // Update global status based on all items
+    const allDelivered = order.items.every(item => item.status === 'Delivered');
+    const allCancelled = order.items.every(item => item.status === 'Cancelled');
+
+    if (allDelivered) {
+      order.status = 'Delivered';
+    } else if (allCancelled) {
+      order.status = 'Cancelled';
+    } else if (status !== 'Pending' && status !== 'Cancelled' && order.status === 'Pending') {
+      order.status = 'Processing';
+    }
+
+    await order.save();
+    return res.json({ success: true, message: "Order status updated", order });
+  } catch (error) {
+    console.error("Update status error:", error);
+    res.status(500).json({ success: false, message: "Failed to update order status" });
+  }
+};
+
+// --- NEW: Get Seller Earnings & Transactions ---
+export const getSellerEarnings = async (req, res) => {
+  try {
+
+    const sellerId = req.sellerId;  // ✔ from token
+
+
+    const orders = await orderModel.find({
+      "items.sellerId": sellerId,
+      // Consider Delivered/Completed status for earnings
+      status: { $in: ["Delivered", "Completed", "Pending", "Processing", "Shipped"] }
+    }).populate("user", "name email");
+
+    let totalEarnings = 0;
+    const transactions = [];
+
+    orders.forEach(order => {
+      const sellerItems = order.items.filter(item => item.sellerId.toString() === sellerId.toString());
+      const orderTotal = sellerItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+      if (orderTotal > 0) {
+        totalEarnings += orderTotal;
+        transactions.push({
+          orderId: order._id,
+          date: order.placedAt,
+          customer: order.user?.name || order.shippingAddress?.name || "Guest",
+          amount: orderTotal,
+          status: order.status
+        });
+      }
+    });
+
+    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalEarnings,
+        pendingClearance: 0,
+        transactions
+      }
+    });
+  } catch (error) {
+    console.error("Earnings Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// --- NEW: Get My Customers ---
+export const getSellerCustomers = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;  // ✔ from token
+
+
+    const orders = await orderModel.find({ "items.sellerId": sellerId })
+      .populate("user", "name email");
+
+    const uniqueCustomers = {};
+
+    orders.forEach(order => {
+      // Use shipping address if user relation is missing
+      const customerId = order.user?._id?.toString() || order.shippingAddress?.phone;
+      const customerName = order.user?.name || order.shippingAddress?.name || "Guest";
+      const customerEmail = order.user?.email || "N/A";
+      const customerPhone = order.shippingAddress?.phone || "N/A";
+
+      if (customerId) {
+        const orderValue = order.items
+          .filter(item => item.sellerId.toString() === sellerId.toString())
+          .reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        if (!uniqueCustomers[customerId]) {
+          uniqueCustomers[customerId] = {
+            _id: customerId,
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            totalOrders: 0,
+            totalSpent: 0,
+            lastOrderDate: order.placedAt
+          };
+        }
+
+        uniqueCustomers[customerId].totalOrders += 1;
+        uniqueCustomers[customerId].totalSpent += orderValue;
+        if (new Date(order.placedAt) > new Date(uniqueCustomers[customerId].lastOrderDate)) {
+          uniqueCustomers[customerId].lastOrderDate = order.placedAt;
+        }
+      }
+    });
+
+    res.status(200).json({ success: true, customers: Object.values(uniqueCustomers) });
+  } catch (error) {
+    console.error("Customer Fetch Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const getSellerNotifications = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { status = "all" } = req.query;
+
+    const filter = { sellerId };
+    if (status === "unread") filter.isRead = false;
+    if (status === "read") filter.isRead = true;
+
+    const notifications = await SellerNotification.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const unreadCount = notifications.filter((item) => !item.isRead).length;
+
+    res.status(200).json({
+      success: true,
+      notifications,
+      stats: {
+        total: notifications.length,
+        unread: unreadCount
+      }
+    });
+  } catch (error) {
+    console.error("Seller Notifications Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const markSellerNotificationRead = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const { id } = req.params;
+
+    const notification = await SellerNotification.findOneAndUpdate(
+      { _id: id, sellerId },
+      { isRead: true, readAt: new Date() },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
+
+    res.status(200).json({ success: true, notification });
+  } catch (error) {
+    console.error("Seller Notification Update Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ========================= RESEND VERIFICATION OTP =========================
+export const resendVerificationOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return res.json({ success: false, message: "Email is required" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      return res.json({ success: false, message: "Seller not found" });
+    }
+
+    if (seller.verified) {
+      return res.json({ success: false, message: "Account is already verified" });
+    }
+
+    // Rate limiting: Check if OTP was sent recently (1 minute cooldown)
+    if (seller.otpExpire && seller.otpExpire > Date.now() - 60000) {
+      const waitTime = Math.ceil((seller.otpExpire - Date.now() + 60000) / 1000);
+      return res.json({
+        success: false,
+        message: `Please wait ${waitTime} seconds before requesting new OTP`
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    seller.otp = otp;
+    seller.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await seller.save();
+
+    await sendEmail(sanitizedEmail, "Your New OTP Verification Code", `
+      <h1>Email Verification</h1>
+      <p>Your new OTP is: <b>${otp}</b></p>
+      <p>This code expires in 10 minutes.</p>
+      <p>If you did not request this, please ignore this email.</p>
+    `);
+
+    res.json({ success: true, message: "New OTP sent to your email" });
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+  }
+};
+
+// ========================= FORGOT PASSWORD =========================
+export const sellerForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return res.json({ success: false, message: "Email is required" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      // Inform user that the email is not registered
+      return res.json({ success: false, message: "This email is not linked to any seller account" });
+    }
+
+    // Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // Rate limiting: Check if reset OTP was sent recently (2 minute cooldown)
+    if (seller.resetOtpExpire && seller.resetOtpExpire > Date.now() - 120000) {
+      return res.json({
+        success: false,
+        message: "Please wait before requesting another reset OTP"
+      });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+    seller.resetOtp = otp;
+    seller.resetOtpExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await seller.save();
+
+    await sendEmail(seller.email, "Password Reset OTP", `
+      <h1>Reset Your Password</h1>
+      <p>Your OTP to reset password is: <b>${otp}</b></p>
+      <p>This code expires in 15 minutes.</p>
+      <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+    `);
+
+    res.json({ success: true, message: "Password reset OTP sent to your email" });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ success: false, message: "Failed to send reset OTP. Please try again." });
+  }
+};
+
+// ========================= RESET PASSWORD =========================
+export const sellerResetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Validate inputs
+    if (!email || !otp || !newPassword) {
+      return res.json({ success: false, message: "Email, OTP, and new password are required" });
+    }
+
+    if (typeof email !== 'string' || typeof otp !== 'string' || typeof newPassword !== 'string') {
+      return res.json({ success: false, message: "Invalid input format" });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
+    const seller = await sellermodel.findOne({ email: sanitizedEmail });
+
+    if (!seller) {
+      return res.json({ success: false, message: "Invalid request" });
+    }
+
+    // Check if seller is blocked
+    if (seller.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Contact support."
+      });
+    }
+
+    // Validate OTP
+    if (!seller.resetOtp || seller.resetOtp !== otp) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    // Check OTP expiry
+    if (!seller.resetOtpExpire || seller.resetOtpExpire < Date.now()) {
+      return res.json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    // Hash new password and save
+    seller.password = await bcrypt.hash(newPassword, 10);
+    seller.resetOtp = null;
+    seller.resetOtpExpire = null;
+    seller.lastLogin = Date.now();
+    await seller.save();
+
+    // Send confirmation email
+    await sendEmail(seller.email, "Password Reset Successful", `
+      <h1>Password Changed</h1>
+      <p>Your password has been successfully reset.</p>
+      <p>If you did not make this change, please contact support immediately.</p>
+    `);
+
+    // Auto-login: Create JWT token and set cookie
+    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie("stoken", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
+    });
+
+    res.json({ 
+      success: true, 
+      message: "Password reset successfully. You are now logged in.",
+      autoLogin: true,
+      user: {
+        name: seller.name,
+        email: seller.email,
+        id: seller._id,
+        uniqueId: seller.uniqueId,
+        region: seller.region
+      }
+    });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ success: false, message: "Failed to reset password. Please try again." });
+  }
+};
+
+// ========================= CHECK SELLER AUTHENTICATED =========================
+export const isSellerAuthenticated = async (req, res) => {
+  try {
+    const sellerId = req.sellerId;
+    const seller = await sellermodel.findById(sellerId).select('-password -otp -resetOtp');
+
+    if (!seller) {
+      return res.json({ success: false, message: "Seller not found" });
+    }
+
+    return res.json({
+      success: true,
+      seller: {
+        id: seller._id,
+        name: seller.name,
+        email: seller.email,
+        nickName: seller.nickName,
+        uniqueId: seller.uniqueId,
+        verified: seller.verified,
+        approved: seller.approved,
+        status: seller.status
+      }
+    });
+  } catch (error) {
+    console.error("Auth Check Error:", error);
+    res.status(500).json({ success: false, message: "Authentication check failed" });
+  }
+};
+
+// ========================= LOGOUT SELLER =========================
+export const logoutSeller = async (req, res) => {
+  try {
+    // Clear the seller token cookie
+    res.clearCookie("stoken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/"
+    });
+
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    res.status(500).json({ success: false, message: "Logout failed" });
+  }
+};

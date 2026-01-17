@@ -236,7 +236,9 @@ const allowedOrigins = [
   "https://www.giftsngifts.in",
   // Add admin/seller subdomains if needed
   "https://admin.giftsngifts.in",
-  "https://seller.giftsngifts.in"
+  "https://seller.giftsngifts.in",
+  "https://www.admin.giftsngifts.in",
+  "https://www.seller.giftsngifts.in"
 ];
 
 app.use(

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../utils/api";
 import { formatINR } from "../../utils/orderMetrics";
 import { MdHistory, MdFilterList, MdSearch, MdDownload, MdReceipt, MdOutlineArrowUpward, MdOutlineArrowDownward } from "react-icons/md";
-import { FiChevronLeft, FiChevronRight, FiDownload, FiExternalLink } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiDownload, FiExternalLink, FiPrinter } from "react-icons/fi";
 import { exportToExcel, TRANSACTION_EXPORT_COLUMNS } from "../../utils/exportUtils";
 
 function Transactions() {
@@ -16,12 +16,8 @@ function Transactions() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await api.get(
-          `/api/seller-panel/finance/transactions?page=${page}&type=${typeFilter}`
-        );
-        if (res.data.success) {
-          setData(res.data.data);
-        }
+        const res = await api.get(`/api/seller-panel/finance/transactions?page=${page}&type=${typeFilter}`);
+        if (res.data.success) setData(res.data.data);
       } catch (err) {
         console.error("Error fetching transactions:", err);
       } finally {
@@ -37,80 +33,16 @@ function Transactions() {
     txn.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getTypeBadge = (type) => {
-    const styles = {
-      order: "bg-emerald-50 text-emerald-700 border-emerald-100",
-      credit: "bg-emerald-50 text-emerald-700 border-emerald-100",
-      refund: "bg-rose-50 text-rose-700 border-rose-100",
-      debit: "bg-rose-50 text-rose-700 border-rose-100",
-      commission: "bg-amber-50 text-amber-700 border-amber-100",
-      payout: "bg-blue-50 text-blue-700 border-blue-100",
+  const getTypeStyle = (type) => {
+    const map = {
+      order: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      credit: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      refund: "bg-rose-50 text-rose-600 border-rose-100",
+      debit: "bg-rose-50 text-rose-600 border-rose-100",
+      commission: "bg-amber-50 text-amber-600 border-amber-100",
+      payout: "bg-blue-50 text-blue-600 border-blue-100",
     };
-    return styles[type] || "bg-slate-50 text-slate-700 border-slate-100";
-  };
-
-  const handleDownloadInvoice = (txn) => {
-    const invoiceDate = new Date(txn.date).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
-    const invoiceNumber = `INV-${txn.orderId?.slice(-8).toUpperCase() || Date.now()}`;
-    const isCredit = txn.type === 'order' || txn.type === 'credit';
-
-    const invoiceHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice ${invoiceNumber}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
-          .invoice-container { max-width: 800px; margin: 0 auto; background: white; padding: 60px; border: 1px solid #e2e8f0; }
-          .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          .logo h1 { color: #4f46e5; font-size: 24px; font-weight: 800; }
-          .invoice-info { text-align: right; }
-          .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-          .party-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
-          .details-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
-          .details-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
-          .details-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-          .totals { margin-left: auto; width: 250px; }
-          .totals-row { display: flex; justify-content: space-between; padding: 8px 0; }
-          .grand-total { border-top: 2px solid #e2e8f0; margin-top: 8px; padding-top: 16px; font-weight: 800; font-size: 18px; }
-          @media print { .no-print { display: none; } body { padding: 0; } .invoice-container { border: none; } }
-        </style>
-      </head>
-      <body>
-        <div style="text-align: center; margin-bottom: 20px;" class="no-print">
-            <button onclick="window.print()" style="padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Print Invoice</button>
-        </div>
-        <div class="invoice-container">
-          <div class="header">
-            <div class="logo"><h1>GIFTNGIFTS</h1><p>Seller Statement</p></div>
-            <div class="invoice-info">
-                <h2 style="font-size: 32px; font-weight: 900; letter-spacing: -1px;">INVOICE</h2>
-                <p style="font-size: 14px; color: #64748b;"># ${invoiceNumber}</p>
-            </div>
-          </div>
-          <div class="parties">
-            <div><p class="party-label">Issued By</p><p><strong>GiftNGifts platform</strong></p><p>Tax Invoice / Statement</p></div>
-            <div style="text-align: right;"><p class="party-label">For Transaction</p><p><strong>${txn.customer || txn.description}</strong></p><p>Date: ${invoiceDate}</p></div>
-          </div>
-          <table class="details-table">
-            <thead><tr><th>Description</th><th>Type</th><th style="text-align: right;">Amount</th></tr></thead>
-            <tbody><tr><td>${txn.description || 'Transaction Item'}</td><td style="text-transform: capitalize;">${txn.type}</td><td style="text-align: right; font-weight: 700;">₹${(txn.amount || 0).toLocaleString('en-IN')}</td></tr></tbody>
-          </table>
-          <div class="totals">
-            <div class="totals-row"><span>Subtotal</span><span>₹${(txn.amount || 0).toLocaleString('en-IN')}</span></div>
-            <div class="totals-row grand-total"><span>Total</span><span style="color: ${isCredit ? '#10b981' : '#f43f5e'}">${isCredit ? '+' : '-'}₹${(txn.amount || 0).toLocaleString('en-IN')}</span></div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const invoiceWindow = window.open('', '_blank');
-    invoiceWindow.document.write(invoiceHTML);
-    invoiceWindow.document.close();
+    return map[type] || "bg-slate-50 text-slate-600 border-slate-100";
   };
 
   const stats = {
@@ -121,159 +53,133 @@ function Transactions() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="max-w-[1440px] mx-auto p-4 md:p-10 space-y-8 bg-[#F8FAFC] min-h-screen">
+      
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-200 pb-8">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-             <MdHistory className="text-indigo-600" /> Transaction Ledger
-          </h1>
-          <p className="text-slate-500 font-medium">Monitor your cash flow and download invoices</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Financial Ledger</h1>
+          <p className="text-slate-500 font-medium">Detailed record of your platform earnings and settlements.</p>
         </div>
         
         <button
-          onClick={() => exportToExcel(data.transactions, `transactions_${typeFilter}`, TRANSACTION_EXPORT_COLUMNS)}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+          onClick={() => exportToExcel(data.transactions, `ledger_${typeFilter}`, TRANSACTION_EXPORT_COLUMNS)}
+          className="flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all"
         >
-          <FiDownload className="text-lg text-indigo-600" />
-          <span>Export Excel</span>
+          <FiDownload className="text-lg" />
+          <span>Export Records</span>
         </button>
       </div>
 
-      {/* Stats Cards - Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatCard 
-            label="Total Credits" 
-            value={formatINR(stats.totalCredit)} 
-            icon={<MdOutlineArrowUpward />} 
-            color="emerald" 
-            sub="Gross income"
-        />
-        <StatCard 
-            label="Total Debits" 
-            value={`-${formatINR(stats.totalDebit)}`} 
-            icon={<MdOutlineArrowDownward />} 
-            color="rose" 
-            sub="Fees & Refunds"
-        />
-        <StatCard 
-            label="Total Refunds" 
-            value={formatINR(stats.totalRefunds)} 
-            icon={<MdHistory />} 
-            color="slate" 
-            sub="Returned orders"
-        />
-        <StatCard 
-            label="Commission" 
-            value={formatINR(stats.totalCommission)} 
-            icon={<MdReceipt />} 
-            color="amber" 
-            sub="Platform usage"
-        />
+      {/* STATS BENTO GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Total Credits" value={formatINR(stats.totalCredit)} icon={<MdOutlineArrowUpward />} theme="emerald" />
+        <StatCard label="Total Debits" value={`-${formatINR(stats.totalDebit)}`} icon={<MdOutlineArrowDownward />} theme="rose" />
+        <StatCard label="Returns" value={formatINR(stats.totalRefunds)} icon={<MdHistory />} theme="indigo" />
+        <StatCard label="Marketplace Fee" value={formatINR(stats.totalCommission)} icon={<MdReceipt />} theme="amber" />
       </div>
 
-      {/* Filters & Search Bar */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm">
-        <div className="relative flex-1 group">
-          <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-indigo-600 transition-colors" />
+      {/* COMMAND BAR */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-9 relative group">
+          <MdSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-2xl" />
           <input
             type="text"
-            placeholder="Search customer, order ID..."
+            placeholder="Filter by Order ID, Customer, or Keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700 outline-none"
+            className="w-full pl-14 pr-4 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all outline-none"
           />
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-px bg-slate-200 hidden md:block"></div>
-          <div className="relative flex-1 md:flex-none">
-            <MdFilterList className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <select
-                value={typeFilter}
-                onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                className="w-full md:w-48 pl-12 pr-8 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-600 appearance-none cursor-pointer outline-none"
-            >
-                <option value="all">All Types</option>
-                <option value="order">Orders Only</option>
-                <option value="refund">Refunds</option>
-                <option value="commission">Fees</option>
-                <option value="payout">Payouts</option>
-            </select>
+        <div className="md:col-span-3 relative">
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-600 appearance-none outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
+          >
+            <option value="all">All Entries</option>
+            <option value="order">Order Sales</option>
+            <option value="refund">Refunds</option>
+            <option value="commission">Commissions</option>
+            <option value="payout">Bank Payouts</option>
+          </select>
+          <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+            <MdFilterList size={22} />
           </div>
         </div>
       </div>
 
-      {/* Table Container */}
+      {/* LEDGER MODULE */}
       <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-20 text-center flex flex-col items-center">
-            <div className="animate-spin w-10 h-10 border-[4px] border-indigo-500 border-t-transparent rounded-full mb-4"></div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Syncing Transactions</p>
+          <div className="p-32 flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Verifying Transactions...</p>
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="p-20 text-center flex flex-col items-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
-                <MdHistory size={48} />
-            </div>
-            <h3 className="font-bold text-slate-800">No records found</h3>
-            <p className="text-slate-400 text-sm">Try adjusting your filters or search query.</p>
+          <div className="p-32 text-center flex flex-col items-center">
+             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-6">
+                <MdHistory size={40} />
+             </div>
+             <h3 className="text-xl font-black text-slate-800">No Entry Found</h3>
+             <p className="text-slate-500 font-medium max-w-xs mx-auto">We couldn't find any transactions matching your current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-left min-w-[900px]">
-              <thead className="bg-slate-50/50">
-                <tr>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Transaction Date</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Details</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Tracking ID</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Invoice</th>
+            
+            <table className="w-full text-left border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-100">
+                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Timestamp</th>
+                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Transaction Details</th>
+                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ref. Code</th>
+                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Cash Flow</th>
+                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Invoice</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {filteredTransactions.map((txn, i) => {
                   const isCredit = txn.type === 'order' || txn.type === 'credit';
                   return (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-8 py-5">
+                    <tr key={i}>
+                      <td className="px-10 py-6">
                         <div className="flex flex-col">
-                            <span className="font-bold text-slate-900">{new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{new Date(txn.date).getFullYear()}</span>
+                          <span className="font-black text-slate-900">{new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                          <span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{new Date(txn.date).getFullYear()}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wider ${getTypeBadge(txn.type)}`}>
-                                {txn.type}
-                            </span>
-                            <div className="min-w-0">
-                                <p className="font-bold text-slate-800 truncate">{txn.description || txn.customer}</p>
-                                {txn.email && <p className="text-[11px] text-slate-400 font-medium">{txn.email}</p>}
-                            </div>
+                      <td className="px-10 py-6">
+                        <div className="flex items-center gap-5">
+                          <div className={`shrink-0 px-3 py-1 rounded-lg text-[9px] font-black border uppercase tracking-[0.15em] ${getTypeStyle(txn.type)}`}>
+                            {txn.type}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-800 truncate">{txn.description || txn.customer}</p>
+                            {txn.email && <p className="text-[10px] text-slate-400 truncate">{txn.email}</p>}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
-                         <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 font-semibold">
-                            {txn.orderId ? `#${txn.orderId.slice(-8).toUpperCase()}` : 'INTERNAL'}
-                         </span>
-                      </td>
-                      <td className="px-8 py-5 text-right font-black text-base">
-                        <span className={isCredit ? 'text-emerald-600' : 'text-rose-600'}>
-                            {isCredit ? '+' : '-'}{formatINR(txn.amount)}
+                      <td className="px-10 py-6">
+                        <span className="font-mono text-xs bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200 font-bold tracking-tight">
+                          {txn.orderId ? `#${txn.orderId.slice(-8).toUpperCase()}` : 'INTERNAL'}
                         </span>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-10 py-6 text-right font-black text-lg">
+                        <span className={isCredit ? 'text-emerald-600' : 'text-rose-600'}>
+                          {isCredit ? '+' : '−'}{formatINR(txn.amount)}
+                        </span>
+                      </td>
+                      <td className="px-10 py-6">
                         <div className="flex justify-center">
-                            {txn.orderId ? (
+                          {txn.orderId ? (
                             <button
-                                onClick={() => handleDownloadInvoice(txn)}
-                                className="p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                                title="Generate Invoice"
+                              onClick={() => handleDownloadInvoice(txn)}
+                              className="w-11 h-11 flex items-center justify-center bg-white border border-slate-200 text-slate-500 rounded-xl hover:border-slate-900 hover:text-slate-900 transition-colors"
                             >
-                                <FiExternalLink strokeWidth={3} size={14} />
+                              <FiPrinter size={18} strokeWidth={2.5} />
                             </button>
-                            ) : '-'}
+                          ) : <span className="text-slate-300">—</span>}
                         </div>
                       </td>
                     </tr>
@@ -284,77 +190,73 @@ function Transactions() {
           </div>
         )}
 
-        {/* Improved Pagination */}
-        {data.pagination.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 gap-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Showing page {data.pagination.currentPage} of {data.pagination.totalPages}
-            </p>
-            <div className="flex gap-2">
+        {/* PAGINATION BAR */}
+        <div className="bg-slate-50/50 p-8 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-slate-100">
+           <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+              Page {data.pagination.currentPage} of {data.pagination.totalPages}
+           </div>
+           <div className="flex items-center gap-4">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="px-6 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-black uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
               >
-                <FiChevronLeft strokeWidth={3} />
+                Previous
               </button>
               <button
                 onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
                 disabled={page === data.pagination.totalPages}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="px-8 py-3 rounded-2xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest disabled:opacity-30 transition-all shadow-lg shadow-slate-200"
               >
-                <FiChevronRight strokeWidth={3} />
+                Next Page
               </button>
-            </div>
-          </div>
-        )}
+           </div>
+        </div>
       </div>
 
-      {/* Transaction Legend Section */}
-      <div className="bg-indigo-50/50 rounded-3xl border border-indigo-100 p-6 md:p-8">
-        <h4 className="font-black text-indigo-900 uppercase text-xs tracking-widest mb-6">Financial Legend</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <LegendItem color="emerald" label="Orders" sub="Sale proceeds" />
-            <LegendItem color="rose" label="Refunds" sub="Customer returns" />
-            <LegendItem color="amber" label="Commissions" sub="Platform fee" />
-            <LegendItem color="blue" label="Payouts" sub="Bank transfers" />
+      {/* FOOTER LEGEND */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+           <LegendItem icon={<MdOutlineArrowUpward />} label="Order Sales" desc="Net earnings from product delivery" color="emerald" />
+           <LegendItem icon={<MdHistory />} label="Refunds" desc="Reverse credit for customer returns" color="rose" />
+           <LegendItem icon={<MdReceipt />} label="Service Fee" desc="Platform usage & transaction costs" color="amber" />
+           <LegendItem icon={<MdDownload />} label="Settlements" desc="Successful payouts to your bank account" color="indigo" />
         </div>
       </div>
     </div>
   );
 }
 
-// Helper Components
-const StatCard = ({ label, value, icon, color, sub }) => {
-    const colors = {
-        emerald: 'bg-emerald-500 shadow-emerald-100 text-emerald-500',
-        rose: 'bg-rose-500 shadow-rose-100 text-rose-500',
-        amber: 'bg-amber-500 shadow-amber-100 text-amber-500',
-        slate: 'bg-slate-700 shadow-slate-100 text-slate-700'
-    };
-    return (
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-            <div className={`p-3 rounded-2xl text-white ${colors[color].split(' ')[0]} w-fit mb-4 group-hover:scale-110 transition-transform`}>
-                {icon}
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 truncate">{value}</h3>
-            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic tracking-tighter">{sub}</p>
-        </div>
-    );
+// COMPONENTS
+const StatCard = ({ label, value, icon, theme }) => {
+  const themes = {
+    emerald: "bg-emerald-600 shadow-emerald-100 text-emerald-600",
+    rose: "bg-rose-600 shadow-rose-100 text-rose-600",
+    indigo: "bg-indigo-600 shadow-indigo-100 text-indigo-600",
+    amber: "bg-amber-600 shadow-amber-100 text-amber-600"
+  };
+  return (
+    <div className="bg-white p-8 rounded-[2.2rem] border border-slate-200 shadow-sm relative overflow-hidden">
+      <div className={`w-14 h-14 flex items-center justify-center rounded-2xl mb-6 text-white shadow-lg ${themes[theme].split(' ')[0]}`}>
+        {React.cloneElement(icon, { size: 28 })}
+      </div>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
+      <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
+    </div>
+  );
 };
 
-const LegendItem = ({ color, label, sub }) => {
-    const bgs = { emerald: 'bg-emerald-500', rose: 'bg-rose-500', amber: 'bg-amber-500', blue: 'bg-blue-500' };
-    return (
-        <div className="flex items-center gap-3">
-            <span className={`w-2.5 h-2.5 rounded-full ${bgs[color]} animate-pulse`}></span>
-            <div>
-                <p className="text-sm font-black text-slate-800 leading-none mb-1">{label}</p>
-                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest leading-none">{sub}</p>
-            </div>
-        </div>
-    );
+const LegendItem = ({ icon, label, desc, color }) => {
+  const colors = { emerald: 'text-emerald-500', rose: 'text-rose-500', amber: 'text-amber-500', indigo: 'text-indigo-500' };
+  return (
+    <div className="flex flex-col gap-3">
+      <div className={`w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center ${colors[color]} border border-slate-100`}>
+        {React.cloneElement(icon, { size: 22 })}
+      </div>
+      <h5 className="font-black text-xs uppercase tracking-widest text-slate-900 leading-none">{label}</h5>
+      <p className="text-slate-400 text-[11px] font-medium leading-relaxed">{desc}</p>
+    </div>
+  );
 };
 
 export default Transactions;

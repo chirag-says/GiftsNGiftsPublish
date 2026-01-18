@@ -1,61 +1,97 @@
 import React from "react";
+import {
+  LuTrendingUp,
+  LuCalendar,
+  LuClock,
+  LuGlobe,
+} from "react-icons/lu";
 
+// Configured with gradients similar to your image
 const SUMMARY_CONFIG = [
-  { key: "today", title: "Today's Orders", iconBg: "bg-indigo-50", iconColor: "text-indigo-600" },
-  { key: "month", title: "This Month", iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
-  { key: "year", title: "This Year", iconBg: "bg-amber-50", iconColor: "text-amber-600" },
-  { key: "overall", title: "All Time", iconBg: "bg-purple-50", iconColor: "text-purple-600" },
+  {
+    key: "today",
+    title: "Today's Revenue",
+    icon: LuClock,
+    // Linear gradient from Indigo to Violet
+    gradient: "from-indigo-600 to-violet-500",
+    shadow: "shadow-indigo-400",
+  },
+  {
+    key: "month",
+    title: "This Month",
+    icon: LuCalendar,
+    // Linear gradient for Emerald/Green
+    gradient: "from-emerald-600 to-teal-500",
+    shadow: "shadow-emerald-200",
+  },
+  {
+    key: "year",
+    title: "This Year",
+    icon: LuTrendingUp,
+    // Linear gradient for Amber/Orange
+    gradient: "from-orange-500 to-amber-500",
+    shadow: "shadow-orange-200",
+  },
+  {
+    key: "overall",
+    title: "All Time Total",
+    icon: LuGlobe,
+    // Linear gradient for Purple/Fuchsia
+    gradient: "from-purple-600 to-fuchsia-500",
+    shadow: "shadow-purple-200",
+  },
 ];
 
 function OrderSummaryCards({ stats, formatAmount, focusedRange, onSelectRange }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-      {SUMMARY_CONFIG.map(({ key, title, iconBg, iconColor }) => {
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {SUMMARY_CONFIG.map(({ key, title, icon: Icon, gradient, shadow }) => {
         const data = stats?.[key] || { count: 0, total: 0 };
-        const isActive = focusedRange === key;
-        const Tag = onSelectRange ? "button" : "div";
+        const active = focusedRange === key;
 
         return (
-          <Tag
+          <button
             key={key}
-            type={onSelectRange ? "button" : undefined}
-            onClick={onSelectRange ? () => onSelectRange(key) : undefined}
-            className={`
-              relative rounded-xl p-6 text-left
-              bg-white border transition-all duration-200
-              focus:outline-none
-              ${isActive
-                ? "border-indigo-200 shadow-md ring-1 ring-indigo-100"
-                : "border-gray-200 shadow-soft hover:shadow-card-hover hover:border-gray-300"
-              }
+            onClick={() => onSelectRange(key)}
+            className={`relative overflow-hidden p-6 rounded-2xl text-left transition-all duration-300 border-none shadow-lg
+              bg-gradient-to-br ${gradient} ${shadow}
+              ${active ? "ring-4 ring-white/30 scale-[1.02]" : "hover:scale-[1.01] hover:shadow-xl"}
             `}
           >
-            {/* Title */}
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-              {title}
-            </p>
+            {/* Background Decorative Circle (Glassmorphism effect from image) */}
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+            <div className="absolute top-2 right-2 w-12 h-12 bg-white/5 rounded-full" />
 
-            {/* Order Count */}
-            <p className="text-3xl font-bold text-gray-900">
-              {data.count}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">orders</p>
-
-            {/* Revenue */}
-            <div className="mt-5 pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {formatAmount ? formatAmount(data.total) : data.total}
+            <div className="relative z-10">
+              <div className="flex justify-between items-start">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
+                  <Icon size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-white/90 tracking-wide">
+                  {title}
                 </span>
               </div>
-            </div>
 
-            {/* Active indicator */}
-            {isActive && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-b-xl"></div>
-            )}
-          </Tag>
+              <div className="mt-5">
+                <h3 className="text-3xl font-black text-white tracking-tight">
+                  {formatAmount(data.total)}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-bold text-white">
+                    {data.count}
+                  </span>
+                  <span className="text-xs text-white/70 uppercase font-medium tracking-tighter">
+                    Orders
+                  </span>
+                </div>
+              </div>
+
+              {/* Decorative Progress bar feel at bottom */}
+              <div className="mt-4 w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                <div className="h-full bg-white/40 w-2/3" />
+              </div>
+            </div>
+          </button>
         );
       })}
     </div>

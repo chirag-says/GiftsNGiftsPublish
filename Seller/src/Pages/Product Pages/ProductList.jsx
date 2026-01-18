@@ -89,32 +89,93 @@ function ProductList() {
         </span>
       );
     }
+    
     return (
       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
         {stock} In Stock
       </span>
     );
   };
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      // 🔍 yahan aapka search/filter already run ho chuka hota hai
+      setSearchTerm(""); // ✅ Enter ke baad input empty
+    }
+  };
+
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 lg:py-8 py-4 space-y-6">
       {/* Page Header */}
-      <div className="flex bg-white py-6 px-6 rounded-2xl shadow-md flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Product Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Monitor stock levels and manage pricing in real-time.
-          </p>
+       <div className="relative overflow-hidden bg-white backdrop-blur-md py-8 px-8 rounded-2xl  shadow-xl shadow-indigo-100/20 border border-gray-200 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-200/30">
+        {/* Multi-color Background Decorative Blurs */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex items-start gap-5">
+          {/* Gradient Icon Box */}
+          <div className="hidden sm:flex shrink-0 w-14 h-14 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 rounded-2xl items-center justify-center text-white shadow-lg shadow-indigo-200 group transition-all duration-300 hover:rotate-6 hover:scale-110">
+            <LuPackage size={28} className="drop-shadow-md" />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Product Inventory
+              </h1>
+              {/* Animated Live Status Badge */}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-100 animate-pulse">
+                Live Sync
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed">
+              Monitor{" "}
+              <span className="text-indigo-600 font-bold">stock levels</span>{" "}
+              and optimize
+              <span className="text-rose-500 font-bold ml-1">
+                pricing metrics
+              </span>{" "}
+              in real-time.
+            </p>
+          </div>
         </div>
-        <div className="relative">
-          <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2.5 w-full sm:w-72 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
-          />
+
+        {/* Futuristic Search Bar with Multi-color Glow */}
+        <div className="relative group w-full lg:w-96 z-10">
+          {/* Outer Glow Effect on Focus */}
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 rounded-2xl blur opacity-20 group-focus-within:opacity-60 transition duration-500"></div>
+
+          <div className="relative flex items-center bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300 group-focus-within:shadow-indigo-100/50">
+            <div className="pl-4 pr-2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+              <LuSearch className="w-5 h-5" strokeWidth={2.5} />
+            </div>
+
+            <input
+              type="text"
+              placeholder="Find items by name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="
+    w-full py-4 pr-4 bg-transparent
+    border-none outline-none ring-0
+    text-sm font-bold text-slate-700
+    placeholder:text-slate-400
+    focus:outline-none focus:ring-0
+  "
+            />
+
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="mr-3 p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-rose-500 transition-all active:scale-90"
+              >
+                <MdClose size={18} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

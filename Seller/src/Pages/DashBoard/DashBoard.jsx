@@ -816,46 +816,40 @@ function DashBoard() {
                   </div>
 
                   {/* Actions */}
-            <div className="p-6 space-y-3">
-  {/* Add Product – Primary */}
-  <button
-    onClick={() =>
-      setIsOpenAddProductPanel({
-        open: true,
-        model: "Add Product",
-      })
-    }
-    className="w-full flex items-center justify-center gap-2 px-4 py-2.5
-      bg-gray-900 text-white rounded-xl
-      hover:bg-gray-800 transition-all
-      font-semibold text-sm shadow-sm"
-  >
-    <FiPlus className="w-4 h-4" />
-    Add New Product
-  </button>
+          <div className="p-6 space-y-3">
+                    <button
+                      onClick={() =>
+                        setIsOpenAddProductPanel({
+                          open: true,
+                          model: "Add Product",
+                        })
+                      }
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 
+                 bg-red-500 text-white rounded-xl hover:bg-red-600 
+                 transition-all font-semibold text-sm shadow-sm"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      Add New Product
+                    </button>
 
-  {/* Orders – Secondary */}
-  <button
-    onClick={() => navigate("/orders")}
-    className="w-full flex items-center justify-center gap-2 px-4 py-2.5
-      bg-gray-100 text-gray-900 rounded-xl
-      hover:bg-gray-200 transition-all
-      font-semibold text-sm border border-gray-200"
-  >
-    View All Orders
-  </button>
+                    <button
+                      onClick={() => navigate("/orders")}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 
+                 bg-yellow-500 text-white rounded-xl hover:bg-yellow-400 
+                 transition-all font-semibold text-sm shadow-sm"
+                    >
+                      View All Orders
+                    </button>
 
-  {/* Products – Tertiary */}
-  <button
-    onClick={() => navigate("/products")}
-    className="w-full flex items-center justify-center gap-2 px-4 py-2.5
-      bg-white text-gray-700 rounded-xl
-      hover:bg-gray-50 transition-all
-      font-semibold text-sm border border-gray-200"
-  >
-    Manage Products
-  </button>
-</div>
+                    <button
+                      onClick={() => navigate("/products")}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 
+                 bg-blue-500 text-white rounded-xl hover:bg-blue-600 
+                 transition-all font-semibold text-sm shadow-sm"
+                    >
+                      Manage Products
+                    </button>
+                  </div>
 
 
 

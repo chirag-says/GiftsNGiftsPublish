@@ -487,7 +487,7 @@ function AddProduct() {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 py-10  px-2 md:px-8">
+    <section className="min-h-screen bg-slate-50 md:py-10  md:px-8">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

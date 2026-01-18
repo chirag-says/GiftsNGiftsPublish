@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
-import { LuPackage, LuDownload, LuFileSpreadsheet, LuFileText, LuSearch, LuUser, LuMapPin, LuPhone } from "react-icons/lu";
+import { LuPackage, LuDownload, LuFileSpreadsheet, LuFileText, LuSearch, LuUser, LuMapPin, LuPhone, LuShoppingBag } from "react-icons/lu";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { useSellerOrders } from "../../hooks/useSellerOrders.js";
@@ -18,6 +18,15 @@ const SORT_OPTIONS = {
   NONE: 'default',
   TOTAL_DESC: 'total_desc',
   TOTAL_ASC: 'total_asc',
+};
+
+// Unified Status Color Map for Table Accents and Badges
+const STATUS_THEMES = {
+  Pending: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", accent: "bg-amber-500" },
+  Processing: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", accent: "bg-blue-500" },
+  Shipped: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200", accent: "bg-indigo-500" },
+  Delivered: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", accent: "bg-emerald-500" },
+  Cancelled: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", accent: "bg-rose-500" },
 };
 
 function OrdersList({ focusedRange: initialRange, statusKey }) {
@@ -85,17 +94,6 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   const handleRangeClick = (range) => setSelectedRange(prev => prev === range ? null : range);
   const handleSortChange = (e) => setSort(e.target.value);
 
-  const getStatusBadge = (status) => {
-    const styles = {
-      Pending: "bg-amber-50 text-amber-700 border-amber-100",
-      Processing: "bg-blue-50 text-blue-700 border-blue-100",
-      Shipped: "bg-indigo-50 text-indigo-700 border-indigo-100",
-      Delivered: "bg-emerald-50 text-emerald-700 border-emerald-100",
-      Cancelled: "bg-red-50 text-red-700 border-red-100",
-    };
-    return styles[status] || "bg-gray-50 text-gray-700 border-gray-100";
-  };
-
   const handleExport = (format) => {
     const dataToExport = filteredOrders.length > 0 ? filteredOrders : orders;
     const filename = selectedRange ? `orders_${selectedRange}` : statusKey ? `orders_${statusKey}` : 'all_orders';
@@ -105,24 +103,21 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-hidden">
-      {/* Page Header - Improved stacking on mobile */}
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+    <div className="space-y-6 bg-slate-50/50 p-4 sm:p-10 rounded-3xl shadow-xl border border-white max-w-full overflow-hidden">
+      {/* Header Section */}
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{title}</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">{subtitle}</p>
+          <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight">{title}</h1>
+          <p className="text-xs sm:text-sm text-slate-500 pl-1 mt-2 font-medium">{subtitle}</p>
         </div>
 
-        {/* Controls Container - Responsive Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 items-center">
-          <div className="relative w-full sm:col-span-2 lg:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <LuSearch className="h-4 w-4 text-gray-400" />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-4 items-center">
+          <div className="relative w-full sm:col-span-2 lg:w-72">
+            <LuSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search ID, Name..."
-              className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+              placeholder="Search Customer, ID, Pin..."
+              className="pl-10 pr-4 py-3 w-full border-none bg-white rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -132,30 +127,30 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
             <select
               value={sort}
               onChange={handleSortChange}
-              className="appearance-none block w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 focus:ring-indigo-500 pr-10 shadow-sm"
+              className="appearance-none block w-full px-5 py-3 bg-white border-none rounded-2xl text-sm font-bold text-slate-700 hover:shadow-md focus:ring-2 focus:ring-indigo-500 pr-10 shadow-sm cursor-pointer transition-all"
             >
               <option value={SORT_OPTIONS.NONE}>Default Sorting</option>
               <option value={SORT_OPTIONS.TOTAL_DESC}>Price: High to Low</option>
               <option value={SORT_OPTIONS.TOTAL_ASC}>Price: Low to High</option>
             </select>
-            <FaAngleDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <FaAngleDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
 
           <div className="relative w-full" ref={exportMenuRef}>
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-slate-800 shadow-lg transition-all"
             >
               <LuDownload className="w-4 h-4" />
               <span>Export</span>
             </button>
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                  <LuFileText className="w-4 h-4 text-gray-400" /> CSV
+              <div className="absolute right-0 mt-3 w-full sm:w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50">
+                <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                  <LuFileText className="w-5 h-5 text-indigo-500" /> Save as CSV
                 </button>
-                <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                  <LuFileSpreadsheet className="w-4 h-4 text-emerald-500" /> Excel
+                <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-emerald-50 transition-colors">
+                  <LuFileSpreadsheet className="w-5 h-5 text-emerald-500" /> Save as Excel
                 </button>
               </div>
             )}
@@ -166,104 +161,122 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
       <OrderSummaryCards stats={stats} formatAmount={formatINR} focusedRange={selectedRange} onSelectRange={handleRangeClick} />
 
       {/* Main Content Area */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center">
-            <div className="inline-flex items-center gap-2 text-gray-500">
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
-              <span>Loading orders...</span>
+          <div className="py-24 text-center">
+            <div className="inline-flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-[3px] border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+              <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Fetching Orders</span>
             </div>
           </div>
         ) : error ? (
-          <div className="p-6 bg-red-50 text-red-700 rounded-xl">{error}</div>
+          <div className="m-6 p-6 bg-rose-50 text-rose-700 rounded-2xl font-bold border border-rose-100 flex items-center gap-3">
+             <LuPackage /> {error}
+          </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="py-16 text-center">
-            <LuPackage className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">{meta?.emptyMessage || "No orders found."}</p>
+          <div className="py-24 text-center">
+            <LuPackage className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+            <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">{meta?.emptyMessage || "No orders found."}</p>
           </div>
         ) : (
           <>
-            {/* Desktop Table View (Hidden on Mobile) */}
+            {/* Desktop Table View */}
             <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
+              <table className="w-full min-w-[1000px] border-separate border-spacing-0">
                 <thead>
-                  <tr className="bg-gray-50/80 border-b border-gray-100">
-                    <th className="w-12 px-4 py-4"></th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                  <tr className="bg-slate-50/80">
+                    <th className="w-16 px-6 py-5"></th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Order ID</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Customer Info</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Total Amount</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                    <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Placement Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredOrders.map((order, i) => (
-                    <React.Fragment key={order._id}>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-4 text-center">
-                          <button onClick={() => toggleDetails(i)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-                            {openRow === i ? <FaAngleUp /> : <FaAngleDown />}
-                          </button>
-                        </td>
-                        <td className="px-4 py-4 font-medium text-sm text-gray-900">#{order._id.slice(-8)}</td>
-                        <td className="px-4 py-4 text-sm text-gray-700">{order.shippingAddress?.name}</td>
-                        <td className="px-4 py-4 text-center font-semibold text-gray-900">{formatINR(order.totalAmount)}</td>
-                        <td className="px-4 py-4 text-center">
-                          <select
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border focus:outline-none transition-all ${getStatusBadge(order.status)}`}
-                            value={order.status}
-                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                          >
-                            {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                        </td>
-                        <td className="px-4 py-4 text-center text-sm text-gray-600">
-                          {new Date(order.placedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </td>
-                      </tr>
-                      {openRow === i && <ExpandedDetails order={order} formatINR={formatINR} />}
-                    </React.Fragment>
-                  ))}
+                <tbody className="divide-y divide-slate-50">
+                  {filteredOrders.map((order, i) => {
+                    const theme = STATUS_THEMES[order.status] || STATUS_THEMES.Pending;
+                    const isExpanded = openRow === i;
+                    return (
+                      <React.Fragment key={order._id}>
+                        <tr className={`group transition-all ${isExpanded ? 'bg-indigo-50/30' : 'hover:bg-slate-50/40'}`}>
+                          <td className="px-6 py-5 text-center relative">
+                            {/* Color Accent Bar */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.accent} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                            <button onClick={() => toggleDetails(i)} className={`p-2 rounded-xl transition-all ${isExpanded ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}>
+                              {isExpanded ? <FaAngleUp /> : <FaAngleDown />}
+                            </button>
+                          </td>
+                          <td className="px-6 py-5 font-black text-slate-900 text-sm">#{order._id.slice(-8).toUpperCase()}</td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${theme.bg} ${theme.text}`}>
+                                  {order.shippingAddress?.name?.charAt(0)}
+                               </div>
+                               <span className="font-bold text-slate-700 text-sm">{order.shippingAddress?.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-center font-black text-slate-900 text-base">{formatINR(order.totalAmount)}</td>
+                          <td className="px-6 py-5 text-center">
+                            <select
+                              className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-none ring-1 ring-inset focus:ring-2 transition-all cursor-pointer ${theme.bg} ${theme.text} ring-${theme.border.split('-')[1]}-200`}
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                            >
+                              {Object.keys(STATUS_THEMES).map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-6 py-5 text-center text-xs font-bold text-slate-400">
+                            {new Date(order.placedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                        </tr>
+                        {isExpanded && <ExpandedDetails order={order} formatINR={formatINR} theme={theme} />}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {/* Mobile Card View (Hidden on Desktop) */}
-            <div className="lg:hidden divide-y divide-gray-100">
-              {filteredOrders.map((order, i) => (
-                <div key={order._id} className="p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-bold text-indigo-600 mb-1">#{order._id.slice(-8)}</p>
-                      <h3 className="font-semibold text-gray-900">{order.shippingAddress?.name}</h3>
-                      <p className="text-xs text-gray-500">{new Date(order.placedAt).toLocaleDateString('en-IN')}</p>
+            {/* Mobile Card View */}
+            <div className="lg:hidden divide-y divide-slate-100">
+              {filteredOrders.map((order, i) => {
+                const theme = STATUS_THEMES[order.status] || STATUS_THEMES.Pending;
+                return (
+                  <div key={order._id} className="p-5 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-indigo-600 tracking-widest uppercase">#{order._id.slice(-8).toUpperCase()}</p>
+                        <h3 className="font-black text-slate-900">{order.shippingAddress?.name}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">{new Date(order.placedAt).toLocaleDateString('en-IN')}</p>
+                      </div>
+                      <div className="text-right space-y-2">
+                        <p className="font-black text-slate-900 text-lg">{formatINR(order.totalAmount)}</p>
+                        <select
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter border-none ring-1 transition-all ${theme.bg} ${theme.text}`}
+                          value={order.status}
+                          onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                        >
+                          {Object.keys(STATUS_THEMES).map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900">{formatINR(order.totalAmount)}</p>
-                      <select
-                        className={`mt-1 px-2 py-1 rounded text-[10px] font-bold border uppercase transition-all ${getStatusBadge(order.status)}`}
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                      >
-                        {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => toggleDetails(i)}
-                    className="w-full py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 flex items-center justify-center gap-1"
-                  >
-                    {openRow === i ? <><FaAngleUp /> Hide Details</> : <><FaAngleDown /> View Items & Shipping</>}
-                  </button>
+                    
+                    <button 
+                      onClick={() => toggleDetails(i)}
+                      className="w-full py-3 bg-slate-50 rounded-2xl text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                    >
+                      {openRow === i ? <><FaAngleUp /> Close Details</> : <><FaAngleDown /> View Logistics</>}
+                    </button>
 
-                  {openRow === i && (
-                    <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                       <ExpandedDetails Mobile order={order} formatINR={formatINR} />
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {openRow === i && (
+                      <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                         <ExpandedDetails Mobile order={order} formatINR={formatINR} theme={theme} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </>
         )}
@@ -272,84 +285,89 @@ function OrdersList({ focusedRange: initialRange, statusKey }) {
   );
 }
 
-// Sub-component for expanded area to avoid repetition
-function ExpandedDetails({ order, formatINR, Mobile = false }) {
+function ExpandedDetails({ order, formatINR, Mobile = false, theme }) {
   const Container = Mobile ? "div" : "td";
-  const innerProps = Mobile ? {} : { colSpan: 10, className: "bg-gray-50/50 px-4 sm:px-6 py-5" };
+  const innerProps = Mobile ? {} : { colSpan: 10, className: "bg-slate-50/50 px-4 sm:px-10 py-8" };
 
   return (
     <tr className={Mobile ? "block" : ""}>
       <Container {...innerProps}>
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Shipping Info Card */}
-          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <LuMapPin className="w-3.5 h-3.5" /> Shipping Details
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+              <LuMapPin className="w-4 h-4 text-indigo-500" /> Delivery Details
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="flex gap-3">
-                <LuUser className="w-4 h-4 text-gray-400 mt-1 shrink-0" />
+            <div className="space-y-5">
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                  <LuUser size={20} />
+                </div>
                 <div>
-                    <p className="text-xs text-gray-500">Customer</p>
-                    <p className="text-sm font-medium">{order.shippingAddress?.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Recipient</p>
+                    <p className="text-sm font-black text-slate-900">{order.shippingAddress?.name}</p>
                 </div>
               </div>
-              <div className="flex gap-3 sm:col-span-2 lg:col-span-1">
-                <LuMapPin className="w-4 h-4 text-gray-400 mt-1 shrink-0" />
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                  <LuMapPin size={20} />
+                </div>
                 <div>
-                    <p className="text-xs text-gray-500">Address</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                        {order.shippingAddress?.address}, {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pin}
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Shipping Address</p>
+                    <p className="text-sm font-bold text-slate-600 leading-relaxed mt-1">
+                        {order.shippingAddress?.address}, {order.shippingAddress?.city}, {order.shippingAddress?.state} - <span className="font-black text-indigo-600">{order.shippingAddress?.pin}</span>
                     </p>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <LuPhone className="w-4 h-4 text-gray-400 mt-1 shrink-0" />
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                  <LuPhone size={20} />
+                </div>
                 <div>
-                    <p className="text-xs text-gray-500">Contact</p>
-                    <p className="text-sm font-medium">{order.shippingAddress?.phone}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Contact Number</p>
+                    <p className="text-sm font-black text-slate-900 tracking-widest">{order.shippingAddress?.phone}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Items Table - Scrollable on very small screens */}
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-            <div className="px-4 py-3 bg-gray-50/80 border-b border-gray-100">
-              <h4 className="text-sm font-semibold text-gray-700">Order Items ({order.items.length})</h4>
+          {/* Items Card */}
+          <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm flex flex-col">
+            <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <LuPackage className="text-orange-500" /> Order Manifest ({order.items.length})
+              </h4>
             </div>
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50/30 text-gray-500 text-[10px] uppercase font-bold">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Product</th>
-                    <th className="px-4 py-2 text-center">Qty</th>
-                    <th className="px-4 py-2 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-slate-50">
                   {order.items.map((item) => (
-                    <tr key={item._id}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                    <tr key={item._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
                           <img 
                             src={item.productId?.images?.[0]?.url || ""} 
-                            className="w-10 h-10 rounded border object-cover shrink-0 bg-gray-50" 
+                            className="w-12 h-12 rounded-2xl border border-slate-100 object-cover shrink-0 shadow-sm" 
                             alt="" 
-                            onError={(e) => e.target.src = 'https://via.placeholder.com/40'}
                           />
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate max-w-[120px] sm:max-w-xs">{item.productId?.title || "Product Removed"}</p>
-                            <p className="text-[10px] text-gray-400">Price: {formatINR(item.price)}</p>
+                            <p className="font-black text-slate-900 truncate max-w-[150px]">{item.productId?.title || "Product Removed"}</p>
+                            <p className="text-[10px] font-bold text-indigo-500">{formatINR(item.price)} per unit</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right font-semibold">{formatINR(item.price * item.quantity)}</td>
+                      <td className="px-4 py-4 text-center">
+                         <span className="inline-block px-2 py-1 bg-slate-100 rounded-lg text-xs font-black text-slate-600">x{item.quantity}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-black text-slate-900">{formatINR(item.price * item.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Net Payable</span>
+                <span className="text-xl font-black">{formatINR(order.totalAmount)}</span>
             </div>
           </div>
         </div>

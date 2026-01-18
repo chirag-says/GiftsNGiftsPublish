@@ -1,10 +1,63 @@
+/**
+ * Enhanced Chatbot Controller
+ * Features:
+ * - Fuzzy intent detection with typo tolerance
+ * - Session context tracking (remembers orders, products)
+ * - Pronoun resolution ("cancel it", "track that")
+ * - Confirmation flows for destructive actions
+ * - Response variations for natural conversation
+ * - Analytics logging for improvement
+ * - Time-aware greetings
+ */
+
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import orderModel from '../model/order.js';
 import { ChatSession, SupportTicket } from '../model/supportModel.js';
 import { searchProducts, getTrendingProducts, getProductsByCategory, simpleSearch } from '../services/productSearchService.js';
 
-// Comprehensive suggestions - both order management AND product search
+// Import new enhanced services
+import {
+    detectIntent as enhancedDetectIntent,
+    extractOrderId,
+    extractColor,
+    getSuggestionsForIntent
+} from '../services/intentDetectionService.js';
+
+import {
+    getWelcomeMessage,
+    getOrderStatusResponse,
+    getOrderCancelResponse,
+    getReturnResponse,
+    getRefundResponse,
+    getAddressResponse,
+    getProductSearchResponse,
+    getTrendingResponse,
+    getGiftingResponse,
+    getOffersResponse,
+    getSupportEscalationResponse,
+    getIssueLoggedResponse,
+    getConfirmationPrompt,
+    getGeneralResponse,
+    getThanksResponse,
+    getGoodbyeResponse,
+    getLoginPrompt,
+    getOrderIdPrompt
+} from '../services/responseTemplates.js';
+
+import {
+    logUnknownQuery,
+    logIntent,
+    incrementMessageCount,
+    trackSearchTerm,
+    markResolved,
+    addIntentToSession
+} from '../model/chatAnalytics.js';
+
+// ============================================
+// CONSTANTS
+// ============================================
+
 const BASE_SUGGESTIONS = [
     'Track my order',
     'Cancel an order',
@@ -27,105 +80,24 @@ const ORDER_STATUS_COPY = {
 
 const formatCurrency = new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'INR'
+    currency: 'INR',
+    maximumFractionDigits: 0
 });
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
 const sanitizeMessage = (value = '') => value.replace(/\s+/g, ' ').trim();
 const makeSessionId = () => `BOT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+
 const buildDeviceMeta = (metadata = {}) => ({
     browser: metadata.browser || metadata.userAgent,
     platform: metadata.platform || metadata.device || 'web',
     locale: metadata.locale || metadata.language,
-    timezone: metadata.timezone
+    timezone: metadata.timezone || 'Asia/Kolkata'
 });
-
-const defaultWelcome = (name) => {
-    const greeting = name ? `Hi ${name.split(' ')[0]},` : 'Hi there,';
-    return `${greeting} I am Ava, your assistant. I can track orders, process returns/cancellations, search products, and help with support. How can I help you today?`;
-};
-
-const detectIntent = (text) => {
-    const normalized = text.toLowerCase();
-
-    // ============================================
-    // PRIORITY 1: Order-related intents (check FIRST!)
-    // ============================================
-
-    // "I have an order ID" - prompt them to enter it
-    if (/(?:i have|here is|here's)\s*(?:an|my|the)?\s*order\s*(?:id|number|#)?/i.test(normalized)) return 'order.provide-id';
-
-    // "Show my orders", "my orders"
-    if (/show\s*(?:my|all)?\s*orders?/i.test(normalized)) return 'order.status';
-    if (/my\s*orders?/i.test(normalized)) return 'order.status';
-
-    // Login to account
-    if (/login\s*to\s*(?:my)?\s*account/i.test(normalized)) return 'support.login';
-
-    // Cancel order
-    if (/cancel/.test(normalized) && /order/i.test(normalized)) return 'order.cancel';
-    if (/cancel\s*(my|the|an)?\s*order/i.test(normalized)) return 'order.cancel';
-    if (/cancel/i.test(normalized)) return 'order.cancel';
-
-    // Return/replace
-    if (/return|replace|exchange/i.test(normalized)) return 'order.return';
-
-    // Track/status
-    if (/track|status|where.*order|where.*my|delivery|shipment|order.*status/i.test(normalized)) return 'order.status';
-
-    // Address change
-    if (/address|change address|update address/i.test(normalized)) return 'order.address';
-
-    // Refund
-    if (/refund/i.test(normalized)) return 'order.refund';
-
-    // ============================================
-    // PRIORITY 2: Support intents
-    // ============================================
-    if (/agent|human|support|person|talk.*to|speak.*to|customer.*care/i.test(normalized)) return 'support.agent';
-    if (/help|issue|problem|complaint|not working|broken|damaged/i.test(normalized)) return 'support.issue';
-
-    // ============================================
-    // PRIORITY 3: Marketing/Gifting
-    // ============================================
-    if (/offer|discount|deal|coupon|promo|sale/i.test(normalized)) return 'marketing.offer';
-    if (/gift|ideas|recommend|occasion|birthday|anniversary|wedding|festive/i.test(normalized)) return 'catalog.gifting';
-
-    // ============================================
-    // PRIORITY 4: Product search intents
-    // ============================================
-    if (/trending|popular|best\s*sellers?|featured|new arrivals?|latest products?/i.test(normalized)) {
-        return 'product.trending';
-    }
-    if (/browse|category|categories|shop\s+by/i.test(normalized)) {
-        return 'product.browse';
-    }
-    // Generic product search - only if no order/support keywords
-    if (/(?:show|find|search|looking for|want|need|buy|get)\s+(?:me\s+)?(?:some\s+)?(?:a\s+)?/i.test(normalized)) {
-        return 'product.search';
-    }
-    if (/(?:under|below|above|around|between)\s*(?:₹|rs\.?|inr)?\s*\d+/i.test(normalized)) {
-        return 'product.search';
-    }
-
-
-    // If contains product-like keywords, try search
-    const productKeywords = ['shirt', 'dress', 'bag', 'watch', 'mug', 'box', 'hamper', 'chocolate',
-        'flower', 'cake', 'toy', 'jewelry', 'perfume', 'wallet', 'photo', 'frame',
-        'candle', 'lamp', 'decor', 'plant', 'book', 'pen', 'diary', 'cushion'];
-    if (productKeywords.some(kw => normalized.includes(kw))) {
-        return 'product.search';
-    }
-
-    return 'general';
-};
-
-const extractOrderId = (text) => {
-    const hexMatch = text.match(/\b[0-9a-f]{24}\b/i);
-    if (hexMatch) return hexMatch[0];
-    const numericMatch = text.match(/#?(\d{6,})/);
-    return numericMatch ? numericMatch[1] : null;
-};
 
 const statusRank = (status = 'Pending') => {
     const order = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'];
@@ -135,14 +107,13 @@ const statusRank = (status = 'Pending') => {
 
 const buildTimeline = (order) => {
     const rank = statusRank(order?.status);
-    const steps = [
+    return [
         { key: 'placed', label: 'Order placed', done: true, date: order?.placedAt },
         { key: 'processing', label: 'Processing', done: rank >= 1 },
         { key: 'shipped', label: 'Shipped', done: rank >= 3 },
         { key: 'out', label: 'Out for delivery', done: rank >= 4 },
         { key: 'delivered', label: 'Delivered', done: rank >= 5 }
     ];
-    return steps;
 };
 
 const buildOrderSnapshot = (order) => {
@@ -164,13 +135,17 @@ const buildOrderSnapshot = (order) => {
     };
 };
 
-const composeSuggestions = (primary = [], secondary = []) => {
-    const merged = [...BASE_SUGGESTIONS];
-    [...primary, ...secondary].forEach((option) => {
-        if (option && !merged.includes(option)) merged.push(option);
-    });
-    return merged.slice(0, 8);
+const composeSuggestions = (contextSuggestions = [], intent = 'general') => {
+    const intentSuggestions = getSuggestionsForIntent(intent);
+    const merged = [...new Set([...contextSuggestions, ...intentSuggestions, ...BASE_SUGGESTIONS])];
+    return merged.slice(0, 6);
 };
+
+const trimMessages = (messages = []) => messages.slice(-60);
+
+// ============================================
+// SESSION MANAGEMENT
+// ============================================
 
 const ensureSession = async (params = {}) => {
     const {
@@ -184,25 +159,26 @@ const ensureSession = async (params = {}) => {
     } = params;
 
     let session = null;
+    const timezone = metadata?.timezone || 'Asia/Kolkata';
 
-    // Only look up session by sessionId if provided
+    // Look up existing session
     if (sessionId) {
         session = await ChatSession.findOne({ sessionId });
 
-        // If session found but belongs to a different user, don't reuse it
+        // Don't reuse if belongs to different user
         if (session && session.userId && userId && session.userId.toString() !== userId.toString()) {
             console.log('[Chatbot] Session belongs to different user, creating new session');
             session = null;
         }
 
-        // If session found and had a userId but current request has no userId (logged out), don't reuse
+        // Don't reuse logged-in session for anonymous user
         if (session && session.userId && !userId) {
             console.log('[Chatbot] Session has userId but request is anonymous, creating new session');
             session = null;
         }
     }
 
-    // If no session found by sessionId but userId provided, find user's existing open session
+    // Find user's existing open session
     if (!session && userId) {
         session = await ChatSession.findOne({
             userId,
@@ -213,22 +189,26 @@ const ensureSession = async (params = {}) => {
 
     if (session) {
         session.status = 'active';
-        // Update user info if provided (handles case when user logs in after starting a session)
         if (userId && !session.userId) {
             session.userId = userId;
         }
         session.userName = session.userName || userName;
         session.userEmail = session.userEmail || userEmail;
         session.deviceMeta = { ...session.deviceMeta, ...buildDeviceMeta(metadata) };
+
         if (!session.context?.quickReplies?.length) {
             session.context = {
                 ...(session.context || {}),
                 quickReplies: BASE_SUGGESTIONS
             };
         }
+
         console.log('[Chatbot] Resuming session:', session.sessionId, 'UserId:', session.userId);
         return { session, isNew: false };
     }
+
+    // Create new session with enhanced welcome message
+    const welcomeMessage = getWelcomeMessage(userName, timezone);
 
     const newSession = new ChatSession({
         sessionId: makeSessionId(),
@@ -242,11 +222,18 @@ const ensureSession = async (params = {}) => {
         deviceMeta: buildDeviceMeta(metadata),
         context: {
             lastIntent: 'welcome',
-            quickReplies: BASE_SUGGESTIONS
+            quickReplies: BASE_SUGGESTIONS,
+            // Enhanced context tracking
+            lastOrderId: null,
+            lastProductId: null,
+            lastSearchQuery: null,
+            awaitingConfirmation: null, // 'cancel' | 'return' | null
+            pendingOrderId: null,
+            recentOrders: [] // Cache user's recent orders
         },
         messages: [{
             sender: 'system',
-            message: defaultWelcome(userName),
+            message: welcomeMessage,
             intent: 'welcome'
         }]
     });
@@ -255,24 +242,26 @@ const ensureSession = async (params = {}) => {
     return { session: newSession, isNew: true };
 };
 
-const trimMessages = (messages = []) => messages.slice(-60);
+// ============================================
+// ORDER RESOLUTION WITH CONTEXT
+// ============================================
 
-const resolveOrder = async ({ session, explicitOrderId, userId }) => {
-    // Convert userId string to ObjectId if valid
+const resolveOrder = async ({ session, explicitOrderId, userId, pronounContext }) => {
     const userObjectId = userId && isObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null;
+    const sessionContext = session?.context || {};
 
     console.log('[Chatbot] resolveOrder called with:', {
         explicitOrderId,
         userId,
-        userObjectId: userObjectId?.toString(),
-        sessionUserId: session?.userId?.toString()
+        pronounContext,
+        lastOrderId: sessionContext.lastOrderId
     });
 
+    // If explicit order ID provided
     if (explicitOrderId) {
         if (isObjectId(explicitOrderId)) {
             const query = { _id: new mongoose.Types.ObjectId(explicitOrderId) };
             if (userObjectId) query.user = userObjectId;
-            console.log('[Chatbot] Searching by explicit orderId:', query);
             const match = await orderModel.findOne(query);
             if (match) {
                 console.log('[Chatbot] Found order by explicit ID:', match._id);
@@ -281,16 +270,25 @@ const resolveOrder = async ({ session, explicitOrderId, userId }) => {
         }
     }
 
-    if (session?.context?.orderInContext) {
-        console.log('[Chatbot] Checking order in context:', session.context.orderInContext);
-        const fromContext = await orderModel.findById(session.context.orderInContext);
+    // Handle pronouns: "it", "this", "that", "the order"
+    if (pronounContext && sessionContext.lastOrderId) {
+        console.log('[Chatbot] Using pronoun resolution, lastOrderId:', sessionContext.lastOrderId);
+        const fromContext = await orderModel.findById(sessionContext.lastOrderId);
+        if (fromContext && (!userObjectId || String(fromContext.user) === String(userObjectId))) {
+            return fromContext;
+        }
+    }
+
+    // Check order in current context
+    if (sessionContext.orderInContext) {
+        const fromContext = await orderModel.findById(sessionContext.orderInContext);
         if (fromContext && (!userObjectId || String(fromContext.user) === String(userObjectId))) {
             console.log('[Chatbot] Found order from context:', fromContext._id);
             return fromContext;
         }
     }
 
-    // Use session.userId as fallback if payload.userId is not provided
+    // Use session.userId as fallback
     const effectiveUserId = userObjectId || (session?.userId && isObjectId(session.userId)
         ? new mongoose.Types.ObjectId(session.userId)
         : null);
@@ -300,8 +298,6 @@ const resolveOrder = async ({ session, explicitOrderId, userId }) => {
         const latestOrder = await orderModel.findOne({ user: effectiveUserId }).sort({ placedAt: -1 });
         if (latestOrder) {
             console.log('[Chatbot] Found latest order:', latestOrder._id, 'Status:', latestOrder.status);
-        } else {
-            console.log('[Chatbot] No orders found for user');
         }
         return latestOrder;
     }
@@ -309,6 +305,34 @@ const resolveOrder = async ({ session, explicitOrderId, userId }) => {
     console.log('[Chatbot] No userId available to search orders');
     return null;
 };
+
+// Load user's recent orders into context
+const loadRecentOrders = async (userId) => {
+    if (!userId || !isObjectId(userId)) return [];
+
+    try {
+        const orders = await orderModel
+            .find({ user: new mongoose.Types.ObjectId(userId) })
+            .sort({ placedAt: -1 })
+            .limit(5)
+            .lean();
+
+        return orders.map(o => ({
+            id: String(o._id),
+            shortId: String(o._id).slice(-6).toUpperCase(),
+            status: o.status,
+            amount: o.totalAmount,
+            items: o.items?.map(i => i.name) || []
+        }));
+    } catch (error) {
+        console.error('[Chatbot] Error loading recent orders:', error.message);
+        return [];
+    }
+};
+
+// ============================================
+// SUPPORT TICKET CREATION
+// ============================================
 
 const createSupportTicketFromChat = async ({ session, order, type, message }) => {
     const title = type === 'return' ? 'Return requested via chatbot' : 'Manual support request from chatbot';
@@ -335,37 +359,71 @@ const createSupportTicketFromChat = async ({ session, order, type, message }) =>
     return ticket;
 };
 
+// ============================================
+// PRONOUN DETECTION
+// ============================================
+
+const containsPronoun = (text) => {
+    const normalized = text.toLowerCase();
+    const pronounPatterns = [
+        /\b(it|this|that)\b/,
+        /\bthe order\b/,
+        /\bthis one\b/,
+        /\bthat one\b/,
+        /\bsame order\b/,
+        /\bmy order\b/,
+        /\bthe same\b/,
+        /\bprevious\b/
+    ];
+
+    return pronounPatterns.some(pattern => pattern.test(normalized));
+};
+
+// ============================================
+// CONFIRMATION HANDLING
+// ============================================
+
+const isConfirmation = (text) => {
+    const normalized = text.toLowerCase().trim();
+    const yesPatterns = ['yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'confirm', 'proceed', 'do it', 'go ahead', 'haan', 'ha', 'theek hai'];
+    const noPatterns = ['no', 'nope', 'nah', 'cancel', 'stop', 'dont', "don't", 'nahi', 'mat karo', 'ruk'];
+
+    if (yesPatterns.some(p => normalized.includes(p))) return 'yes';
+    if (noPatterns.some(p => normalized.includes(p))) return 'no';
+    return null;
+};
+
+// ============================================
+// RESPONSE HANDLERS
+// ============================================
+
 const orderStatusResponse = async ({ session, userId, explicitOrderId }) => {
-    const order = await resolveOrder({ session, explicitOrderId, userId });
+    const hasPronoun = containsPronoun(explicitOrderId || '');
+    const order = await resolveOrder({ session, explicitOrderId, userId, pronounContext: hasPronoun });
 
     if (!order) {
-        // Determine why we couldn't find an order
         const isLoggedIn = !!userId || !!session?.userId;
 
         if (!isLoggedIn) {
-            // User is not logged in
             return {
-                reply: "Please log in to view your orders, or share the 24-digit order ID if you have one.",
+                reply: getOrderStatusResponse('needLogin'),
                 intent: 'order.status.need-login',
                 payload: null,
                 suggestions: ['Login to my account', 'I have an order ID', 'Browse products']
             };
         }
 
-        // User is logged in but no orders found
         if (explicitOrderId) {
-            // They provided an order ID but it wasn't found
             return {
-                reply: "I couldn't find an order with that ID. Please double-check the order ID or try searching with a different one.",
+                reply: getOrderStatusResponse('notFound'),
                 intent: 'order.status.not-found',
                 payload: null,
                 suggestions: ['Show my orders', 'Talk to support', 'Browse products']
             };
         }
 
-        // User is logged in but simply has no orders
         return {
-            reply: "You don't have any orders yet! 🛒 Start shopping and I'll help you track your first order.",
+            reply: getOrderStatusResponse('noOrders'),
             intent: 'order.status.no-orders',
             payload: null,
             suggestions: ['Search products', 'Show trending items', 'Gift ideas']
@@ -375,8 +433,26 @@ const orderStatusResponse = async ({ session, userId, explicitOrderId }) => {
     const snapshot = buildOrderSnapshot(order);
     const timeline = buildTimeline(order);
 
+    // Determine response type based on status
+    let responseType = 'found';
+    let additionalInfo = '';
+
+    if (order.status === 'Delivered') {
+        responseType = 'delivered';
+    } else if (order.status === 'Shipped' || order.status === 'Out for Delivery') {
+        responseType = 'shipped';
+        additionalInfo = timeline.find(s => s.label === 'Delivered' && s.done) ? '' : "I'll notify you as it moves.";
+    }
+
+    const reply = getOrderStatusResponse(responseType, {
+        orderShort: snapshot.orderShort,
+        statusLabel: snapshot.statusLabel,
+        additionalInfo,
+        eta: 'soon' // Could calculate from order data
+    });
+
     return {
-        reply: `Order ${snapshot.orderShort} is ${snapshot.statusLabel}. ${timeline.find((step) => step.label === 'Delivered' && step.done) ? 'Thanks for shopping with us!' : 'I will notify you as it moves.'}`,
+        reply,
         intent: 'order.status',
         payload: {
             type: 'order-status',
@@ -385,25 +461,23 @@ const orderStatusResponse = async ({ session, userId, explicitOrderId }) => {
         },
         contextUpdates: {
             orderInContext: order._id,
-            orderSnapshot: snapshot
+            orderSnapshot: snapshot,
+            lastOrderId: String(order._id)
         },
-        suggestions: composeSuggestions([
-            'Cancel this order',
-            'Change delivery address',
-            'Talk to support'
-        ])
+        suggestions: composeSuggestions(['Cancel this order', 'Change delivery address'], 'order.status')
     };
 };
 
-const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
-    const order = await resolveOrder({ session, explicitOrderId, userId });
+const orderCancelResponse = async ({ session, userId, explicitOrderId, skipConfirmation = false }) => {
+    const hasPronoun = containsPronoun(explicitOrderId || '');
+    const order = await resolveOrder({ session, explicitOrderId, userId, pronounContext: hasPronoun });
 
     if (!order) {
         const isLoggedIn = !!userId || !!session?.userId;
 
         if (!isLoggedIn) {
             return {
-                reply: "Please log in first so I can find your orders to cancel, or share the order ID directly.",
+                reply: getOrderCancelResponse('needLogin'),
                 intent: 'order.cancel.need-login',
                 suggestions: ['Login to my account', 'I have an order ID', 'Talk to support']
             };
@@ -411,7 +485,7 @@ const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
 
         if (explicitOrderId) {
             return {
-                reply: "I couldn't find an order with that ID. Please check the order ID and try again.",
+                reply: getOrderCancelResponse('needLogin').replace('log in', 'check the order ID'),
                 intent: 'order.cancel.not-found',
                 suggestions: ['Show my orders', 'Talk to support']
             };
@@ -424,7 +498,10 @@ const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
         };
     }
 
+    const snapshot = buildOrderSnapshot(order);
     const cancellableStatuses = ['Pending', 'Processing'];
+
+    // If not cancellable, escalate to support
     if (!cancellableStatuses.includes(order.status)) {
         const ticket = await createSupportTicketFromChat({
             session,
@@ -432,60 +509,78 @@ const orderCancelResponse = async ({ session, userId, explicitOrderId }) => {
             type: 'manual',
             message: 'User attempted to cancel order but it is no longer cancellable.'
         });
+
+        // Mark session as escalated
+        await markResolved(session.sessionId, 'escalated', { ticketCreated: true });
+
         return {
-            reply: `This order is already ${order.status}, so I raised ticket ${ticket.ticketId} for the support team to review manually. They will call you shortly.`,
-            intent: 'order.cancel.escalated',
-            payload: {
-                type: 'ticket',
+            reply: getOrderCancelResponse('notCancellable', {
+                status: order.status.toLowerCase(),
                 ticketId: ticket.ticketId
-            },
-            suggestions: composeSuggestions(['Track my latest order'])
+            }),
+            intent: 'order.cancel.escalated',
+            payload: { type: 'ticket', ticketId: ticket.ticketId },
+            suggestions: composeSuggestions(['Track my latest order'], 'order.cancel')
         };
     }
 
+    // Request confirmation before cancellation (unless skipped)
+    if (!skipConfirmation) {
+        return {
+            reply: getConfirmationPrompt('cancel', {
+                orderShort: snapshot.orderShort,
+                itemCount: snapshot.itemCount,
+                totalAmount: snapshot.totalAmount
+            }),
+            intent: 'order.cancel.confirm',
+            contextUpdates: {
+                awaitingConfirmation: 'cancel',
+                pendingOrderId: String(order._id),
+                lastOrderId: String(order._id)
+            },
+            suggestions: ['Yes, cancel it', 'No, keep the order', 'Talk to support']
+        };
+    }
+
+    // Actually cancel the order
     order.status = 'Cancelled';
     await order.save();
 
-    const snapshot = buildOrderSnapshot(order);
+    // Track successful resolution
+    await markResolved(session.sessionId, 'resolved', { orderCancelled: true });
+
     return {
-        reply: `Done! Order ${snapshot.orderShort} is cancelled. Refunds typically reflect within 5-7 business days through the original payment method.`,
+        reply: getOrderCancelResponse('success', { orderShort: snapshot.orderShort }),
         intent: 'order.cancel',
-        payload: {
-            type: 'order-cancelled',
-            order: snapshot
-        },
+        payload: { type: 'order-cancelled', order: buildOrderSnapshot(order) },
         contextUpdates: {
             orderInContext: order._id,
-            orderSnapshot: snapshot
+            orderSnapshot: buildOrderSnapshot(order),
+            lastOrderId: String(order._id),
+            awaitingConfirmation: null,
+            pendingOrderId: null
         },
-        suggestions: composeSuggestions(['Track another order', 'Browse new arrivals'])
+        suggestions: composeSuggestions(['Track another order', 'Browse new arrivals'], 'order.cancel')
     };
 };
 
 const orderReturnResponse = async ({ session, userId, explicitOrderId }) => {
-    const order = await resolveOrder({ session, explicitOrderId, userId });
+    const hasPronoun = containsPronoun(explicitOrderId || '');
+    const order = await resolveOrder({ session, explicitOrderId, userId, pronounContext: hasPronoun });
 
     if (!order) {
         const isLoggedIn = !!userId || !!session?.userId;
 
         if (!isLoggedIn) {
             return {
-                reply: "Please log in so I can find your delivered orders for return, or share the order ID directly.",
+                reply: getReturnResponse('needLogin'),
                 intent: 'order.return.need-login',
                 suggestions: ['Login to my account', 'I have an order ID', 'Talk to support']
             };
         }
 
-        if (explicitOrderId) {
-            return {
-                reply: "I couldn't find an order with that ID. Please double-check the order ID.",
-                intent: 'order.return.not-found',
-                suggestions: ['Show my orders', 'Talk to support']
-            };
-        }
-
         return {
-            reply: "You don't have any orders to return yet. Once you receive a delivery, I can help you with returns!",
+            reply: "You don't have any orders to return yet. Once you receive a delivery, I can help with returns!",
             intent: 'order.return.no-orders',
             suggestions: ['Search products', 'Show trending items', 'Browse gift ideas']
         };
@@ -493,9 +588,9 @@ const orderReturnResponse = async ({ session, userId, explicitOrderId }) => {
 
     if (order.status !== 'Delivered') {
         return {
-            reply: `Returns open right after delivery. This order is currently ${order.status}, so I will remind you once it is marked delivered.`,
+            reply: getReturnResponse('notDelivered', { status: order.status.toLowerCase() }),
             intent: 'order.return.wait',
-            suggestions: composeSuggestions(['Track delivery status'])
+            suggestions: composeSuggestions(['Track delivery status'], 'order.return')
         };
     }
 
@@ -506,68 +601,103 @@ const orderReturnResponse = async ({ session, userId, explicitOrderId }) => {
         message: 'Customer requested a return via chatbot.'
     });
 
+    // Track resolution
+    await markResolved(session.sessionId, 'resolved', { returnInitiated: true, ticketCreated: true });
+
     return {
-        reply: `I have logged return ticket ${ticket.ticketId}. Our support crew will schedule a pickup and share packaging instructions within 12 hours.`,
+        reply: getReturnResponse('initiated', {
+            ticketId: ticket.ticketId,
+            orderShort: String(order._id).slice(-6).toUpperCase()
+        }),
         intent: 'order.return',
-        payload: {
-            type: 'ticket',
-            ticketId: ticket.ticketId
+        payload: { type: 'ticket', ticketId: ticket.ticketId },
+        contextUpdates: {
+            lastOrderId: String(order._id)
         },
-        suggestions: composeSuggestions(['Track pickup status', 'Talk to a human expert'])
+        suggestions: composeSuggestions(['Track pickup status', 'Talk to a human expert'], 'order.return')
     };
 };
 
-const addressResponse = ({ session }) => ({
-    reply: 'You can update the delivery address before the order ships. Head over to My Orders > Manage Order and choose "Update address". I can create a support ticket if the package already left the warehouse.',
+const addressResponse = () => ({
+    reply: getAddressResponse(),
     intent: 'order.address',
-    suggestions: composeSuggestions(['Track my latest order', 'Talk to support'])
+    suggestions: composeSuggestions(['Track my latest order', 'Talk to support'], 'order.address')
 });
 
-const refundResponse = ({ session }) => ({
-    reply: 'Refunds go back to the original payment method. UPI/card refunds take 2-5 working days once the order is cancelled or the return is scanned. I will keep tracking it for you.',
+const refundResponse = () => ({
+    reply: getRefundResponse(),
     intent: 'order.refund',
-    suggestions: composeSuggestions(['Track refund status', 'Talk to support'])
+    suggestions: composeSuggestions(['Track refund status', 'Talk to support'], 'order.refund')
 });
 
 const loginResponse = () => ({
-    reply: "To log in, please click the 'Sign In' button in the top right corner of the page. Once logged in, I can help you track all your orders automatically!",
+    reply: getLoginPrompt(),
     intent: 'support.login',
-    suggestions: composeSuggestions(['I have an order ID', 'Search products', 'Talk to support'])
+    suggestions: composeSuggestions(['I have an order ID', 'Search products'], 'support.login')
 });
 
 const orderIdPromptResponse = () => ({
-    reply: "Please paste your 24-digit order ID here and I'll look it up for you right away! 📋\n\nYou can find it in your order confirmation email or SMS.",
+    reply: getOrderIdPrompt(),
     intent: 'order.status.awaiting-id',
-    suggestions: composeSuggestions(['Track my order', 'Talk to support', 'Browse products'])
+    suggestions: composeSuggestions(['Track my order', 'Talk to support'], 'general')
 });
 
 const marketingResponse = () => ({
-    reply: 'Here are today’s highlights: 1) Mid-week Flash Sale on premium hampers (extra 10% off). 2) Free gift wrapping on orders above ₹999. Want me to apply the best coupon at checkout?',
+    reply: getOffersResponse(),
     intent: 'marketing.offer',
-    suggestions: composeSuggestions(['Show gifting ideas', 'Track my order'])
+    suggestions: composeSuggestions(['Show gifting ideas', 'Track my order'], 'marketing.offer')
 });
 
-const giftingResponse = async ({ userMessage }) => {
-    // Try to search for gift-related products
+const giftingResponse = async ({ userMessage, session }) => {
+    // Try to extract occasion from message
+    const occasionKeywords = {
+        birthday: 'birthday',
+        anniversary: 'anniversary',
+        wedding: 'wedding',
+        rakhi: 'Rakhi',
+        diwali: 'Diwali',
+        christmas: 'Christmas',
+        valentine: "Valentine's Day",
+        'mothers day': "Mother's Day",
+        'fathers day': "Father's Day"
+    };
+
+    let detectedOccasion = null;
+    const lowerMessage = userMessage.toLowerCase();
+
+    for (const [keyword, displayName] of Object.entries(occasionKeywords)) {
+        if (lowerMessage.includes(keyword)) {
+            detectedOccasion = displayName;
+            break;
+        }
+    }
+
+    // Search for gift-related products
     const searchResult = await searchProducts(userMessage + ' gift', { limit: 4 });
 
     if (searchResult.success && searchResult.products.length > 0) {
+        // Track search
+        await trackSearchTerm(userMessage, searchResult.products.length);
+
         return {
-            reply: `Here are some perfect gifting options for you! 🎁`,
+            reply: getGiftingResponse(detectedOccasion),
             intent: 'catalog.gifting',
             payload: {
                 type: 'product-list',
                 products: searchResult.products,
                 searchInfo: searchResult.parsed
             },
-            suggestions: composeSuggestions(['Gift ideas under ₹1000', 'Show more gifts', 'Corporate gifting'])
+            contextUpdates: {
+                lastSearchQuery: userMessage
+            },
+            suggestions: composeSuggestions(['Gift ideas under ₹1000', 'Show more gifts'], 'catalog.gifting')
         };
     }
 
     return {
-        reply: 'Need ideas? Tell me the occasion (birthday, anniversary, corporate) or budget and I will curate the perfect gift options for you!',
+        reply: getGiftingResponse(),
         intent: 'catalog.gifting',
-        suggestions: composeSuggestions(['Gift ideas under ₹1500', 'Birthday gifts', 'Corporate gifting'])
+        suggestions: composeSuggestions(['Gift ideas under ₹1500', 'Birthday gifts'], 'catalog.gifting')
     };
 };
 
@@ -575,22 +705,19 @@ const giftingResponse = async ({ userMessage }) => {
 // PRODUCT SEARCH RESPONSES
 // ============================================
 
-const productSearchResponse = async ({ userMessage }) => {
+const productSearchResponse = async ({ userMessage, session }) => {
     let searchResult = await searchProducts(userMessage, { limit: 5 });
 
-    // If NLP search found no products, try a simpler keyword search
+    // Fallback to simple search if no results
     if (searchResult.success && searchResult.products.length === 0) {
-        // Extract the most likely product keyword from the message
         const words = userMessage.toLowerCase().split(/\s+/);
         const productKeywords = ['cake', 'saree', 'gift', 'flower', 'chocolate', 'mug', 'watch',
             'bag', 'wallet', 'jewelry', 'hamper', 'box', 'frame', 'candle',
             'lamp', 'plant', 'dress', 'shirt', 'toy', 'perfume', 'decor'];
 
-        // Find a product keyword in the message
         const foundKeyword = words.find(word => productKeywords.includes(word));
 
         if (foundKeyword) {
-            console.log('[ProductSearch] Trying simple search for:', foundKeyword);
             const simpleResults = await simpleSearch(foundKeyword, 5);
             if (simpleResults.length > 0) {
                 searchResult = {
@@ -605,55 +732,57 @@ const productSearchResponse = async ({ userMessage }) => {
 
     if (!searchResult.success) {
         return {
-            reply: "I'm having trouble searching right now. Please try again or browse our categories!",
+            reply: getProductSearchResponse('error'),
             intent: 'product.search.error',
-            suggestions: composeSuggestions(['Show trending items', 'Browse categories', 'Talk to support'])
+            suggestions: composeSuggestions(['Show trending items', 'Browse categories'], 'product.search')
         };
     }
+
+    // Track search term
+    await trackSearchTerm(userMessage, searchResult.products.length);
 
     if (searchResult.products.length === 0) {
         const trending = await getTrendingProducts(4);
+        // Extract the main search term to show in the message
+        const searchTerm = searchResult.parsed?.searchTerms?.[0] || userMessage.split(' ').slice(0, 2).join(' ');
         return {
-            reply: `I couldn't find products matching your search. Here are some popular items you might like:`,
+            reply: getProductSearchResponse('noResults', { searchTerm }),
             intent: 'product.search.no-results',
-            payload: trending.length > 0 ? {
-                type: 'product-list',
-                products: trending
-            } : null,
-            suggestions: composeSuggestions(['Show all products', 'Gift hampers', 'Contact support'])
+            payload: trending.length > 0 ? { type: 'product-list', products: trending } : null,
+            suggestions: composeSuggestions(['Show all products', 'Gift hampers', 'Try different search'], 'product.search')
         };
     }
 
-    // Build a natural response based on what was searched
+    // Build response based on what was searched
     const { priceFilter, colors, searchTerms } = searchResult.parsed;
-    let responseText = `Found ${searchResult.products.length} ${searchResult.products.length === 1 ? 'item' : 'great items'}`;
+    let filters = '';
 
-    if (searchTerms.length > 0) {
-        responseText += ` for "${searchTerms.join(' ')}"`;
-    }
-    if (colors.length > 0) {
-        responseText += ` in ${colors.join('/')}`;
-    }
+    if (colors?.length > 0) filters += ` in ${colors.join('/')}`;
     if (priceFilter) {
-        if (priceFilter.max && !priceFilter.min) {
-            responseText += ` under ₹${priceFilter.max}`;
-        } else if (priceFilter.min && !priceFilter.max) {
-            responseText += ` above ₹${priceFilter.min}`;
-        } else if (priceFilter.min && priceFilter.max) {
-            responseText += ` between ₹${priceFilter.min}-₹${priceFilter.max}`;
-        }
+        if (priceFilter.max && !priceFilter.min) filters += ` under ₹${priceFilter.max}`;
+        else if (priceFilter.min && !priceFilter.max) filters += ` above ₹${priceFilter.min}`;
+        else if (priceFilter.min && priceFilter.max) filters += ` between ₹${priceFilter.min}-₹${priceFilter.max}`;
     }
-    responseText += '. Check these out! 🛍️';
+
+    const reply = getProductSearchResponse(filters ? 'foundWithFilters' : 'found', {
+        count: searchResult.products.length,
+        searchTerm: searchTerms?.join(' ') || 'products',
+        filters: filters.trim()
+    });
 
     return {
-        reply: responseText,
+        reply,
         intent: 'product.search',
         payload: {
             type: 'product-list',
             products: searchResult.products,
             searchInfo: searchResult.parsed
         },
-        suggestions: composeSuggestions(['Show more', 'Different category', 'Track order'])
+        contextUpdates: {
+            lastSearchQuery: userMessage,
+            lastProductId: searchResult.products[0]?._id
+        },
+        suggestions: composeSuggestions(['Show more', 'Different category'], 'product.search')
     };
 };
 
@@ -664,23 +793,19 @@ const trendingProductsResponse = async () => {
         return {
             reply: "Our trending section is being updated. Try searching for something specific!",
             intent: 'product.trending',
-            suggestions: composeSuggestions(['Gift ideas', 'Search products', 'Browse categories'])
+            suggestions: composeSuggestions(['Gift ideas', 'Search products'], 'product.trending')
         };
     }
 
     return {
-        reply: "Here's what's trending right now! 🔥 These are our most popular picks:",
+        reply: getTrendingResponse(),
         intent: 'product.trending',
-        payload: {
-            type: 'product-list',
-            products: products
-        },
-        suggestions: composeSuggestions(['Show me gifts', 'Items under ₹500', 'New arrivals'])
+        payload: { type: 'product-list', products },
+        suggestions: composeSuggestions(['Show me gifts', 'Items under ₹500'], 'product.trending')
     };
 };
 
 const browseProductsResponse = async ({ userMessage }) => {
-    // Try to extract category from message
     const categoryMatch = userMessage.match(/(?:browse|category|shop)\s+(.+)/i);
 
     if (categoryMatch) {
@@ -694,7 +819,7 @@ const browseProductsResponse = async ({ userMessage }) => {
                     products: result.products,
                     category: result.category
                 },
-                suggestions: composeSuggestions(['Show more', 'Different category', 'Gift ideas'])
+                suggestions: composeSuggestions(['Show more', 'Different category'], 'product.browse')
             };
         }
     }
@@ -702,20 +827,22 @@ const browseProductsResponse = async ({ userMessage }) => {
     return {
         reply: "What would you like to explore? You can ask me things like:\n• \"Show me gift hampers\"\n• \"Red items under ₹1000\"\n• \"Trending products\"",
         intent: 'product.browse',
-        suggestions: composeSuggestions(['Trending items', 'Gift hampers', 'Under ₹500'])
+        suggestions: composeSuggestions(['Trending items', 'Gift hampers', 'Under ₹500'], 'product.browse')
     };
 };
 
-const supportEscalationResponse = (session) => {
+const supportEscalationResponse = async (session) => {
     session.context = {
         ...(session.context || {}),
         escalateToHuman: true
     };
 
+    await markResolved(session.sessionId, 'escalated', { humanRequested: true });
+
     return {
-        reply: 'Okay, I will loop in a live specialist. Expect a call or WhatsApp follow-up within 15 minutes. Meanwhile I will keep monitoring your order.',
+        reply: getSupportEscalationResponse(),
         intent: 'support.agent',
-        suggestions: composeSuggestions(['Track my order', 'Share more details for agent'])
+        suggestions: composeSuggestions(['Track my order', 'Share more details'], 'support.agent')
     };
 };
 
@@ -726,26 +853,51 @@ const issueResponse = async ({ session, rawMessage }) => {
         message: rawMessage
     });
 
+    await markResolved(session.sessionId, 'resolved', { ticketCreated: true });
+
     return {
-        reply: `I noted that down and created ticket ${ticket.ticketId}. You can reply to this chat with photos or extra info anytime, we keep everything synced.`,
+        reply: getIssueLoggedResponse(ticket.ticketId),
         intent: 'support.issue',
-        payload: {
-            type: 'ticket',
-            ticketId: ticket.ticketId
-        },
-        suggestions: composeSuggestions(['Track my order', 'Talk to a human expert'])
+        payload: { type: 'ticket', ticketId: ticket.ticketId },
+        suggestions: composeSuggestions(['Track my order', 'Talk to a human'], 'support.issue')
     };
 };
 
 const generalResponse = () => ({
-    reply: 'I manage everything from order tracking, refunds, gifting suggestions, to connecting you with support. Ask me anything or pick a quick action below.',
+    reply: getGeneralResponse(),
     intent: 'general',
     suggestions: BASE_SUGGESTIONS
 });
 
+const thanksResponse = () => ({
+    reply: getThanksResponse(),
+    intent: 'thanks',
+    suggestions: composeSuggestions(['Track my order', 'Browse products'], 'thanks')
+});
+
+const goodbyeResponse = () => ({
+    reply: getGoodbyeResponse(),
+    intent: 'goodbye',
+    suggestions: composeSuggestions(['Track order', 'Browse products'], 'goodbye')
+});
+
+// ============================================
+// API HANDLERS
+// ============================================
+
 export const createOrResumeSession = async (req, res) => {
     try {
-        const { session } = await ensureSession(req.body || {});
+        const { session, isNew } = await ensureSession(req.body || {});
+
+        // Load recent orders into context for logged-in users
+        if (session.userId && isNew) {
+            const recentOrders = await loadRecentOrders(session.userId);
+            session.context.recentOrders = recentOrders;
+            if (recentOrders.length > 0) {
+                session.context.lastOrderId = recentOrders[0].id;
+            }
+        }
+
         await session.save();
         res.status(200).json({ success: true, session });
     } catch (error) {
@@ -769,8 +921,8 @@ export const getChatSessionById = async (req, res) => {
 
 export const getChatSessionsForUser = async (req, res) => {
     try {
-        const userId = req.userId; // Securely get ID from auth middleware
-        
+        const userId = req.userId;
+
         if (!userId || !isObjectId(userId)) {
             return res.status(400).json({ success: false, message: 'Valid userId is required.' });
         }
@@ -786,97 +938,192 @@ export const handleChatMessage = async (req, res) => {
     try {
         const payload = req.body || {};
         const userMessage = sanitizeMessage(payload.message);
+
         if (!userMessage) {
             return res.status(400).json({ success: false, message: 'Message cannot be empty.' });
         }
 
         const { session } = await ensureSession(payload);
-        const intent = detectIntent(userMessage);
+        const sessionContext = session.context && typeof session.context.toObject === 'function'
+            ? session.context.toObject()
+            : session.context || {};
+
+        // Extract order ID from message
         const explicitOrderId = payload.orderId || extractOrderId(userMessage);
 
+        // Check if user is responding to a confirmation prompt
+        const confirmationResponse = isConfirmation(userMessage);
+
+        // Track message count
+        await incrementMessageCount(session.sessionId);
+
+        let botResponse;
+
+        // Handle pending confirmations
+        if (sessionContext.awaitingConfirmation && confirmationResponse) {
+            if (confirmationResponse === 'yes') {
+                if (sessionContext.awaitingConfirmation === 'cancel') {
+                    botResponse = await orderCancelResponse({
+                        session,
+                        userId: payload.userId,
+                        explicitOrderId: sessionContext.pendingOrderId,
+                        skipConfirmation: true
+                    });
+                } else if (sessionContext.awaitingConfirmation === 'return') {
+                    botResponse = await orderReturnResponse({
+                        session,
+                        userId: payload.userId,
+                        explicitOrderId: sessionContext.pendingOrderId
+                    });
+                }
+            } else {
+                // User said no to confirmation
+                botResponse = {
+                    reply: "No problem! I've kept your order as is. Anything else I can help with?",
+                    intent: 'confirmation.cancelled',
+                    contextUpdates: {
+                        awaitingConfirmation: null,
+                        pendingOrderId: null
+                    },
+                    suggestions: BASE_SUGGESTIONS
+                };
+            }
+        } else {
+            // Use enhanced intent detection
+            const intentResult = enhancedDetectIntent(userMessage);
+            const intent = intentResult.intent;
+            const confidence = intentResult.confidence;
+
+            console.log('[Chatbot] Detected intent:', intent, 'Confidence:', confidence.toFixed(2));
+
+            // Log intent for analytics
+            await logIntent({
+                sessionId: session.sessionId,
+                userId: payload.userId,
+                userMessage,
+                detectedIntent: intent,
+                confidenceScore: confidence,
+                matchedPhrase: intentResult.matchedPhrase,
+                matchedKeywords: intentResult.matchedKeywords
+            });
+
+            // Track intent in session
+            await addIntentToSession(session.sessionId, intent, payload.userId);
+
+            // Log unknown/low confidence queries
+            if (intent === 'general' || confidence < 0.3) {
+                await logUnknownQuery({
+                    sessionId: session.sessionId,
+                    userId: payload.userId,
+                    query: userMessage,
+                    detectedIntent: intent,
+                    confidenceScore: confidence,
+                    metadata: payload.metadata
+                });
+            }
+
+            // Route to appropriate handler
+            switch (intent) {
+                // Product intents
+                case 'product.search':
+                    botResponse = await productSearchResponse({ userMessage, session });
+                    break;
+                case 'product.trending':
+                    botResponse = await trendingProductsResponse();
+                    break;
+                case 'product.browse':
+                    botResponse = await browseProductsResponse({ userMessage });
+                    break;
+
+                // Order intents
+                case 'order.status':
+                    botResponse = await orderStatusResponse({ session, userId: payload.userId, explicitOrderId });
+                    break;
+                case 'order.cancel':
+                    botResponse = await orderCancelResponse({ session, userId: payload.userId, explicitOrderId });
+                    break;
+                case 'order.return':
+                    botResponse = await orderReturnResponse({ session, userId: payload.userId, explicitOrderId });
+                    break;
+                case 'order.address':
+                    botResponse = addressResponse();
+                    break;
+                case 'order.refund':
+                    botResponse = refundResponse();
+                    break;
+                case 'order.provide-id':
+                    botResponse = orderIdPromptResponse();
+                    break;
+
+                // Marketing & catalog
+                case 'marketing.offer':
+                    botResponse = marketingResponse();
+                    break;
+                case 'catalog.gifting':
+                    botResponse = await giftingResponse({ userMessage, session });
+                    break;
+
+                // Support
+                case 'support.agent':
+                    botResponse = await supportEscalationResponse(session);
+                    break;
+                case 'support.issue':
+                    botResponse = await issueResponse({ session, rawMessage: userMessage });
+                    break;
+                case 'support.login':
+                    botResponse = loginResponse();
+                    break;
+
+                // Conversational
+                case 'greeting':
+                    botResponse = {
+                        reply: getWelcomeMessage(session.userName, sessionContext.deviceMeta?.timezone),
+                        intent: 'greeting',
+                        suggestions: BASE_SUGGESTIONS
+                    };
+                    break;
+                case 'thanks':
+                    botResponse = thanksResponse();
+                    break;
+                case 'goodbye':
+                    botResponse = goodbyeResponse();
+                    break;
+
+                default:
+                    // Try product search as fallback for unknown queries
+                    if (confidence < 0.3) {
+                        const searchAttempt = await productSearchResponse({ userMessage, session });
+                        if (searchAttempt.payload?.products?.length > 0) {
+                            botResponse = searchAttempt;
+                        } else {
+                            botResponse = generalResponse();
+                        }
+                    } else {
+                        botResponse = generalResponse();
+                    }
+            }
+        }
+
+        // Add user message to session
         session.messages.push({
             sender: 'user',
             message: userMessage,
             intent: 'user.input'
         });
 
-        let botResponse;
-        switch (intent) {
-            // Product search intents
-            case 'product.search':
-                botResponse = await productSearchResponse({ userMessage });
-                break;
-            case 'product.trending':
-                botResponse = await trendingProductsResponse();
-                break;
-            case 'product.browse':
-                botResponse = await browseProductsResponse({ userMessage });
-                break;
-
-            // Order intents
-            case 'order.status':
-                botResponse = await orderStatusResponse({ session, userId: payload.userId, explicitOrderId });
-                break;
-            case 'order.cancel':
-                botResponse = await orderCancelResponse({ session, userId: payload.userId, explicitOrderId });
-                break;
-            case 'order.return':
-                botResponse = await orderReturnResponse({ session, userId: payload.userId, explicitOrderId });
-                break;
-            case 'order.address':
-                botResponse = addressResponse({ session });
-                break;
-            case 'order.refund':
-                botResponse = refundResponse({ session });
-                break;
-            case 'order.provide-id':
-                botResponse = orderIdPromptResponse();
-                break;
-
-            // Marketing & catalog
-            case 'marketing.offer':
-                botResponse = marketingResponse();
-                break;
-            case 'catalog.gifting':
-                botResponse = await giftingResponse({ userMessage });
-                break;
-
-            // Support
-            case 'support.agent':
-                botResponse = supportEscalationResponse(session);
-                break;
-            case 'support.issue':
-                botResponse = await issueResponse({ session, rawMessage: userMessage });
-                break;
-            case 'support.login':
-                botResponse = loginResponse();
-                break;
-
-            default:
-                // Try product search as fallback for unknown queries
-                const searchAttempt = await productSearchResponse({ userMessage });
-                if (searchAttempt.payload?.products?.length > 0) {
-                    botResponse = searchAttempt;
-                } else {
-                    botResponse = generalResponse();
-                }
-        }
-
-        const currentContext = session.context && typeof session.context.toObject === 'function'
-            ? session.context.toObject()
-            : session.context;
-
+        // Update session context
         session.context = {
-            ...(currentContext || {}),
-            lastIntent: botResponse.intent || intent,
+            ...sessionContext,
+            lastIntent: botResponse.intent,
             ...(botResponse.contextUpdates || {}),
             quickReplies: botResponse.suggestions || BASE_SUGGESTIONS
         };
 
+        // Add bot response to session
         session.messages.push({
             sender: 'agent',
             message: botResponse.reply,
-            intent: botResponse.intent || intent,
+            intent: botResponse.intent,
             payload: botResponse.payload
         });
 
@@ -907,6 +1154,9 @@ export const closeChatSession = async (req, res) => {
         if (!session) {
             return res.status(404).json({ success: false, message: 'Session not found.' });
         }
+
+        // Mark conversation as abandoned if not resolved
+        await markResolved(sessionId, 'abandoned');
 
         res.status(200).json({ success: true, session });
     } catch (error) {

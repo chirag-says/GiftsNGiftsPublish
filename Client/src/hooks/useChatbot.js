@@ -115,6 +115,13 @@ export const useChatbot = ({ backendurl, userData }) => {
       const { data } = await axios.post(`${backendurl}/api/chatbot/message`, payload);
       if (abortRef.current) return;
 
+      // Add realistic typing delay based on response length (300-800ms)
+      const responseLength = data.reply?.length || 50;
+      const typingDelay = Math.min(300 + Math.floor(responseLength * 3), 800);
+
+      await new Promise(resolve => setTimeout(resolve, typingDelay));
+      if (abortRef.current) return;
+
       sessionIdRef.current = data.session.sessionId;
       localStorage.setItem('chatbotSessionId', data.session.sessionId);
       setSession(data.session);

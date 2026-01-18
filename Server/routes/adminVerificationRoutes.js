@@ -4,7 +4,8 @@
  */
 
 import express from "express";
-import authadmin from "../middleware/authadmin.js";
+import authadmin from "../middleware/authAdmin.js";
+
 import {
     getPendingVerifications,
     getSellerVerificationDetails,

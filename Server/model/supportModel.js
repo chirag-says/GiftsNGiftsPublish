@@ -105,7 +105,7 @@ const systemStatusSchema = new mongoose.Schema({
     message: { type: String }
 }, { timestamps: true });
 
-// Chat Session Schema (for future live chat implementation)
+// Chat Session Schema (Enhanced with context tracking)
 const chatSessionSchema = new mongoose.Schema({
     sessionId: { type: String, unique: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -129,7 +129,26 @@ const chatSessionSchema = new mongoose.Schema({
         payload: { type: mongoose.Schema.Types.Mixed },
         timestamp: { type: Date, default: Date.now }
     }],
-    context: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // Enhanced context for multi-turn conversations
+    context: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {
+            lastIntent: null,
+            quickReplies: [],
+            // Context tracking for pronoun resolution
+            lastOrderId: null,
+            lastProductId: null,
+            lastSearchQuery: null,
+            orderInContext: null,
+            orderSnapshot: null,
+            // Confirmation flow tracking
+            awaitingConfirmation: null, // 'cancel' | 'return' | null
+            pendingOrderId: null,
+            // Cached data for quick access
+            recentOrders: [],
+            escalateToHuman: false
+        }
+    },
     rating: { type: Number, min: 1, max: 5 },
     feedback: { type: String }
 }, { timestamps: true });

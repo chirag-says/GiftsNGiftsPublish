@@ -147,7 +147,27 @@ const parseSearchQuery = (query) => {
         .split(/\s+/)
         .filter(term => term.length > 1 && !STOP_WORDS.includes(term));
 
-    result.searchTerms = terms;
+    // Apply basic stemming - add singular versions for plurals
+    const expandedTerms = [];
+    for (const term of terms) {
+        expandedTerms.push(term);
+
+        // Handle common plural endings
+        if (term.endsWith('ies') && term.length > 4) {
+            // e.g., "candies" -> "candy"
+            expandedTerms.push(term.slice(0, -3) + 'y');
+        } else if (term.endsWith('es') && term.length > 3) {
+            // e.g., "watches" -> "watch", "boxes" -> "box"
+            expandedTerms.push(term.slice(0, -2));
+            expandedTerms.push(term.slice(0, -1)); // Also try just removing 's'
+        } else if (term.endsWith('s') && term.length > 3 && !term.endsWith('ss')) {
+            // e.g., "cakes" -> "cake", "gifts" -> "gift"
+            expandedTerms.push(term.slice(0, -1));
+        }
+    }
+
+    // Remove duplicates
+    result.searchTerms = [...new Set(expandedTerms)];
 
     return result;
 };
@@ -270,19 +290,31 @@ export const searchProducts = async (userQuery, options = {}) => {
         console.log('[ProductSearch] Found', products.length, 'products');
 
         // Format results for chatbot
-        const formattedProducts = products.map(product => ({
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            oldPrice: product.oldprice,
-            discount: product.discount,
-            image: product.images?.[0]?.url || null,
-            brand: product.brand || null,
-            category: product.categoryname?.categoryname || null,
-            availability: product.availability,
-            isAvailable: product.isAvailable,
-            stock: product.stock
-        }));
+        const formattedProducts = products.map(product => {
+            // Calculate isAvailable reliably - check multiple fields
+            const stockCount = parseInt(product.stock) || 0;
+            const reservedStock = parseInt(product.reservedStock) || 0;
+            const availableStock = stockCount - reservedStock;
+
+            // isAvailable is true if: stock > 0 OR isAvailable flag is true OR availability is "In Stock"/"Low Stock"
+            const inStock = availableStock > 0 ||
+                product.isAvailable === true ||
+                (product.availability && product.availability !== 'Out of Stock');
+
+            return {
+                _id: product._id,
+                title: product.title,
+                price: product.price,
+                oldPrice: product.oldprice,
+                discount: product.discount,
+                image: product.images?.[0]?.url || null,
+                brand: product.brand || null,
+                category: product.categoryname?.categoryname || null,
+                availability: product.availability,
+                isAvailable: inStock,
+                stock: stockCount
+            };
+        });
 
         return {
             success: true,
@@ -333,16 +365,27 @@ export const getProductRecommendations = async (options = {}) => {
             .limit(limit)
             .lean();
 
-        return products.map(product => ({
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            oldPrice: product.oldprice,
-            discount: product.discount,
-            image: product.images?.[0]?.url || null,
-            brand: product.brand || null,
-            category: product.categoryname?.categoryname || null
-        }));
+        return products.map(product => {
+            const stockCount = parseInt(product.stock) || 0;
+            const reservedStock = parseInt(product.reservedStock) || 0;
+            const availableStock = stockCount - reservedStock;
+            const inStock = availableStock > 0 ||
+                product.isAvailable === true ||
+                (product.availability && product.availability !== 'Out of Stock');
+
+            return {
+                _id: product._id,
+                title: product.title,
+                price: product.price,
+                oldPrice: product.oldprice,
+                discount: product.discount,
+                image: product.images?.[0]?.url || null,
+                brand: product.brand || null,
+                category: product.categoryname?.categoryname || null,
+                isAvailable: inStock,
+                stock: stockCount
+            };
+        });
 
     } catch (error) {
         console.error('[ProductRecommendations] Error:', error);
@@ -387,16 +430,27 @@ export const getTrendingProducts = async (limit = 4) => {
                 .lean();
         }
 
-        return products.map(product => ({
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            oldPrice: product.oldprice,
-            discount: product.discount,
-            image: product.images?.[0]?.url || null,
-            brand: product.brand || null,
-            category: product.categoryname?.categoryname || null
-        }));
+        return products.map(product => {
+            const stockCount = parseInt(product.stock) || 0;
+            const reservedStock = parseInt(product.reservedStock) || 0;
+            const availableStock = stockCount - reservedStock;
+            const inStock = availableStock > 0 ||
+                product.isAvailable === true ||
+                (product.availability && product.availability !== 'Out of Stock');
+
+            return {
+                _id: product._id,
+                title: product.title,
+                price: product.price,
+                oldPrice: product.oldprice,
+                discount: product.discount,
+                image: product.images?.[0]?.url || null,
+                brand: product.brand || null,
+                category: product.categoryname?.categoryname || null,
+                isAvailable: inStock,
+                stock: stockCount
+            };
+        });
 
     } catch (error) {
         console.error('[TrendingProducts] Error:', error);
@@ -431,15 +485,26 @@ export const getProductsByCategory = async (categoryName, limit = 5) => {
         return {
             success: true,
             category: category.categoryname,
-            products: products.map(product => ({
-                _id: product._id,
-                title: product.title,
-                price: product.price,
-                oldPrice: product.oldprice,
-                discount: product.discount,
-                image: product.images?.[0]?.url || null,
-                brand: product.brand || null
-            }))
+            products: products.map(product => {
+                const stockCount = parseInt(product.stock) || 0;
+                const reservedStock = parseInt(product.reservedStock) || 0;
+                const availableStock = stockCount - reservedStock;
+                const inStock = availableStock > 0 ||
+                    product.isAvailable === true ||
+                    (product.availability && product.availability !== 'Out of Stock');
+
+                return {
+                    _id: product._id,
+                    title: product.title,
+                    price: product.price,
+                    oldPrice: product.oldprice,
+                    discount: product.discount,
+                    image: product.images?.[0]?.url || null,
+                    brand: product.brand || null,
+                    isAvailable: inStock,
+                    stock: stockCount
+                };
+            })
         };
 
     } catch (error) {
@@ -466,16 +531,27 @@ export const simpleSearch = async (keyword, limit = 5) => {
             .limit(limit)
             .lean();
 
-        return products.map(product => ({
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            oldPrice: product.oldprice,
-            discount: product.discount,
-            image: product.images?.[0]?.url || null,
-            brand: product.brand || null,
-            category: product.categoryname?.categoryname || null
-        }));
+        return products.map(product => {
+            const stockCount = parseInt(product.stock) || 0;
+            const reservedStock = parseInt(product.reservedStock) || 0;
+            const availableStock = stockCount - reservedStock;
+            const inStock = availableStock > 0 ||
+                product.isAvailable === true ||
+                (product.availability && product.availability !== 'Out of Stock');
+
+            return {
+                _id: product._id,
+                title: product.title,
+                price: product.price,
+                oldPrice: product.oldprice,
+                discount: product.discount,
+                image: product.images?.[0]?.url || null,
+                brand: product.brand || null,
+                category: product.categoryname?.categoryname || null,
+                isAvailable: inStock,
+                stock: stockCount
+            };
+        });
     } catch (error) {
         console.error('[SimpleSearch] Error:', error);
         return [];

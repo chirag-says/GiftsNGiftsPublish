@@ -74,41 +74,47 @@ function BasicInfoStep({ onComplete }) {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+   const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        // Validation
-        if (!formData.name || !formData.phone || !formData.street || !formData.city || !formData.state || !formData.pincode) {
-            toast.error('Please fill all required fields');
-            return;
-        }
+    // Trim whitespace and convert to string for accurate length check
+    const phoneStr = formData.phone ? formData.phone.toString().trim() : "";
 
-        if (formData.phone.length !== 10) {
-            toast.error('Phone number must be 10 digits');
-            return;
-        }
+    // Validation
+    if (!formData.name || !phoneStr || !formData.street || !formData.city || !formData.state || !formData.pincode) {
+        toast.error('Please fill all required fields');
+        return;
+    }
 
-        setSaving(true);
-        try {
-            const updateData = new FormData();
-            updateData.append('name', formData.name);
-            updateData.append('phone', formData.phone);
-            updateData.append('alternatePhone', formData.alternatePhone);
-            updateData.append('street', formData.street);
-            updateData.append('city', formData.city);
-            updateData.append('state', formData.state);
-            updateData.append('pincode', formData.pincode);
+    if (phoneStr.length !== 10) {
+        toast.error('Phone number must be 10 digits');
+        return;
+    }
 
-            await api.post('/api/seller/updateprofile', updateData);
-            toast.success('Basic info saved successfully');
-            onComplete && onComplete();
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to save');
-        } finally {
-            setSaving(false);
-        }
-    };
+    setSaving(true);
+    try {
+        // Agar aapka backend JSON accept karta hai toh normal object bhejein
+        // Agar FormData hi chahiye toh ye format rakhein:
+        const updateData = new FormData();
+        updateData.append('name', formData.name);
+        updateData.append('phone', phoneStr);
+        updateData.append('alternatePhone', formData.alternatePhone);
+        updateData.append('street', formData.street);
+        updateData.append('city', formData.city);
+        updateData.append('state', formData.state);
+        updateData.append('pincode', formData.pincode);
+        
+        // Agar communication address bhi bhejna hai toh yahan append karein...
 
+        await api.post('/api/seller/updateprofile', updateData);
+        toast.success('Basic info saved successfully');
+        onComplete && onComplete();
+    } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to save');
+    } finally {
+        setSaving(false);
+    }
+};
     if (loading) {
         return (
             <div className="flex justify-center py-12">

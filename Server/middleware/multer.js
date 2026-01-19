@@ -40,7 +40,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
   'image/png',
-  'image/webp'
+  'image/webp',
+      'application/pdf'
 ]);
 
 // Extended MIME types for document uploads (includes PDFs)
@@ -52,7 +53,7 @@ const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
   'application/pdf'
 ]);
 
-const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png','.pdf', '.webp']);
 
 // Extended extensions for document uploads
 const ALLOWED_DOCUMENT_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.pdf']);
@@ -153,7 +154,8 @@ const preValidationFilter = (req, file, cb) => {
     'image/jpeg': ['.jpg', '.jpeg'],
     'image/jpg': ['.jpg', '.jpeg'],
     'image/png': ['.png'],
-    'image/webp': ['.webp']
+    'image/webp': ['.webp'],   
+     'application/pdf': ['.pdf']
   };
 
   const expectedExtensions = mimeExtensionMap[file.mimetype];

@@ -235,6 +235,18 @@ const Login = () => {
                 {showPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>
+            {/* 🔐 Reset password link */}
+{state === "Login" && (
+  <div className="flex justify-end">
+    <button
+      type="button"
+      onClick={() => navigate("/reset-password")}
+      className="text-sm text-[#fb541b] hover:text-orange-700 font-medium"
+    >
+      Forgot password?
+    </button>
+  </div>
+)}
 
             <button className="w-full py-3 bg-[#fb541b] text-white rounded-xl">
               {state === "Login" ? "Sign In" : "Create Account"}

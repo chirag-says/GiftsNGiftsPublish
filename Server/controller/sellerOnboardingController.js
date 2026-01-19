@@ -1174,3 +1174,33 @@ export const getCompleteOnboardingData = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+export const removeDocument = async (req, res) => {
+    try {
+        const { category, documentType } = req.params;
+
+        const validCategories = ['kycDocuments', 'taxDocuments', 'documents'];
+        if (!validCategories.includes(category)) {
+            return res.status(400).json({ success: false, message: "Invalid category" });
+        }
+
+        const update = {
+            [`${category}.${documentType}`]: {
+                url: '',
+                status: 'pending',
+                uploadedAt: null,
+                rejectionReason: ''
+            }
+        };
+
+        await sellermodel.findByIdAndUpdate(req.seller._id, { $set: update });
+
+        res.json({
+            success: true,
+            message: "Document removed successfully"
+        });
+    } catch (error) {
+        console.error("Remove document error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};

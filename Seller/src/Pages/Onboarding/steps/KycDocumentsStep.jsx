@@ -96,9 +96,16 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
         if (!file) return;
 
         // Validate file - images only for now
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/jpg',
+            'image/webp',
+            'application/pdf'
+        ];
+
         if (!allowedTypes.includes(file.type)) {
-            toast.error('Please upload JPG, PNG, or WebP images only');
+            toast.error('Please upload JPG, PNG,PDF or WebP images only');
             return;
         }
 
@@ -196,38 +203,34 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
 
                 {docStatus.url ? (
                     <div className="space-y-3">
-                        {/* Preview */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
                             <a
                                 href={docStatus.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
+                                className="flex items-center gap-1 text-sm text-indigo-600"
                             >
-                                <FiEye className="w-4 h-4" /> View Document
+                                <FiEye /> View
                             </a>
+
+                            <button
+                                type="button"
+                                onClick={() => handleRemove(doc.key, category)}
+                                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                            >
+                                <FiTrash2 /> Remove
+                            </button>
                         </div>
 
-                        {/* Re-upload option if rejected */}
-                        {docStatus.status === 'rejected' && (
-                            <div>
-                                {docStatus.rejectionReason && (
-                                    <p className="text-sm text-red-600 mb-2">
-                                        Reason: {docStatus.rejectionReason}
-                                    </p>
-                                )}
-                                <label className="flex items-center gap-2 text-sm text-indigo-600 cursor-pointer hover:text-indigo-800">
-                                    <FiUpload className="w-4 h-4" /> Re-upload
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        accept=".jpg,.jpeg,.png,.webp"
-                                        onChange={(e) => handleUpload(doc.key, category, e.target.files[0])}
-                                        disabled={isUploading}
-                                    />
-                                </label>
-                            </div>
-                        )}
+                        <label className="flex items-center gap-2 text-sm text-indigo-600 cursor-pointer">
+                            <FiUpload /> Re-upload
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                                onChange={(e) => handleUpload(doc.key, category, e.target.files[0])}
+                            />
+                        </label>
                     </div>
                 ) : (
                     <label className="flex flex-col items-center justify-center py-6 cursor-pointer hover:bg-gray-50 rounded-lg transition-all">
@@ -237,16 +240,16 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
                             <>
                                 <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
                                 <span className="text-sm text-gray-500">Click to upload</span>
-                                <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP (Max 5MB)</span>
+                                <span className="text-xs text-gray-400 mt-1">JPG, PNG, PDF, WebP (Max 5MB)</span>
                             </>
                         )}
                         <input
                             type="file"
                             className="hidden"
-                            accept=".jpg,.jpeg,.png,.webp"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf"
                             onChange={(e) => handleUpload(doc.key, category, e.target.files[0])}
-                            disabled={isUploading}
                         />
+
                     </label>
                 )}
             </div>
@@ -263,6 +266,24 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
 
     const requiredCount = requiredDocs.filter(d => d.required).length;
     const uploadedRequired = requiredDocs.filter(d => d.required && getDocumentStatus(d.key, d.category).url).length;
+    const handleRemove = async (docKey, category) => {
+        try {
+            const categoryMap = {
+                kyc: 'kycDocuments',
+                tax: 'taxDocuments',
+                general: 'documents'
+            };
+
+            await api.delete(
+                `/api/seller/onboarding/documents/${categoryMap[category]}/${docKey}`
+            );
+
+            toast.success('Document removed');
+            fetchDocuments();
+        } catch (error) {
+            toast.error('Failed to remove document');
+        }
+    };
 
     return (
         <div className="space-y-8">

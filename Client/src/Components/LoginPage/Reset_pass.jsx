@@ -1,221 +1,223 @@
-import React, { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AppContext } from '../context/Appcontext'
-import api from '../../utils/api'
-import { toast } from 'react-toastify'
-import { Eye, EyeOff } from 'lucide-react'
+import React, { useState, useRef, useEffect } from "react";
+import api from "../../utils/api";
+import { toast } from "react-toastify";
+import { Eye, EyeOff, Mail, Lock, KeyRound, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-function Reset_pass() {
+const ResetPassword = () => {
+  const navigate = useNavigate();
+  const otpRefs = useRef([]);
 
-    const { onLoginSuccess } = useContext(AppContext)
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const navigate = useNavigate()
-    const inputRefs = React.useRef([])
-    const [email, setemail] = useState('')
-    const [newpassword, setnewpassword] = useState('')
-    const [showPassword, setShowPassword] = useState(false)
-    const [isEmailsent, setisEmailsent] = useState('')
-    const [otp, setotp] = useState(0)
-    const [isotpsubmitted, seisotpsubmitted] = useState(false)
-
-
-    const handelInput = (e, index) => {
-        if (e.target.value.length > 0 && index < inputRefs.current.length - 1) {
-            inputRefs.current[index + 1].focus();
-        }
+  // Handle OTP Input focus shift
+  const handleOtpChange = (e, index) => {
+    const val = e.target.value;
+    if (val && index < 5) {
+      otpRefs.current[index + 1].focus();
     }
+  };
 
-    //for delete value one by one---
-    const handeldown = (e, index) => {
-        if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
-            inputRefs.current[index - 1].focus();
-        }
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !e.target.value && index > 0) {
+      otpRefs.current[index - 1].focus();
     }
+  };
 
-    //Hnadel pest feature---
-    const handelpast = (e) => {
-        const paste = e.clipboardData.getData('text');
-        const pasteArray = paste.split('')
-        pasteArray.forEach((char, index) => {
-            if (inputRefs.current[index]) {
-                inputRefs.current[index].value = char;
-            }
-        })
+  const handlePaste = (e) => {
+    const data = e.clipboardData.getData("text").slice(0, 6);
+    if (!/^\d+$/.test(data)) return;
+    
+    const digits = data.split("");
+    digits.forEach((digit, i) => {
+      if (otpRefs.current[i]) {
+        otpRefs.current[i].value = digit;
+      }
+    });
+    otpRefs.current[digits.length - 1]?.focus();
+  };
+
+  // ================= API ACTIONS =================
+
+  const sendOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data } = await api.post("/api/auth/send-reset-otp", { email });
+      if (data.success) {
+        toast.success("OTP sent to your email");
+        setStep(2);
+      } else toast.error(data.message);
+    } catch {
+      toast.error("Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const onSubmitEmail = async (e) => {
-        e.preventDefault();
-
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
-            toast.error("Please enter a valid email address");
-            return;
-        }
-
-        try {
-            const { data } = await api.post('/api/auth/send-reset-otp', { email: email.trim().toLowerCase() })
-            data.success ? toast.success(data.message) : toast.error(data.message)
-            data.success && setisEmailsent(true)
-        } catch (error) {
-            toast.error(error.message)
-        }
+  const verifyOtp = (e) => {
+    e.preventDefault();
+    const value = otpRefs.current.map((i) => i?.value).join("");
+    if (value.length !== 6) {
+      toast.error("Please enter the full 6-digit code");
+      return;
     }
+    setOtp(value);
+    setStep(3);
+  };
 
-    const onsubmitotp = async (e) => {
-        e.preventDefault();
-        const otpArray = inputRefs.current.map(e => e.value)
-        const otpValue = otpArray.join('')
+  const resetPassword = async (e) => {
+  e.preventDefault();
 
-        if (!/^\d{6}$/.test(otpValue)) {
-            toast.error("Please enter a valid 6-digit OTP");
-            return;
-        }
+  if (password.length < 8) {
+    toast.error("Password must be at least 8 characters");
+    return;
+  }
 
-        setotp(otpValue)
-        seisotpsubmitted(true)
+  const safeEmail = email.trim().toLowerCase();
+
+  setLoading(true);
+  try {
+    const { data } = await api.post("/api/auth/reset-password", {
+      email: safeEmail,
+      otp,
+      newpassword: password,
+    });
+
+    if (data.success) {
+      toast.success("Password reset successful. Please login.");
+      navigate("/login");
+    } else {
+      toast.error(data.message);
     }
+  } catch (error) {
+    toast.error(error.response?.data?.message || "OTP expired or invalid");
+  } finally {
+    setLoading(false);
+  }
+};
 
-    const onSubmitpassword = async (e) => {
-        e.preventDefault();
+  return (
+    <div className="py-10 flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        
+        {/* Step 1: Email */}
+        {step === 1 && (
+          <form onSubmit={sendOtp} className="space-y-6">
+            <div className="text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="text-orange-600" size={30} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Forgot Password?</h2>
+              <p className="text-gray-500 mt-2">Enter your email to receive a reset code.</p>
+            </div>
+            
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="Email Address"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+            
+            <button 
+              disabled={loading}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
+            >
+              {loading ? "Sending..." : "Send OTP"} <ChevronRight size={18} />
+            </button>
+          </form>
+        )}
 
-        // Password validation
-        if (newpassword.length < 8) {
-            toast.error("Password must be at least 8 characters");
-            return;
-        }
+        {/* Step 2: OTP */}
+        {step === 2 && (
+          <form onSubmit={verifyOtp} className="space-y-6">
+            <div className="text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <KeyRound className="text-orange-600" size={30} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Verify OTP</h2>
+              <p className="text-gray-500 mt-2">We sent a 6-digit code to {email}</p>
+            </div>
 
-        // Password strength check (at least one letter and one number)
-        if (!/[a-zA-Z]/.test(newpassword) || !/[0-9]/.test(newpassword)) {
-            toast.error("Password must contain at least one letter and one number");
-            return;
-        }
+            <div className="flex justify-between gap-2" onPaste={handlePaste}>
+              {Array(6).fill(0).map((_, i) => (
+                <input
+                  key={i}
+                  ref={(el) => (otpRefs.current[i] = el)}
+                  type="text"
+                  maxLength={1}
+                  inputMode="numeric"
+                  onChange={(e) => handleOtpChange(e, i)}
+                  onKeyDown={(e) => handleKeyDown(e, i)}
+                  className="w-12 h-14 border-2 border-gray-200 rounded-xl text-center text-xl font-bold focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all"
+                />
+              ))}
+            </div>
 
-        try {
-            const { data } = await api.post('/api/auth/reset-password', { email, otp, newpassword })
+            <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors">
+              Verify Code
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setStep(1)} 
+              className="w-full text-sm text-gray-500 hover:text-orange-600 transition-colors"
+            >
+              Change Email
+            </button>
+          </form>
+        )}
 
-            if (data.success) {
-                toast.success(data.message);
+        {/* Step 3: New Password */}
+        {step === 3 && (
+          <form onSubmit={resetPassword} className="space-y-6">
+            <div className="text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="text-orange-600" size={30} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Set New Password</h2>
+              <p className="text-gray-500 mt-2">Must be at least 8 characters long.</p>
+            </div>
 
-                // Auto-login if backend supports it
-                if (data.autoLogin && data.user) {
-                    onLoginSuccess(data.user);
-                    navigate('/');
-                } else {
-                    navigate('/login');
-                }
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            toast.error(error.message)
-        }
-    }
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type={show ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                placeholder="New Password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {show ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
-    // Password strength indicator
-    const getPasswordStrength = () => {
-        if (!newpassword) return { text: '', color: '' };
-        if (newpassword.length < 8) return { text: 'Too short', color: 'text-red-500' };
+            <button 
+              disabled={loading}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-70"
+            >
+              {loading ? "Updating..." : "Reset Password"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
 
-        const hasLetter = /[a-zA-Z]/.test(newpassword);
-        const hasNumber = /[0-9]/.test(newpassword);
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(newpassword);
-
-        if (hasLetter && hasNumber && hasSpecial && newpassword.length >= 12) {
-            return { text: 'Strong', color: 'text-green-500' };
-        } else if (hasLetter && hasNumber) {
-            return { text: 'Good', color: 'text-yellow-500' };
-        }
-        return { text: 'Weak', color: 'text-red-500' };
-    }
-
-    const passwordStrength = getPasswordStrength();
-
-    return (
-        <div className='flex items-center justify-center mt-5 px-6 sm:px-0 bg-gradient-to-br'>
-
-            {!isEmailsent &&
-                <form onSubmit={onSubmitEmail} className='bg-state-900 p-8 bg-white rounded-lg shadow-lg sm:w-100 xl:w-[35%] text-sm'>
-                    <h1 className='text-2xl font-semibold text-center mb-4'>Reset Password</h1>
-                    <p className='text-center mb-6 text-1xl'>Enter your registered email address</p>
-                    <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded border border-gray-400  bg-white'>
-                        <input
-                            onChange={e => setemail(e.target.value)}
-                            value={email}
-                            className='bg-transparent outline-none w-full' type="email" placeholder="Email id" required />
-
-                    </div>
-                    <button className='w-full !py-3  !bg-[#fb541b] text-white rounded mt-3'>Submit</button>
-                </form>
-            }
-            {/* enter the otp*/}
-
-
-            {!isotpsubmitted && isEmailsent &&
-
-                <form onSubmit={onsubmitotp} className='bg-state-900 p-8 rounded-lg shadow-lg sm:w-100 xl:w-[35%] text-sm'>
-                    <h1 className=' text-2xl font-semibold text-center mb-4'> Reset password OTP</h1>
-                    <p className='text-center mb-6  text-1xl'>Enter the 6-digit code sent to your email.</p>
-                    <div className='flex justify-between mb-8' onPaste={handelpast}>
-                        {Array(6).fill(0).map((_, index) => (
-                            <input type="text" inputMode="numeric" maxLength={1} key={index} required className='w-12 h-12 border border-gray-400 text-center text-xl rounded-md'
-                                ref={e => inputRefs.current[index] = e}
-                                onInput={(e) => handelInput(e, index)}
-                                onKeyDown={(e) => handeldown(e, index)} />
-                        ))}
-
-                    </div>
-                    <button className='w-full !py-3 !bg-[#fb541b] text-white rounded'>Submit</button>
-                </form>
-            }
-
-            {isotpsubmitted && isEmailsent &&
-                <form onSubmit={onSubmitpassword} className='bg-state-900 p-8 rounded-lg shadow-lg sm:w-100 xl:w-[35%] text-sm'>
-                    <h1 className=' text-2xl font-semibold text-center mb-4'>New Password</h1>
-                    <p className='text-center mb-6  text-1xl'>Enter a new password below</p>
-
-                    <div className='mb-2 flex items-center gap-3 w-full px-5 py-2.5 rounded border border-gray-400 bg-white relative'>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder='Password (min 8 characters)'
-                            className='bg-transparent outline-none text-black w-full pr-10'
-                            value={newpassword}
-                            onChange={(e) => setnewpassword(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#fb541b] transition-colors focus:outline-none"
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-
-                    {/* Password strength indicator */}
-                    {newpassword && (
-                        <div className='flex items-center justify-between mb-4 px-1'>
-                            <p className='text-xs text-gray-500'>Password strength:</p>
-                            <p className={`text-xs font-semibold ${passwordStrength.color}`}>
-                                {passwordStrength.text}
-                            </p>
-                        </div>
-                    )}
-
-                    <p className='text-xs text-gray-400 mb-4 px-1'>
-                        Must be at least 8 characters with letters and numbers
-                    </p>
-
-                    <button type="submit" className='w-full !py-3 !bg-[#fb541b] text-white rounded mt-3'>
-                        Reset Password
-                    </button>
-                </form>
-            }
-
-        </div >
-
-    )
-}
-
-export default Reset_pass
+export default ResetPassword;

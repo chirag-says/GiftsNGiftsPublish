@@ -389,16 +389,16 @@ export const sendResetpassword = async (req, res) => {
  */
 export const resetpassword = async (req, res) => {
   const { email, otp, newpassword } = req.body;
+
   if (!email || !otp || !newpassword) {
-    return res.json({
+    return res.status(400).json({
       success: false,
       message: "Email, OTP, and new password are required",
     });
   }
 
-  // Validate password strength
   if (newpassword.length < 8) {
-    return res.json({
+    return res.status(400).json({
       success: false,
       message: "Password must be at least 8 characters",
     });
@@ -407,48 +407,54 @@ export const resetpassword = async (req, res) => {
   try {
     const user = await usermodel.findOne({ email });
     if (!user) {
-      return res.json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    if (user.resetotp == "" || user.resetotp !== otp) {
-      return res.json({ success: false, message: "Invalid OTP" });
+    // ✅ OTP checks
+    if (!user.resetotp || user.resetotp !== otp) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
     if (user.resetotpexpireAt < Date.now()) {
-      return res.json({ success: false, message: "OTP Expired" });
+      return res.status(400).json({ success: false, message: "OTP expired" });
     }
 
-    const hashedPassword = await bcrypt.hash(newpassword, 10);
-    user.password = hashedPassword;
+    // ✅ Update password
+    user.password = await bcrypt.hash(newpassword, 10);
     user.resetotp = "";
     user.resetotpexpireAt = 0;
-
     await user.save();
 
-    // Auto-login: Create JWT token and set cookie
-    const token = jwt.sign({ id: user._id, role: 'user' }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // ✅ Auto login (optional but good UX)
+    const token = jwt.sign(
+      { id: user._id, role: "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV == "production" ? "none" : "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({
       success: true,
-      message: "Password has been reset successfully. You are now logged in.",
+      message: "Password reset successful",
       autoLogin: true,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-      }
+      },
     });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.error("Reset password error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /**
  * Verify registration OTP

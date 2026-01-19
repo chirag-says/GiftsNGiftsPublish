@@ -72,7 +72,6 @@ function App() {
           <Route path="/" exact={true} element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/email-verify" element={<Emailverify />} />
-          <Route path="/Reset_pass" element={<Reset_pass />} />
           <Route path="/myProfile" element={<MyProfile />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/wishlist" element={<WishlistPage />} />
@@ -98,6 +97,8 @@ function App() {
           <Route path="/bulk-orders" element={<BulkOrders />} />
           <Route path="/refund-policy" element={<RefundPlicy />} />
           <Route path="*" element={<ErrorPage />} />
+          <Route path="/reset-password" element={<Reset_pass />} />
+
         </Routes>
       </Suspense>
 

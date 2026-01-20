@@ -85,6 +85,9 @@ import CustomPricing from './Pages/Personalization/CustomPricing.jsx';
 
 // Onboarding
 import OnboardingWizard from './Pages/Onboarding/OnboardingWizard.jsx';
+import BasicInfoStep from './Pages/Seller Profile/BasicInfoStep.jsx';
+import BusinessInfoStep from './Pages/Seller Profile/BusinessInfoStep.jsx';
+import BankDetailsStep from './Pages/Seller Profile/BankDetailsStep.jsx';
 
 export const MyContext = createContext();
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -136,6 +139,7 @@ function App() {
     { path: '/subcategorylist', element: <ProtectedRoute><Layout><SubCategoryList /></Layout></ProtectedRoute> },
     { path: '/seller-profile', element: <ProtectedRoute><Layout><SellerProfile /></Layout></ProtectedRoute> },
 
+    
     // Reports
     { path: '/reports/product-performance', element: <ProtectedRoute><Layout><ProductPerformance /></Layout></ProtectedRoute> },
 
@@ -191,6 +195,9 @@ function App() {
     { path: '/personalization/addons', element: <ProtectedRoute><Layout><AddOnServices /></Layout></ProtectedRoute> },
     { path: '/personalization/bulk', element: <ProtectedRoute><Layout><BulkPersonalization /></Layout></ProtectedRoute> },
     { path: '/personalization/pricing', element: <ProtectedRoute><Layout><CustomPricing /></Layout></ProtectedRoute> },
+     { path: '/store/storedetail', element: <ProtectedRoute><Layout><BasicInfoStep /></Layout></ProtectedRoute> },
+     { path: '/store/bussinessdetail', element: <ProtectedRoute><Layout><BusinessInfoStep /></Layout></ProtectedRoute> },
+       { path: '/store/bankDetail', element: <ProtectedRoute><Layout>< BankDetailsStep/></Layout></ProtectedRoute> },
   ]);
 
   return (

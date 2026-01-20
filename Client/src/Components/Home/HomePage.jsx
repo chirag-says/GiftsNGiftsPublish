@@ -11,7 +11,6 @@ function Home() {
   return (
     <>
      <Banner/> 
-    
      <NavCatSlider />
      <FreeShip/>
      <Adevert/>

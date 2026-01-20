@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import dotenv from "dotenv";
 dotenv.config();
-
+import sellerProfileRoutes from './routes/sellerProfileRoutes.js'
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -340,6 +340,7 @@ app.use("/api/category-requests", categoryRequestRoutes);
 app.use("/api/subcategory-requests", subcategoryRequestRoutes);
 app.use("/api/seller/onboarding", sellerOnboardingRoutes);
 app.use("/api/admin/verification", adminVerificationRoutes);
+app.use("/api/seller", sellerProfileRoutes);
 
 /* =========================
    HEALTH CHECK

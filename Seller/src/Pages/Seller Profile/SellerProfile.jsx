@@ -73,8 +73,19 @@ function SellerProfile() {
   };
 
   const handleChange = (e) => {
-    setProfile((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const { name, value } = e.target;
+
+  // Phone fields ke liye 10 digits ki restriction
+  if (name === "phone" || name === "alternatePhone") {
+    // Sirf numbers allow karein aur length 10 tak restrict karein
+    const onlyNums = value.replace(/[^0-9]/g, '');
+    if (onlyNums.length > 10) return; 
+    
+    setProfile((prev) => ({ ...prev, [name]: onlyNums }));
+  } else {
+    setProfile((prev) => ({ ...prev, [name]: value }));
+  }
+};
 
   const handleAddressChange = (e) => {
     const currentAddress = profile.address || {};

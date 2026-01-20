@@ -2,8 +2,12 @@
 body {
   margin: 0;
   padding: 0;
-  background: #F9FAFB !important;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f9fafb !important;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 /* Smooth collapse animation */
@@ -13,7 +17,7 @@ body {
 
 /* Legacy button support - use .btn-primary class instead */
 .btn-blue {
-  background: #4F46E5 !important;
+  background: #4f46e5 !important;
   color: white !important;
   padding: 10px 20px !important;
   font-weight: 500 !important;
@@ -25,8 +29,10 @@ body {
 }
 
 .btn-blue:hover {
-  background: #4338CA !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  background: #4338ca !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
   transform: translateY(-1px);
 }
 
@@ -78,6 +84,13 @@ input[type="number"] {
 
 /* Premium focus states */
 *:focus-visible {
-  outline: 2px solid #4F46E5;
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
+}
+.btn-primary {
+  @apply flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700;
+}
+
+.btn-secondary {
+  @apply flex items-center gap-2 rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-100;
 }

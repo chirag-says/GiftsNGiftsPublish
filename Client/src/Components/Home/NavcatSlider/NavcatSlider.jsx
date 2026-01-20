@@ -49,8 +49,8 @@ const NavCatSlider = () => {
     <div className="bg-white border-b border-gray-100 pb-6">
 
       {/* 1. Promo Header - Clean & Minimal */}
-      <div className="py-2.5 bg-gray-50 border-b border-gray-100 mb-6">
-        <h5 className="text-[11px] sm:text-[13px] tracking-wide font-semibold text-gray-600 text-center uppercase">
+      <div className="md:py-3 py-2.5 bg-gray-50 border-b border-gray-100 mb-6">
+        <h5 className="text-[11px] sm:text-[14px] tracking-wide font-semibold text-gray-600 text-center ">
           Celebrate Occasions with India's #1 Online Gift Store
         </h5>
       </div>

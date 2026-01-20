@@ -6,6 +6,8 @@ import "swiper/css/pagination";
 import one from "../../../assets/banner/one.jpg"
 import two from "../../../assets/banner/two.jpg"
 import three from "../../../assets/banner/three.jpg"
+import banner from "../../../assets/banner/mainbanner.jpg";
+
 function Banner() {
   return (
     <div className="relative w-full">
@@ -27,21 +29,28 @@ function Banner() {
           <img
             src={two}
             alt="Banner Image 2"
-            className="w-full h-40 sm:h-45 md:h-55 lg:h-95"
+            className="w-full h-40 sm:h-45 md:h-55 lg:h-90"
+          />
+        </SwiperSlide>
+         <SwiperSlide>
+          <img
+            src={banner}
+            alt="Banner Image 2"
+            className="w-full h-40 sm:h-45 md:h-55 lg:h-90"
           />
         </SwiperSlide>
           <SwiperSlide>
           <img
             src={three}
             alt="Banner Image 2"
-            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
+            className="w-full h-35 sm:h-45 md:h-55 lg:h-90"
           />
         </SwiperSlide>
         <SwiperSlide >
           <img
             src={one}
             alt="Banner Image 1"
-            className="w-full h-35 sm:h-45 md:h-55 lg:h-95"
+            className="w-full h-35 sm:h-45 md:h-55 lg:h-90"
           />
         </SwiperSlide>
        

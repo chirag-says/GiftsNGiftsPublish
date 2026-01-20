@@ -51,6 +51,7 @@ import {
     uploadRegulatedLicenseDocument,
     getRegulatedLicenses,
     removeDocument,
+    getSellerAllDocuments,
 } from "../controller/sellerOnboardingController.js";
 
 const sellerOnboardingRouter = express.Router();
@@ -130,5 +131,11 @@ sellerOnboardingRouter.delete(
   "/documents/:category/:documentType",
   authseller,
   removeDocument
+);
+
+sellerOnboardingRouter.get(
+  "/documents/all",
+  authseller,
+  getSellerAllDocuments
 );
 export default sellerOnboardingRouter;

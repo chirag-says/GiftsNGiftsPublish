@@ -1204,3 +1204,204 @@ export const removeDocument = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+export const getBasicSellerProfile = async (req, res) => {
+  try {
+    const seller = await sellermodel.findById(req.seller._id).select(
+      "name email phone alternatePhone address contactPerson"
+    );
+
+    res.json({
+      success: true,
+      seller: {
+        name: seller.name || "",
+        email: seller.email || "",
+        phone: seller.phone || "",
+        alternatePhone: seller.alternatePhone || "",
+        address: {
+          street: seller.address?.street || "",
+          city: seller.address?.city || "",
+          state: seller.address?.state || "",
+          pincode: seller.address?.pincode || "",
+        },
+        contactPerson: {
+          name: seller.contactPerson?.name || "",
+          designation: seller.contactPerson?.designation || "",
+          phone: seller.contactPerson?.phone || "",
+          email: seller.contactPerson?.email || "",
+        },
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateBasicSellerProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      alternatePhone,
+      street,
+      city,
+      state,
+      pincode,
+      contactPersonName,
+      contactPersonDesignation,
+      contactPersonPhone,
+      contactPersonEmail,
+    } = req.body;
+
+    const seller = await sellermodel.findByIdAndUpdate(
+      req.seller._id,
+      {
+        $set: {
+          name,
+          phone,
+          alternatePhone,
+
+          "address.street": street,
+          "address.city": city,
+          "address.state": state,
+          "address.pincode": pincode,
+
+          "contactPerson.name": contactPersonName,
+          "contactPerson.designation": contactPersonDesignation,
+          "contactPerson.phone": contactPersonPhone,
+          "contactPerson.email": contactPersonEmail,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ success: true, seller });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Update failed" });
+  }
+};
+
+
+
+
+/**
+ * Get full seller business information
+ * Returns ALL businessInfo fields filled during onboarding
+ */
+// controller/sellerOnboardingController.js
+export const getSellerBusinessDetails = async (req, res) => {
+  try {
+    const seller = await sellermodel.findById(req.seller._id).select(
+      "businessInfo status onboardingCompleted verificationStatus storeLogo"
+    );
+
+    if (!seller) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      businessInfo: {
+        businessType: seller.businessInfo?.businessType || "",
+        businessName: seller.businessInfo?.businessName || "",
+        tradeName: seller.businessInfo?.tradeName || "",
+        panNumber: seller.businessInfo?.panNumber || "",
+        gstNumber: seller.businessInfo?.gstNumber || "",
+        udyamNumber: seller.businessInfo?.udyamNumber || "",
+        businessAddress: seller.businessInfo?.businessAddress || "",
+        businessCity: seller.businessInfo?.businessCity || "",
+        businessState: seller.businessInfo?.businessState || "",
+        businessPincode: seller.businessInfo?.businessPincode || "",
+        logo: seller.storeLogo
+          ? `${process.env.BASE_URL}/${seller.storeLogo}`
+          : "",
+      },
+      sellerStatus: seller.status,
+      verificationStatus: seller.verificationStatus,
+      onboardingCompleted: seller.onboardingCompleted,
+    });
+  } catch (error) {
+    console.error("Get seller business details error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Get ALL seller documents (KYC + TAX + GENERAL)
+export const getSellerAllDocuments = async (req, res) => {
+  try {
+    const seller = await sellermodel.findById(req.seller._id).select(
+      "kycDocuments taxDocuments documents businessInfo.businessType"
+    );
+
+    if (!seller) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      documents: {
+        kyc: seller.kycDocuments || {},
+        tax: seller.taxDocuments || {},
+        general: seller.documents || {},
+      },
+      businessType: seller.businessInfo?.businessType || "Individual",
+    });
+  } catch (error) {
+    console.error("Get seller documents error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+export const updateSellerBusinessDetails = async (req, res) => {
+  try {
+    const {
+      businessType,
+      businessName,
+      tradeName,
+      businessAddress,
+      businessCity,
+      businessState,
+      businessPincode,
+    } = req.body;
+
+    const seller = await sellermodel.findById(req.seller._id);
+
+    if (!seller) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller not found",
+      });
+    }
+
+    seller.businessInfo.businessType = businessType ?? seller.businessInfo.businessType;
+    seller.businessInfo.businessName = businessName ?? seller.businessInfo.businessName;
+    seller.businessInfo.tradeName = tradeName ?? seller.businessInfo.tradeName;
+    seller.businessInfo.businessAddress = businessAddress ?? seller.businessInfo.businessAddress;
+    seller.businessInfo.businessCity = businessCity ?? seller.businessInfo.businessCity;
+    seller.businessInfo.businessState = businessState ?? seller.businessInfo.businessState;
+    seller.businessInfo.businessPincode = businessPincode ?? seller.businessInfo.businessPincode;
+
+    await seller.save();
+
+    res.json({
+      success: true,
+      message: "Business details updated successfully",
+      businessInfo: seller.businessInfo,
+    });
+  } catch (error) {
+    console.error("Update business info error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

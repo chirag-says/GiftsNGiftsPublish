@@ -22,7 +22,6 @@ export const getStoreSettings = async (req, res) => {
       });
       await settings.save();
     }
-
     res.status(200).json({ success: true, data: settings, seller });
   } catch (error) {
     console.error("Store Settings Error:", error);

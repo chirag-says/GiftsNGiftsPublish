@@ -62,9 +62,9 @@ function AddAddress() {
     getProfile();
   }, []);
 
-  const handleAddressChange = (e) => {
-    setNewAddress({ ...newAddress, [e.target.name]: e.target.value });
-  };
+  // const handleAddressChange = (e) => {
+  //   setNewAddress({ ...newAddress, [e.target.name]: e.target.value });
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -157,6 +157,18 @@ function AddAddress() {
   const handleSelectAddress = (addr) => {
     setSelectedAddress(addr);
   };
+const handleAddressChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "phoneNumber") {
+    const onlyNums = value.replace(/[^0-9]/g, '');
+    if (onlyNums.length <= 10) {
+      setNewAddress((prev) => ({ ...prev, [name]: onlyNums }));
+    }
+  } else {
+    setNewAddress((prev) => ({ ...prev, [name]: value }));
+  }
+};
 
   const handleKeyDown = (e, addr) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -286,7 +298,22 @@ function AddAddress() {
 
                   <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                     <TextField label="Full Name" name="fullName" value={newAddress.fullName} onChange={handleAddressChange} fullWidth size="small" required />
-                    <TextField label="Phone Number" name="phoneNumber" value={newAddress.phoneNumber} onChange={handleAddressChange} fullWidth size="small" required />
+                    <TextField
+                      label="Phone Number"
+                      name="phoneNumber"
+                      value={newAddress.phoneNumber}
+                      onChange={handleAddressChange}
+                      fullWidth
+                      size="small"
+                      required
+                      inputProps={{
+                        inputMode: 'numeric',
+                        pattern: '[0-9]*',
+                        maxLength: 10
+                      }}
+                    />
+
+                    {/* <TextField label="Phone Number" name="phoneNumber" value={newAddress.phoneNumber} onChange={handleAddressChange} fullWidth size="small" required /> */}
                     <div className="md:col-span-2">
                       <TextField label="Address (House No, Building, Area)" name="address" value={newAddress.address} onChange={handleAddressChange} fullWidth size="small" multiline rows={2} required />
                     </div>

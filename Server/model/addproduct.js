@@ -24,6 +24,8 @@ const addproductSchema = new mongoose.Schema({
   size: String,
   additional_details: String,
 
+  
+
   // ⭐ Extra Product Specification Fields
   productDimensions: { type: String },    // "30 x 10 x 3 cm"
   itemWeight: { type: String },           // "300 g"
@@ -45,6 +47,11 @@ const addproductSchema = new mongoose.Schema({
 
   // ⭐ Minimum Order Quantity
   moq: { type: Number, default: 1 }, // Minimum Order Quantity
+ // ⭐ Dynamic Category Attributes
+  attributes: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
 
   // ⭐ Brand Authorization (if selling branded products)
   isBrandedProduct: { type: Boolean, default: false },

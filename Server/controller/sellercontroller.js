@@ -394,6 +394,26 @@ export const addproducts = async (req, res) => {
     }));
 
     // ========== CREATE PRODUCT WITH VALIDATED VALUES ==========
+    // Parse dynamic attributes from additional_details or attributes field
+    let dynamicAttributes = {};
+    try {
+      if (req.body.additional_details) {
+        const parsed = typeof req.body.additional_details === 'string'
+          ? JSON.parse(req.body.additional_details)
+          : req.body.additional_details;
+        dynamicAttributes = { ...dynamicAttributes, ...parsed };
+      }
+      if (req.body.attributes) {
+        const parsed = typeof req.body.attributes === 'string'
+          ? JSON.parse(req.body.attributes)
+          : req.body.attributes;
+        dynamicAttributes = { ...dynamicAttributes, ...parsed };
+      }
+    } catch (parseError) {
+      console.log("Dynamic attributes parse info:", parseError.message);
+      // If parsing fails, treat additional_details as regular text
+    }
+
     const newProduct = new addproductmodel({
       title: title.trim(),
       description: description.trim(),
@@ -404,15 +424,23 @@ export const addproducts = async (req, res) => {
       discount: numDiscount,     // Use validated number
       ingredients,
       brand,
-      additional_details,
+      additional_details: typeof req.body.additional_details === 'string' && !req.body.additional_details.startsWith('{')
+        ? req.body.additional_details
+        : undefined,
       size,
       stock: numStock,           // Use validated number
       sellerId,
       images: imageUrls,
+      // ⭐ Dynamic Category Attributes
+      attributes: dynamicAttributes,
       // ⭐ Add Extra Fields
       productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
-      genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
-      materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
+      genericName, gngId: req.body.gngId, itemPartNumber, dateFirstAvailable, bestSellerRank,
+      materialComposition: dynamicAttributes.material || materialComposition,
+      outerMaterial,
+      length: dynamicAttributes.length || length,
+      careInstructions: dynamicAttributes.care_instructions || careInstructions,
+      aboutThisItem,
       manufacturer, packer, department, countryOfOrigin
     });
 
@@ -987,8 +1015,8 @@ export const sellerResetPassword = async (req, res) => {
       path: "/"
     });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "Password reset successfully. You are now logged in.",
       autoLogin: true,
       user: {

@@ -11,7 +11,7 @@ const addproductSchema = new mongoose.Schema({
   },
   subcategory: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "subcategory",
+    ref: "Subcategory",
     required: true,
   },
 
@@ -24,7 +24,7 @@ const addproductSchema = new mongoose.Schema({
   size: String,
   additional_details: String,
 
-  
+
 
   // ⭐ Extra Product Specification Fields
   productDimensions: { type: String },    // "30 x 10 x 3 cm"
@@ -32,7 +32,7 @@ const addproductSchema = new mongoose.Schema({
   itemDimensionsLxWxH: { type: String },  // "30 x 10 x 3 Centimeters"
   netQuantity: { type: String, default: "1 Count" },
   genericName: { type: String },
-  asin: { type: String },
+  gngId: { type: String },                // GNG unique product identifier
   itemPartNumber: { type: String },
   dateFirstAvailable: { type: Date },
   manufacturer: { type: String },
@@ -47,7 +47,7 @@ const addproductSchema = new mongoose.Schema({
 
   // ⭐ Minimum Order Quantity
   moq: { type: Number, default: 1 }, // Minimum Order Quantity
- // ⭐ Dynamic Category Attributes
+  // ⭐ Dynamic Category Attributes
   attributes: {
     type: mongoose.Schema.Types.Mixed,
     default: {}

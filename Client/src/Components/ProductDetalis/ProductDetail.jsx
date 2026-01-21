@@ -9,19 +9,22 @@ import {
   HiChevronLeft,
   HiChevronRight,
   HiShoppingCart,
-  HiSparkles,
   HiCheck,
   HiArrowRight,
   HiOutlineBadgeCheck,
   HiTag,
   HiOutlineRefresh,
   HiShoppingBag,
+  HiClipboardList,
+  HiInformationCircle,
+  HiViewList,
+  HiDocumentText,
 } from "react-icons/hi";
 import { MdClose } from "react-icons/md";
 import { FaFacebookF, FaTwitter, FaWhatsapp, FaLink } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/Appcontext";
-import { getStaticSpecifications } from "../../utils/productSpecifications.js";
+import { getStaticSpecifications, getGroupedSpecifications, getProductHighlights, hasSpecifications, shouldShowIngredients } from "../../utils/productSpecifications.js";
 
 // Extracted Sub-Components
 import ProductImageGallery from "./ProductImageGallery";
@@ -404,22 +407,22 @@ function ProductDetail() {
       </div>
 
       {/* Breadcrumb */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-3">
-          <nav className="flex items-center gap-2 text-sm text-gray-500 overflow-x-auto" aria-label="Breadcrumb">
-            <Link to="/" className="hover:text-indigo-600 transition whitespace-nowrap">Home</Link>
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="container mx-auto px-4 py-2">
+          <nav className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto" aria-label="Breadcrumb">
+            <Link to="/" className="hover:text-gray-900 hover:underline transition whitespace-nowrap">Home</Link>
             <span className="whitespace-nowrap" aria-hidden="true">/</span>
-            <Link to="/products" className="hover:text-indigo-600 transition whitespace-nowrap">Products</Link>
+            <Link to="/products" className="hover:text-gray-900 hover:underline transition whitespace-nowrap">Products</Link>
             <span className="whitespace-nowrap" aria-hidden="true">/</span>
-            <span className="text-gray-800 font-medium truncate">{product.title}</span>
+            <span className="text-gray-600 truncate">{product.title}</span>
           </nav>
         </div>
       </div>
 
       {/* Main Product Section */}
-      <div className="container mx-auto px-4 py-4 sm:py-8">
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+      <div className="container mx-auto px-4 py-4 sm:py-6">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
             {/* Left - Image Gallery */}
             <ProductImageGallery
               images={images}
@@ -450,9 +453,9 @@ function ProductDetail() {
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-6 !bg-white sm:mt-8  rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
+        <div className="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
           {/* Tab Headers */}
-          <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto" role="tablist">
+          <div className="flex border-b border-gray-200 overflow-x-auto" role="tablist">
             {["Description", "Specifications", "Reviews"].map((tab, idx) => (
               <button
                 key={tab}
@@ -461,17 +464,17 @@ function ProductDetail() {
                 aria-selected={activeTab === idx}
                 aria-controls={`tabpanel-${idx}`}
                 onClick={() => setActiveTab(idx)}
-                className={`flex-1 min-w-[120px] py-4 px-6 font-semibold text-center transition-all relative ${activeTab === idx
-                  ? "text-indigo-600 bg-white"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                className={`flex-1 min-w-[120px] py-3 px-6 text-sm font-medium text-center transition-all relative ${activeTab === idx
+                  ? "text-gray-900 bg-white"
+                  : "text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
                   }`}
               >
                 {tab}
                 {tab === "Reviews" && reviewStats && (
-                  <span className="ml-1 text-sm text-gray-400">({reviewStats.totalReviews})</span>
+                  <span className="ml-1 text-gray-400">({reviewStats.totalReviews})</span>
                 )}
                 {activeTab === idx && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"></span>
                 )}
               </button>
             ))}
@@ -479,21 +482,23 @@ function ProductDetail() {
 
           {/* Tab Content */}
           <div className="p-4 sm:p-6 lg:p-10">
-            {/* Description */}
+            {/* Description - Amazon Style */}
             {activeTab === 0 && (
-              <div className="prose max-w-none" role="tabpanel" id="tabpanel-0">
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <HiSparkles className="text-indigo-600" />
-                    About this product
+              <div className="space-y-6" role="tabpanel" id="tabpanel-0">
+
+                {/* About This Product */}
+                <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <HiDocumentText className="w-5 h-5 text-gray-600" />
+                    Product Description
                   </h3>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                     {showFullDescription
                       ? product.description
-                      : `${product.description?.substring(0, 300)}${product.description?.length > 300 ? '...' : ''}`
+                      : `${product.description?.substring(0, 400)}${product.description?.length > 400 ? '...' : ''}`
                     }
                   </p>
-                  {product.description?.length > 300 && (
+                  {product.description?.length > 400 && (
                     <button
                       type="button"
                       onClick={() => setShowFullDescription(!showFullDescription)}
@@ -505,62 +510,174 @@ function ProductDetail() {
                   )}
                 </div>
 
-                {product.aboutThisItem && (
-                  <div className="bg-blue-50 rounded-2xl p-6 mb-6">
-                    <h4 className="font-bold text-gray-800 mb-3 text-lg flex items-center gap-2">
-                      <HiCheck className="text-blue-600" />
-                      Key Features
+                {/* Key Features / About This Item - Amazon Style Bullet Points */}
+                {(() => {
+                  const highlights = getProductHighlights(product);
+                  if (highlights.length === 0 && !product.aboutThisItem) return null;
+
+                  return (
+                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                      <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                        <HiCheck className="text-green-600" />
+                        About This Item
+                      </h4>
+
+                      {highlights.length > 0 ? (
+                        <ul className="space-y-3">
+                          {highlights.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-3">
+                              <span className="flex-shrink-0 w-2 h-2 bg-gray-800 rounded-full mt-2"></span>
+                              <span className="text-gray-700 leading-relaxed">{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                          {product.aboutThisItem}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Quick Specifications Preview */}
+                {(() => {
+                  const staticSpecs = getStaticSpecifications(product);
+                  if (staticSpecs.length === 0) return null;
+
+                  const previewSpecs = staticSpecs.slice(0, 6);
+
+                  return (
+                    <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                      <h4 className="font-semibold text-gray-900 mb-4 text-base flex items-center gap-2">
+                        <HiClipboardList className="w-5 h-5 text-gray-600" />
+                        Technical Details
+                      </h4>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {previewSpecs.map((spec, idx) => (
+                          <div key={idx} className="bg-white rounded-xl p-3 border border-gray-100">
+                            <p className="text-xs text-gray-500 mb-1">{spec.label}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">{spec.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {staticSpecs.length > 6 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(1)}
+                          className="mt-4 text-indigo-600 font-semibold hover:text-indigo-700 transition flex items-center gap-1"
+                        >
+                          View all specifications
+                          <HiArrowRight className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Care Instructions */}
+                {product.careInstructions && (
+                  <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base flex items-center gap-2">
+                      <HiOutlineRefresh className="w-5 h-5 text-gray-600" />
+                      Care Instructions
                     </h4>
-                    <p className="text-gray-700 whitespace-pre-line">{product.aboutThisItem}</p>
+                    <p className="text-gray-700 leading-relaxed">{product.careInstructions}</p>
                   </div>
                 )}
 
-                {product.careInstructions && (
-                  <div className="bg-amber-50 rounded-2xl p-6">
-                    <h4 className="font-bold text-gray-800 mb-3 text-lg flex items-center gap-2">
-                      <HiOutlineRefresh className="text-amber-600" />
-                      Care Instructions
-                    </h4>
-                    <p className="text-gray-600">{product.careInstructions}</p>
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Specifications */}
+            {/* Specifications - Amazon Style */}
             {activeTab === 1 && (
-  <div className="grid lg:grid-cols-2 gap-8">
+              <div className="space-y-8" role="tabpanel" id="tabpanel-1">
 
-    {/* STATIC PRODUCT DETAILS */}
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-        📋 Product Specifications
-      </h3>
+                {hasSpecifications(product) ? (
+                  <>
+                    {/* Grouped Product Specifications */}
+                    {(() => {
+                      const groupedSpecs = getGroupedSpecifications(product);
+                      const groupKeys = Object.keys(groupedSpecs);
 
-      <div className="divide-y divide-gray-200">
-        {getStaticSpecifications(product).map((spec, idx) => (
-          <div
-            key={idx}
-            className="flex justify-between gap-6 py-3 text-sm"
-          >
-            <span className="text-gray-500 w-1/2">
-              {spec.label}
-            </span>
-            <span className="text-gray-900 font-medium w-1/2 text-right break-words">
-              {spec.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+                      if (groupKeys.length === 0) return null;
 
-    {/* DYNAMIC CATEGORY-WISE SPECIFICATIONS */}
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <DynamicSpecifications product={product} />
-    </div>
+                      return (
+                        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                          <h3 className="text-base font-semibold text-gray-900 px-6 py-4 bg-gray-50 border-b flex items-center gap-2">
+                            <HiClipboardList className="w-5 h-5 text-gray-600" />
+                            Product Information
+                          </h3>
 
-  </div>
-)}
+                          <div className="divide-y divide-gray-100">
+                            {groupKeys.map((groupName) => (
+                              <div key={groupName} className="px-6 py-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                                  {groupName}
+                                </h4>
+                                <div className="space-y-0">
+                                  {groupedSpecs[groupName].map((spec, specIdx) => (
+                                    <div
+                                      key={spec.label}
+                                      className={`flex py-2.5 ${specIdx % 2 === 0 ? 'bg-gray-50/50' : ''} -mx-6 px-6`}
+                                    >
+                                      <span className="text-gray-500 w-1/2 text-sm">
+                                        {spec.label}
+                                      </span>
+                                      <span className="text-gray-900 font-medium w-1/2 text-sm break-words">
+                                        {spec.value}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Category Specific Specifications */}
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden p-6">
+                      <DynamicSpecifications product={product} />
+                    </div>
+
+                    {/* Additional Details Section */}
+                    {product.additional_details && (
+                      <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                        <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <HiInformationCircle className="w-5 h-5 text-gray-600" />
+                          Additional Details
+                        </h3>
+                        <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                          {product.additional_details}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Ingredients Section - Only for food products */}
+                    {shouldShowIngredients(product) && (
+                      <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                        <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <HiViewList className="w-5 h-5 text-gray-600" />
+                          Ingredients
+                        </h3>
+                        <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                          {product.ingredients}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-16 text-gray-400">
+                    <HiClipboardList className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">No Specifications Available</p>
+                    <p className="text-sm">Product specifications are not available for this item.</p>
+                  </div>
+                )}
+
+              </div>
+            )}
 
             {/* Reviews */}
             {activeTab === 2 && (
@@ -586,41 +703,41 @@ function ProductDetail() {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div className="mt-6 sm:mt-8 bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 lg:p-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-8">You May Also Like</h2>
+          <div className="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Products related to this item</h2>
             <div className="relative">
               <Swiper
-                spaceBetween={20}
+                spaceBetween={16}
                 modules={[Navigation]}
                 navigation={{
                   nextEl: `.next-related`,
                   prevEl: `.prev-related`,
                 }}
                 breakpoints={{
-                  320: { slidesPerView: 1.5 },
+                  320: { slidesPerView: 2 },
                   480: { slidesPerView: 2.5 },
-                  768: { slidesPerView: 3.5 },
-                  1280: { slidesPerView: 4.5 },
+                  768: { slidesPerView: 4 },
+                  1280: { slidesPerView: 5 },
                 }}
-                className="pb-10"
+                className="pb-4"
               >
                 {relatedProducts.map((item) => (
                   <SwiperSlide key={item._id}>
                     <Link to={`/products/${item._id}`}>
-                      <div className="bg-gray-50 rounded-2xl overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2 group">
-                        <div className="aspect-square overflow-hidden bg-white">
+                      <div className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors bg-white group">
+                        <div className="aspect-square overflow-hidden bg-gray-50">
                           <img
                             src={item.images?.[0]?.url || item.images?.[0] || "/placeholder.png"}
                             alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
-                        <div className="p-4">
-                          <h3 className="text-gray-800 font-medium truncate mb-2">{item.title}</h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold text-gray-900">₹{item.price}</span>
+                        <div className="p-3">
+                          <h3 className="text-sm text-gray-700 line-clamp-2 mb-1 group-hover:text-blue-600">{item.title}</h3>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-sm font-medium text-gray-900">₹{item.price?.toLocaleString()}</span>
                             {item.oldprice > item.price && (
-                              <span className="text-sm text-gray-400 line-through">₹{item.oldprice}</span>
+                              <span className="text-xs text-gray-400 line-through">₹{item.oldprice}</span>
                             )}
                           </div>
                         </div>
@@ -632,17 +749,17 @@ function ProductDetail() {
 
               <button
                 type="button"
-                className="prev-related absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all"
+                className="prev-related absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                 aria-label="Previous related products"
               >
-                <HiChevronLeft className="w-6 h-6" />
+                <HiChevronLeft className="w-5 h-5 text-gray-600" />
               </button>
               <button
                 type="button"
-                className="next-related absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all"
+                className="next-related absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                 aria-label="Next related products"
               >
-                <HiChevronRight className="w-6 h-6" />
+                <HiChevronRight className="w-5 h-5 text-gray-600" />
               </button>
             </div>
           </div>

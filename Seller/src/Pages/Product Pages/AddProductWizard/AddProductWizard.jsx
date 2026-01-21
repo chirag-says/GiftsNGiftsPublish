@@ -336,15 +336,18 @@ function AddProductWizard() {
             formData.append('drugLicenseRequired', productData.drugLicenseRequired);
             if (productData.drugLicenseNumber) formData.append('drugLicenseNumber', productData.drugLicenseNumber);
 
-            // Dynamic attributes
+            // Dynamic attributes - Send as both additional_details AND attributes for backend
             if (Object.keys(productData.dynamicAttributes).length > 0) {
+                formData.append('attributes', JSON.stringify(productData.dynamicAttributes));
                 formData.append('additional_details', JSON.stringify(productData.dynamicAttributes));
 
                 // Also add common fields for backend compatibility
                 if (productData.dynamicAttributes.material) formData.append('materialComposition', productData.dynamicAttributes.material);
                 if (productData.dynamicAttributes.weight) formData.append('itemWeight', productData.dynamicAttributes.weight);
                 if (productData.dynamicAttributes.dimensions) formData.append('productDimensions', productData.dynamicAttributes.dimensions);
-                if (productData.dynamicAttributes.careInstructions) formData.append('careInstructions', productData.dynamicAttributes.careInstructions);
+                if (productData.dynamicAttributes.care_instructions) formData.append('careInstructions', productData.dynamicAttributes.care_instructions);
+                if (productData.dynamicAttributes.ingredients) formData.append('ingredients', productData.dynamicAttributes.ingredients);
+                if (productData.dynamicAttributes.allergens) formData.append('allergens', productData.dynamicAttributes.allergens);
             }
 
             // Images

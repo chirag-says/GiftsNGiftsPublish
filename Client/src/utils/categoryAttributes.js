@@ -1,5 +1,6 @@
 /**
  * Category-specific product attributes configuration
+ * GS1/Shopify-standard product data schema
  * This file defines dynamic fields that appear based on selected category
  */
 
@@ -39,12 +40,13 @@ export const COMMON_FIELDS = [
     }
 ];
 
-// Category-specific attributes
+// Category-specific attributes - Using EXACT category names from database
 export const CATEGORY_ATTRIBUTES = {
-    // Handcrafted Teawares
+
+    // ==================== HANDCRAFTED TEAWARES ====================
     'handcrafted_teawares': {
         label: 'Handcrafted Teawares',
-        keywords: ['teaware', 'tea', 'teapot', 'cup', 'kettle', 'handcrafted tea'],
+        keywords: ['teaware', 'tea', 'teapot', 'cup', 'kettle', 'handcrafted tea', 'handcrafted teawares'],
         fields: [
             {
                 name: 'teaware_type',
@@ -59,7 +61,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Material',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Ceramic', 'Porcelain', 'Clay', 'Terracotta', 'Bone China', 'Glass', 'Bamboo', 'Wood', 'Metal', 'Other'],
+                options: ['Ceramic', 'Porcelain', 'Clay', 'Terracotta', 'Bone China', 'Glass', 'Bamboo', 'Wood', 'Metal', 'Cast Iron', 'Other'],
                 placeholder: 'Select material'
             },
             {
@@ -110,10 +112,10 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Bamboo and Canes
+    // ==================== BAMBOO AND CANES ====================
     'bamboo_canes': {
         label: 'Bamboo & Cane Products',
-        keywords: ['bamboo', 'cane', 'canes', 'rattan', 'wicker'],
+        keywords: ['bamboo', 'cane', 'canes', 'rattan', 'wicker', 'bamboo and canes'],
         fields: [
             {
                 name: 'product_type',
@@ -179,17 +181,17 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Cakes
+    // ==================== CAKES & BAKERY ====================
     'cakes': {
         label: 'Cakes & Bakery',
-        keywords: ['cake', 'cakes', 'bakery', 'pastry', 'dessert', 'sweet'],
+        keywords: ['cake', 'cakes', 'bakery', 'pastry', 'dessert', 'sweet', 'brownie', 'cupcake'],
         fields: [
             {
                 name: 'cake_type',
                 label: 'Cake Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Birthday Cake', 'Wedding Cake', 'Anniversary Cake', 'Chocolate Cake', 'Fruit Cake', 'Black Forest', 'Red Velvet', 'Cheesecake', 'Cupcakes', 'Pastries', 'Custom Cake', 'Eggless Cake', 'Other'],
+                options: ['Birthday Cake', 'Wedding Cake', 'Anniversary Cake', 'Chocolate Cake', 'Fruit Cake', 'Black Forest', 'Red Velvet', 'Cheesecake', 'Cupcakes', 'Brownies', 'Pastries', 'Cookies', 'Custom Cake', 'Eggless Cake', 'Photo Cake', 'Tier Cake', 'Other'],
                 placeholder: 'Select cake type'
             },
             {
@@ -197,15 +199,15 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Flavor',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Chocolate', 'Vanilla', 'Strawberry', 'Butterscotch', 'Pineapple', 'Mango', 'Coffee', 'Blueberry', 'Mixed Fruit', 'Custom', 'Other'],
+                options: ['Chocolate', 'Vanilla', 'Strawberry', 'Butterscotch', 'Pineapple', 'Mango', 'Coffee', 'Blueberry', 'Mixed Fruit', 'Red Velvet', 'Black Forest', 'Oreo', 'Caramel', 'Hazelnut', 'Custom', 'Other'],
                 placeholder: 'Select flavor'
             },
             {
                 name: 'weight_kg',
-                label: 'Weight (kg)',
+                label: 'Weight',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['0.5 kg', '1 kg', '1.5 kg', '2 kg', '2.5 kg', '3 kg', '4 kg', '5 kg', 'Custom'],
+                options: ['250g', '500g', '0.5 kg', '1 kg', '1.5 kg', '2 kg', '2.5 kg', '3 kg', '4 kg', '5 kg', 'Custom'],
                 placeholder: 'Select weight'
             },
             {
@@ -221,7 +223,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Shape',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Round', 'Square', 'Rectangle', 'Heart', 'Custom Shape', 'Tier'],
+                options: ['Round', 'Square', 'Rectangle', 'Heart', 'Custom Shape', 'Tier', 'Number Shaped', 'Letter Shaped'],
                 default: 'Round'
             },
             {
@@ -242,9 +244,18 @@ export const CATEGORY_ATTRIBUTES = {
             {
                 name: 'advance_order',
                 label: 'Advance Order Required (hours)',
-                type: FIELD_TYPES.NUMBER,
+                type: FIELD_TYPES.SELECT,
                 required: false,
-                placeholder: 'e.g., 24'
+                options: ['2 hours', '4 hours', '6 hours', '12 hours', '24 hours', '48 hours', '72 hours', 'Same Day Delivery'],
+                placeholder: 'Select time'
+            },
+            {
+                name: 'frosting_type',
+                label: 'Frosting/Icing Type',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Buttercream', 'Whipped Cream', 'Fondant', 'Ganache', 'Cream Cheese', 'Royal Icing', 'No Frosting'],
+                placeholder: 'Select frosting'
             },
             {
                 name: 'ingredients',
@@ -259,11 +270,35 @@ export const CATEGORY_ATTRIBUTES = {
                 type: FIELD_TYPES.TEXT,
                 required: false,
                 placeholder: 'e.g., Contains nuts, dairy, gluten'
+            },
+            {
+                name: 'shelf_life',
+                label: 'Shelf Life',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Same Day', '1 Day', '2-3 Days', '1 Week', '2 Weeks', '1 Month'],
+                placeholder: 'Select shelf life'
+            },
+            {
+                name: 'storage_instructions',
+                label: 'Storage Instructions',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Refrigerate', 'Room Temperature', 'Freeze', 'Cool & Dry Place'],
+                default: 'Refrigerate'
+            },
+            {
+                name: 'fssai_licensed',
+                label: 'FSSAI Licensed',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes', 'No'],
+                default: 'Yes'
             }
         ]
     },
 
-    // Sarees
+    // ==================== SAREES ====================
     'sarees': {
         label: 'Sarees',
         keywords: ['saree', 'sarees', 'sari', 'saris'],
@@ -273,7 +308,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Saree Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Silk Saree', 'Cotton Saree', 'Georgette', 'Chiffon', 'Crepe', 'Organza', 'Linen', 'Khadi', 'Handloom', 'Designer', 'Printed', 'Embroidered', 'Other'],
+                options: ['Silk Saree', 'Cotton Saree', 'Georgette', 'Chiffon', 'Crepe', 'Organza', 'Linen', 'Khadi', 'Handloom', 'Designer', 'Printed', 'Embroidered', 'Kanjivaram', 'Banarasi', 'Chanderi', 'Paithani', 'Tussar', 'Other'],
                 placeholder: 'Select saree type'
             },
             {
@@ -281,7 +316,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Fabric',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Pure Silk', 'Art Silk', 'Cotton', 'Cotton Silk', 'Georgette', 'Chiffon', 'Crepe', 'Organza', 'Linen', 'Khadi', 'Net', 'Satin', 'Velvet', 'Other'],
+                options: ['Pure Silk', 'Art Silk', 'Cotton', 'Cotton Silk', 'Georgette', 'Chiffon', 'Crepe', 'Organza', 'Linen', 'Khadi', 'Net', 'Satin', 'Velvet', 'Tussar', 'Mul Cotton', 'Other'],
                 placeholder: 'Select fabric'
             },
             {
@@ -302,17 +337,18 @@ export const CATEGORY_ATTRIBUTES = {
             },
             {
                 name: 'blouse_length',
-                label: 'Blouse Piece Length (meters)',
-                type: FIELD_TYPES.TEXT,
+                label: 'Blouse Piece Length',
+                type: FIELD_TYPES.SELECT,
                 required: false,
-                placeholder: 'e.g., 0.8 meters'
+                options: ['0.75 meters', '0.8 meters', '0.9 meters', '1 meter', 'Running Blouse', 'N/A'],
+                placeholder: 'Select length'
             },
             {
                 name: 'work_type',
                 label: 'Work/Embellishment Type',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Zari Work', 'Embroidery', 'Printed', 'Sequin', 'Stone Work', 'Thread Work', 'Mirror Work', 'Plain', 'Digital Print', 'Hand Painted', 'Other'],
+                options: ['Zari Work', 'Embroidery', 'Printed', 'Sequin', 'Stone Work', 'Thread Work', 'Mirror Work', 'Plain', 'Digital Print', 'Hand Painted', 'Bandhani', 'Block Print', 'Other'],
                 placeholder: 'Select work type'
             },
             {
@@ -320,7 +356,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Occasion',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Casual', 'Party', 'Wedding', 'Festival', 'Office Wear', 'Daily Wear', 'Special Occasion'],
+                options: ['Casual', 'Party', 'Wedding', 'Festival', 'Office Wear', 'Daily Wear', 'Bridal', 'Reception', 'Special Occasion'],
                 placeholder: 'Select occasion'
             },
             {
@@ -338,6 +374,21 @@ export const CATEGORY_ATTRIBUTES = {
                 placeholder: 'Describe pallu design'
             },
             {
+                name: 'pattern',
+                label: 'Pattern',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Solid', 'Floral', 'Paisley', 'Geometric', 'Traditional', 'Abstract', 'Animal Print', 'Stripes', 'Checks'],
+                placeholder: 'Select pattern'
+            },
+            {
+                name: 'color',
+                label: 'Primary Color',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., Red, Gold, Blue'
+            },
+            {
                 name: 'wash_care',
                 label: 'Wash Care',
                 type: FIELD_TYPES.SELECT,
@@ -351,14 +402,30 @@ export const CATEGORY_ATTRIBUTES = {
                 type: FIELD_TYPES.TEXT,
                 required: false,
                 placeholder: 'e.g., Banarasi, Kanjivaram, Chanderi'
+            },
+            {
+                name: 'gi_tag',
+                label: 'GI Tag Certified',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes', 'No'],
+                default: 'No'
+            },
+            {
+                name: 'handwoven',
+                label: 'Handwoven',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes', 'No'],
+                default: 'No'
             }
         ]
     },
 
-    // Banarasi Saree (specific subcategory)
+    // ==================== BANARASI SAREE ====================
     'banarasi_saree': {
         label: 'Banarasi Saree',
-        keywords: ['banarasi', 'banaras', 'varanasi'],
+        keywords: ['banarasi', 'banaras', 'varanasi', 'banarasi saree'],
         fields: [
             {
                 name: 'banarasi_type',
@@ -389,7 +456,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Weave Pattern',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Jangla', 'Tanchoi', 'Butidar', 'Cutwork', 'Jaal', 'Shikargah', 'Kadwa'],
+                options: ['Jangla', 'Tanchoi', 'Butidar', 'Cutwork', 'Jaal', 'Shikargah', 'Kadwa', 'Meenakari'],
                 placeholder: 'Select pattern'
             },
             {
@@ -413,7 +480,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Occasion',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Bridal', 'Wedding', 'Party', 'Festival', 'Special Occasion'],
+                options: ['Bridal', 'Wedding', 'Party', 'Festival', 'Special Occasion', 'Reception'],
                 placeholder: 'Select occasion'
             },
             {
@@ -429,6 +496,13 @@ export const CATEGORY_ATTRIBUTES = {
                 type: FIELD_TYPES.TEXT,
                 required: false,
                 placeholder: 'Describe pallu design'
+            },
+            {
+                name: 'color',
+                label: 'Primary Color',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., Red, Magenta, Royal Blue'
             },
             {
                 name: 'handwoven',
@@ -457,7 +531,7 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Shawls
+    // ==================== SHAWLS ====================
     'shawls': {
         label: 'Shawls',
         keywords: ['shawl', 'shawls', 'stole', 'wrap', 'dupatta'],
@@ -467,7 +541,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Shawl Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Pashmina', 'Cashmere', 'Wool', 'Silk', 'Cotton', 'Handloom', 'Embroidered', 'Printed', 'Stole', 'Dupatta', 'Other'],
+                options: ['Pashmina', 'Cashmere', 'Wool', 'Silk', 'Cotton', 'Handloom', 'Embroidered', 'Printed', 'Stole', 'Dupatta', 'Kani Shawl', 'Jamawar', 'Other'],
                 placeholder: 'Select shawl type'
             },
             {
@@ -475,7 +549,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Fabric',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Pure Wool', 'Pashmina', 'Cashmere', 'Silk', 'Silk Wool', 'Cotton', 'Acrylic', 'Blended'],
+                options: ['Pure Wool', 'Pashmina', 'Cashmere', 'Silk', 'Silk Wool', 'Cotton', 'Acrylic', 'Blended', 'Shahtoosh'],
                 placeholder: 'Select fabric'
             },
             {
@@ -490,7 +564,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Work/Embroidery Type',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Sozni Embroidery', 'Aari Work', 'Kani Weave', 'Printed', 'Plain', 'Machine Embroidery', 'Hand Embroidery', 'Other'],
+                options: ['Sozni Embroidery', 'Aari Work', 'Kani Weave', 'Printed', 'Plain', 'Machine Embroidery', 'Hand Embroidery', 'Kashmiri Embroidery', 'Other'],
                 placeholder: 'Select work type'
             },
             {
@@ -514,6 +588,14 @@ export const CATEGORY_ATTRIBUTES = {
                 type: FIELD_TYPES.NUMBER,
                 required: false,
                 placeholder: 'e.g., 250'
+            },
+            {
+                name: 'warmth_level',
+                label: 'Warmth Level',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Light', 'Medium', 'Warm', 'Very Warm'],
+                placeholder: 'Select warmth level'
             },
             {
                 name: 'handmade',
@@ -541,17 +623,17 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Tripura Jewellery
+    // ==================== TRIPURA JEWELLERY ====================
     'tripura_jewellery': {
         label: 'Tripura Jewellery',
-        keywords: ['tripura', 'jewellery', 'jewelry', 'tribal', 'ornament'],
+        keywords: ['tripura', 'jewellery', 'jewelry', 'tribal', 'ornament', 'tripura jewellery'],
         fields: [
             {
                 name: 'jewellery_type',
                 label: 'Jewellery Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Necklace', 'Earrings', 'Bangles', 'Bracelet', 'Anklet', 'Ring', 'Nose Pin', 'Hair Accessory', 'Pendant', 'Complete Set', 'Other'],
+                options: ['Necklace', 'Earrings', 'Bangles', 'Bracelet', 'Anklet', 'Ring', 'Nose Pin', 'Hair Accessory', 'Pendant', 'Complete Set', 'Maang Tikka', 'Choker', 'Other'],
                 placeholder: 'Select jewellery type'
             },
             {
@@ -559,7 +641,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Primary Material',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Silver', 'German Silver', 'Brass', 'Copper', 'Alloy', 'Beads', 'Wood', 'Bamboo', 'Shell', 'Bone', 'Mixed'],
+                options: ['Silver', 'German Silver', 'Brass', 'Copper', 'Alloy', 'Beads', 'Wood', 'Bamboo', 'Shell', 'Bone', 'Oxidized Metal', 'Mixed'],
                 placeholder: 'Select material'
             },
             {
@@ -567,7 +649,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Tribal/Traditional Design',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Traditional Tripuri', 'Chakma', 'Reang', 'Jamatia', 'Tribal Fusion', 'Contemporary', 'Other'],
+                options: ['Traditional Tripuri', 'Chakma', 'Reang', 'Jamatia', 'Tribal Fusion', 'Contemporary', 'Mog', 'Lushai', 'Other'],
                 placeholder: 'Select design style'
             },
             {
@@ -575,7 +657,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Plating/Finish',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Gold Plated', 'Silver Plated', 'Oxidized', 'Antique Finish', 'Natural', 'Rhodium Plated'],
+                options: ['Gold Plated', 'Silver Plated', 'Oxidized', 'Antique Finish', 'Natural', 'Rhodium Plated', 'Rose Gold Plated'],
                 placeholder: 'Select plating'
             },
             {
@@ -590,7 +672,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Dimensions/Size',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., 18 inches length, 2.5 inches diameter'
+                placeholder: 'e.g., 18 inches length, 2.5 cm diameter'
             },
             {
                 name: 'stone_beads',
@@ -612,7 +694,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Occasion',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Daily Wear', 'Festival', 'Wedding', 'Party', 'Traditional Event', 'Gift'],
+                options: ['Daily Wear', 'Festival', 'Wedding', 'Party', 'Traditional Event', 'Gift', 'Ethnic Wear'],
                 placeholder: 'Select occasion'
             },
             {
@@ -622,21 +704,29 @@ export const CATEGORY_ATTRIBUTES = {
                 required: false,
                 options: ['Women', 'Men', 'Unisex', 'Girls', 'Boys'],
                 default: 'Women'
+            },
+            {
+                name: 'closure_type',
+                label: 'Closure Type',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Hook', 'Lobster Clasp', 'Spring Ring', 'Screw Back', 'Push Back', 'Adjustable', 'Tie-up', 'None'],
+                placeholder: 'Select closure type'
             }
         ]
     },
 
-    // Women Wear
+    // ==================== WOMEN WEAR ====================
     'women_wear': {
         label: 'Women Wear',
-        keywords: ['women', 'woman', 'ladies', 'female', 'wear', 'dress', 'kurti', 'suit'],
+        keywords: ['women', 'woman', 'ladies', 'female', 'wear', 'dress', 'kurti', 'suit', 'women wear'],
         fields: [
             {
                 name: 'garment_type',
                 label: 'Garment Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Kurti', 'Salwar Suit', 'Dress', 'Top', 'Blouse', 'Palazzo', 'Lehenga', 'Gown', 'Tunic', 'Indo-Western', 'Skirt', 'Ethnic Set', 'Other'],
+                options: ['Kurti', 'Salwar Suit', 'Anarkali', 'Dress', 'Top', 'Blouse', 'Palazzo', 'Lehenga', 'Gown', 'Tunic', 'Indo-Western', 'Skirt', 'Ethnic Set', 'Sharara', 'Gharara', 'Kaftan', 'Other'],
                 placeholder: 'Select garment type'
             },
             {
@@ -644,7 +734,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Fabric',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Cotton', 'Silk', 'Georgette', 'Chiffon', 'Crepe', 'Rayon', 'Linen', 'Khadi', 'Velvet', 'Net', 'Satin', 'Polyester', 'Blended'],
+                options: ['Cotton', 'Silk', 'Georgette', 'Chiffon', 'Crepe', 'Rayon', 'Linen', 'Khadi', 'Velvet', 'Net', 'Satin', 'Polyester', 'Blended', 'Chanderi', 'Muslin'],
                 placeholder: 'Select fabric'
             },
             {
@@ -652,7 +742,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Available Sizes',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size', 'Custom Size', 'S/M/L/XL', 'All Sizes Available'],
+                options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', 'Free Size', 'Custom Size', 'All Sizes Available'],
                 placeholder: 'Select sizes'
             },
             {
@@ -660,7 +750,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Length',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Short', 'Knee Length', 'Calf Length', 'Ankle Length', 'Floor Length'],
+                options: ['Short', 'Knee Length', 'Calf Length', 'Ankle Length', 'Floor Length', 'Midi'],
                 placeholder: 'Select length'
             },
             {
@@ -668,7 +758,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Sleeve Type',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Sleeveless', 'Half Sleeve', 'Three-Quarter Sleeve', 'Full Sleeve', 'Cap Sleeve', 'Cold Shoulder'],
+                options: ['Sleeveless', 'Half Sleeve', 'Three-Quarter Sleeve', 'Full Sleeve', 'Cap Sleeve', 'Cold Shoulder', 'Bell Sleeve', 'Puff Sleeve'],
                 placeholder: 'Select sleeve type'
             },
             {
@@ -676,7 +766,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Neck Type',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Round Neck', 'V-Neck', 'Boat Neck', 'Collar Neck', 'Mandarin Collar', 'Sweetheart', 'Square Neck', 'Off Shoulder'],
+                options: ['Round Neck', 'V-Neck', 'Boat Neck', 'Collar Neck', 'Mandarin Collar', 'Sweetheart', 'Square Neck', 'Off Shoulder', 'Keyhole', 'Halter'],
                 placeholder: 'Select neck type'
             },
             {
@@ -684,7 +774,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Work/Embellishment',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Embroidery', 'Printed', 'Sequin', 'Stone Work', 'Thread Work', 'Mirror Work', 'Plain', 'Lace', 'Other'],
+                options: ['Embroidery', 'Printed', 'Sequin', 'Stone Work', 'Thread Work', 'Mirror Work', 'Plain', 'Lace', 'Applique', 'Gota Patti', 'Other'],
                 placeholder: 'Select work type'
             },
             {
@@ -692,7 +782,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Occasion',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Casual', 'Party', 'Festive', 'Wedding', 'Office Wear', 'Daily Wear', 'Ethnic'],
+                options: ['Casual', 'Party', 'Festive', 'Wedding', 'Office Wear', 'Daily Wear', 'Ethnic', 'Formal'],
                 placeholder: 'Select occasion'
             },
             {
@@ -700,8 +790,15 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Pattern',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Solid', 'Printed', 'Floral', 'Geometric', 'Striped', 'Checked', 'Abstract', 'Traditional'],
+                options: ['Solid', 'Printed', 'Floral', 'Geometric', 'Striped', 'Checked', 'Abstract', 'Traditional', 'Paisley'],
                 placeholder: 'Select pattern'
+            },
+            {
+                name: 'color',
+                label: 'Primary Color',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., Red, Blue, Multi'
             },
             {
                 name: 'set_includes',
@@ -721,7 +818,7 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Mugs
+    // ==================== MUGS ====================
     'mugs': {
         label: 'Mugs & Cups',
         keywords: ['mug', 'mugs', 'cup', 'cups', 'coffee mug', 'tea mug'],
@@ -731,7 +828,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Mug Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Coffee Mug', 'Tea Cup', 'Travel Mug', 'Beer Mug', 'Couple Mug Set', 'Magic Mug', 'Personalized Mug', 'Kids Mug', 'Other'],
+                options: ['Coffee Mug', 'Tea Cup', 'Travel Mug', 'Beer Mug', 'Couple Mug Set', 'Magic Mug', 'Personalized Mug', 'Kids Mug', 'Thermos', 'Insulated', 'Other'],
                 placeholder: 'Select mug type'
             },
             {
@@ -739,15 +836,15 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Material',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Ceramic', 'Porcelain', 'Glass', 'Stainless Steel', 'Bone China', 'Earthenware', 'Bamboo', 'Plastic (BPA Free)', 'Other'],
+                options: ['Ceramic', 'Porcelain', 'Glass', 'Stainless Steel', 'Bone China', 'Earthenware', 'Bamboo', 'Plastic (BPA Free)', 'Copper', 'Clay', 'Other'],
                 placeholder: 'Select material'
             },
             {
                 name: 'capacity',
-                label: 'Capacity (ml)',
+                label: 'Capacity',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['150ml', '200ml', '250ml', '300ml', '350ml', '400ml', '450ml', '500ml', 'Other'],
+                options: ['100ml', '150ml', '200ml', '250ml', '300ml', '350ml', '400ml', '450ml', '500ml', '600ml', 'Other'],
                 placeholder: 'Select capacity'
             },
             {
@@ -800,181 +897,177 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Flowers
+    // ==================== FLOWERS ====================
     'flowers': {
-        label: 'Flowers & Plants',
-        keywords: ['flower', 'flowers', 'plant', 'plants', 'bouquet', 'floral'],
+        label: 'Flowers',
+        keywords: ['flower', 'flowers', 'bouquet', 'floral', 'rose', 'arrangement'],
         fields: [
             {
-                name: 'product_type',
-                label: 'Product Type',
+                name: 'flower_type',
+                label: 'Flower Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Fresh Bouquet', 'Single Flower', 'Flower Bunch', 'Artificial Flowers', 'Indoor Plant', 'Outdoor Plant', 'Succulent', 'Flowering Plant', 'Decorative Plant', 'Seeds', 'Gift Hamper', 'Other'],
-                placeholder: 'Select product type'
+                options: ['Roses', 'Lilies', 'Orchids', 'Carnations', 'Tulips', 'Sunflowers', 'Gerberas', 'Mixed Flowers', 'Exotic', 'Seasonal', 'Artificial', 'Dried/Preserved', 'Other'],
+                placeholder: 'Select flower type'
             },
             {
-                name: 'flower_type',
-                label: 'Flower/Plant Name',
-                type: FIELD_TYPES.TEXT,
+                name: 'arrangement_type',
+                label: 'Arrangement Type',
+                type: FIELD_TYPES.SELECT,
                 required: true,
-                placeholder: 'e.g., Rose, Lily, Orchid, Money Plant'
+                options: ['Bouquet', 'Basket', 'Vase Arrangement', 'Box', 'Heart Shape', 'Wreath', 'Garland', 'Single Stem', 'Hand Tied', 'Other'],
+                placeholder: 'Select arrangement'
+            },
+            {
+                name: 'quantity',
+                label: 'Number of Stems',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['1', '6', '12', '24', '50', '100', 'Mixed'],
+                placeholder: 'Select quantity'
             },
             {
                 name: 'color',
                 label: 'Color',
-                type: FIELD_TYPES.TEXT,
+                type: FIELD_TYPES.SELECT,
                 required: false,
-                placeholder: 'e.g., Red, Yellow, Mixed'
-            },
-            {
-                name: 'quantity',
-                label: 'Quantity (stems/plants)',
-                type: FIELD_TYPES.NUMBER,
-                required: false,
-                placeholder: 'e.g., 12'
-            },
-            {
-                name: 'freshness_guarantee',
-                label: 'Freshness Guarantee (days)',
-                type: FIELD_TYPES.NUMBER,
-                required: false,
-                placeholder: 'e.g., 5'
+                options: ['Red', 'Pink', 'White', 'Yellow', 'Orange', 'Purple', 'Mixed', 'Custom'],
+                placeholder: 'Select color'
             },
             {
                 name: 'occasion',
                 label: 'Occasion',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Birthday', 'Anniversary', 'Wedding', 'Congratulations', 'Get Well', 'Thank You', 'Love', 'Sympathy', 'Festival', 'Home Decor', 'General'],
+                options: ['Birthday', 'Anniversary', 'Valentine', 'Wedding', 'Sympathy', 'Get Well', 'Thank You', 'Congratulations', 'Just Because', 'Any Occasion'],
                 placeholder: 'Select occasion'
             },
             {
-                name: 'vase_included',
-                label: 'Vase/Pot Included',
+                name: 'freshness_guarantee',
+                label: 'Freshness Guarantee',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['3 Days', '5 Days', '7 Days', '10 Days', '14 Days', 'N/A (Artificial)'],
+                placeholder: 'Select guarantee'
+            },
+            {
+                name: 'add_ons',
+                label: 'Add-ons Included',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., Chocolates, Teddy, Card'
+            },
+            {
+                name: 'same_day_delivery',
+                label: 'Same Day Delivery',
                 type: FIELD_TYPES.SELECT,
                 required: false,
                 options: ['Yes', 'No'],
+                default: 'Yes'
+            },
+            {
+                name: 'is_artificial',
+                label: 'Is Artificial',
+                type: FIELD_TYPES.SELECT,
+                required: true,
+                options: ['Yes', 'No'],
                 default: 'No'
-            },
-            {
-                name: 'care_level',
-                label: 'Care Level (for plants)',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['Easy', 'Moderate', 'Expert', 'N/A'],
-                default: 'N/A'
-            },
-            {
-                name: 'sunlight_requirement',
-                label: 'Sunlight Requirement',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['Full Sun', 'Partial Sun', 'Low Light', 'Indirect Light', 'N/A'],
-                default: 'N/A'
-            },
-            {
-                name: 'fragrance',
-                label: 'Fragrance',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['Highly Fragrant', 'Mildly Fragrant', 'No Fragrance'],
-                placeholder: 'Select fragrance level'
-            },
-            {
-                name: 'delivery_instructions',
-                label: 'Special Delivery Instructions',
-                type: FIELD_TYPES.TEXTAREA,
-                required: false,
-                placeholder: 'Delivery timing, handling requirements, etc.'
             }
         ]
     },
 
-    // Car Accessories
+    // ==================== CAR ACCESSORIES ====================
     'car_accessories': {
         label: 'Car Accessories',
-        keywords: ['car', 'auto', 'vehicle', 'automobile', 'accessories', 'automotive'],
+        keywords: ['car', 'automobile', 'vehicle', 'auto', 'car accessories'],
         fields: [
             {
                 name: 'accessory_type',
                 label: 'Accessory Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Seat Cover', 'Floor Mat', 'Dashboard Accessory', 'Air Freshener', 'Phone Holder', 'Charger', 'Sun Shade', 'Steering Cover', 'Cushion', 'Organizer', 'Cleaning Product', 'Light/LED', 'Mirror', 'Cover', 'Other'],
+                options: ['Seat Cover', 'Floor Mat', 'Steering Cover', 'Dashboard Accessories', 'Car Perfume', 'Mobile Holder', 'Charger', 'Organizer', 'Sun Shade', 'Lights', 'Cleaning Kit', 'Tool Kit', 'Music System', 'Camera', 'Other'],
                 placeholder: 'Select accessory type'
-            },
-            {
-                name: 'material',
-                label: 'Material',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['Leather', 'Faux Leather', 'Fabric', 'Rubber', 'Plastic', 'Silicone', 'Metal', 'Wood', 'Foam', 'Other'],
-                placeholder: 'Select material'
             },
             {
                 name: 'car_compatibility',
                 label: 'Car Compatibility',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Universal Fit', 'Sedan', 'Hatchback', 'SUV', 'MUV', 'Specific Model'],
-                default: 'Universal Fit'
+                options: ['Universal', 'Sedan', 'SUV', 'Hatchback', 'MPV', 'Specific Model'],
+                placeholder: 'Select compatibility'
             },
             {
-                name: 'specific_model',
-                label: 'Specific Car Model (if applicable)',
-                type: FIELD_TYPES.TEXT,
+                name: 'material',
+                label: 'Material',
+                type: FIELD_TYPES.SELECT,
                 required: false,
-                placeholder: 'e.g., Maruti Swift, Hyundai Creta'
+                options: ['Leather', 'Faux Leather', 'Fabric', 'Rubber', 'Plastic', 'Silicone', 'Metal', 'Carbon Fiber', 'Wood', 'Other'],
+                placeholder: 'Select material'
             },
             {
                 name: 'color',
                 label: 'Color',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., Black, Beige, Grey'
+                placeholder: 'e.g., Black, Beige, Brown'
             },
             {
                 name: 'set_includes',
                 label: 'Set Includes',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., Front + Rear Mats, 5 Seat Covers'
+                placeholder: 'e.g., 5 pieces, Front + Rear'
             },
             {
-                name: 'installation',
-                label: 'Installation',
+                name: 'installation_type',
+                label: 'Installation Type',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Easy Self-Install', 'Professional Required', 'No Installation Needed'],
-                default: 'Easy Self-Install'
+                options: ['Easy DIY', 'Professional Required', 'No Installation'],
+                default: 'Easy DIY'
             },
             {
                 name: 'warranty',
-                label: 'Warranty (months)',
-                type: FIELD_TYPES.NUMBER,
+                label: 'Warranty',
+                type: FIELD_TYPES.SELECT,
                 required: false,
-                placeholder: 'e.g., 6'
+                options: ['No Warranty', '6 Months', '1 Year', '2 Years', 'Lifetime'],
+                placeholder: 'Select warranty'
             }
         ]
     },
 
-    // Household Appliances
+    // ==================== HOUSEHOLD APPLIANCES ====================
     'household_appliances': {
         label: 'Household Appliances',
-        keywords: ['household', 'home', 'appliance', 'appliances', 'kitchen', 'domestic'],
+        keywords: ['household', 'home appliance', 'appliance', 'household appliances'],
         fields: [
             {
                 name: 'appliance_type',
                 label: 'Appliance Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Mixer Grinder', 'Juicer', 'Blender', 'Toaster', 'Iron', 'Vacuum Cleaner', 'Fan', 'Heater', 'Cooker', 'Water Purifier', 'Air Purifier', 'Humidifier', 'Other'],
+                options: ['Mixer Grinder', 'Blender', 'Juicer', 'Food Processor', 'Water Purifier', 'Vacuum Cleaner', 'Iron', 'Fan', 'Heater', 'Air Purifier', 'Sewing Machine', 'Other'],
                 placeholder: 'Select appliance type'
             },
             {
+                name: 'brand',
+                label: 'Brand',
+                type: FIELD_TYPES.TEXT,
+                required: true,
+                placeholder: 'Enter brand name'
+            },
+            {
+                name: 'model_number',
+                label: 'Model Number',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'Enter model number'
+            },
+            {
                 name: 'power_watts',
-                label: 'Power (Watts)',
+                label: 'Power Consumption (Watts)',
                 type: FIELD_TYPES.NUMBER,
                 required: false,
                 placeholder: 'e.g., 750'
@@ -984,41 +1077,33 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Voltage',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['220-240V', '110-120V', 'Multi-Voltage'],
+                options: ['220-240V', '110-120V', 'Universal'],
                 default: '220-240V'
             },
             {
-                name: 'capacity',
+                name: 'capacity_size',
                 label: 'Capacity/Size',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., 3 Liters, 5 kg'
+                placeholder: 'e.g., 1.5L, 4 Jars'
             },
             {
                 name: 'color',
                 label: 'Color',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., White, Black, Silver'
+                placeholder: 'e.g., Black, White, Silver'
             },
             {
                 name: 'features',
                 label: 'Key Features',
                 type: FIELD_TYPES.TEXTAREA,
                 required: false,
-                placeholder: 'List key features, e.g., 3 speed settings, auto shut-off'
-            },
-            {
-                name: 'energy_rating',
-                label: 'Energy Star Rating',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['5 Star', '4 Star', '3 Star', '2 Star', '1 Star', 'Not Rated'],
-                placeholder: 'Select rating'
+                placeholder: 'List special features'
             },
             {
                 name: 'warranty_years',
-                label: 'Warranty (years)',
+                label: 'Product Warranty',
                 type: FIELD_TYPES.SELECT,
                 required: false,
                 options: ['1 Year', '2 Years', '3 Years', '5 Years', 'No Warranty'],
@@ -1026,7 +1111,7 @@ export const CATEGORY_ATTRIBUTES = {
             },
             {
                 name: 'motor_warranty',
-                label: 'Motor Warranty (years)',
+                label: 'Motor Warranty (if applicable)',
                 type: FIELD_TYPES.SELECT,
                 required: false,
                 options: ['2 Years', '3 Years', '5 Years', '10 Years', 'Lifetime', 'N/A'],
@@ -1043,17 +1128,17 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Electrical Appliances
+    // ==================== ELECTRICAL APPLIANCES ====================
     'electrical_appliances': {
         label: 'Electrical Appliances',
-        keywords: ['electrical', 'electric', 'electronic', 'electronics', 'appliance'],
+        keywords: ['electrical', 'electric', 'electronic', 'electronics', 'electrical appliances'],
         fields: [
             {
                 name: 'appliance_type',
                 label: 'Appliance Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['TV', 'Refrigerator', 'Washing Machine', 'AC', 'Microwave', 'Oven', 'Geyser', 'Inverter', 'UPS', 'Fan', 'Cooler', 'LED Bulb', 'Tube Light', 'Other'],
+                options: ['TV', 'Refrigerator', 'Washing Machine', 'AC', 'Microwave', 'Oven', 'Geyser', 'Inverter', 'UPS', 'Fan', 'Cooler', 'LED Bulb', 'Tube Light', 'Laptop', 'Mobile Phone', 'Speaker', 'Other'],
                 placeholder: 'Select appliance type'
             },
             {
@@ -1108,7 +1193,7 @@ export const CATEGORY_ATTRIBUTES = {
             },
             {
                 name: 'warranty_years',
-                label: 'Product Warranty (years)',
+                label: 'Product Warranty',
                 type: FIELD_TYPES.SELECT,
                 required: false,
                 options: ['1 Year', '2 Years', '3 Years', '5 Years', 'No Warranty'],
@@ -1133,7 +1218,7 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Kids
+    // ==================== KIDS ====================
     'kids': {
         label: 'Kids Products',
         keywords: ['kids', 'kid', 'children', 'child', 'baby', 'toddler', 'infant'],
@@ -1143,7 +1228,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Product Type',
                 type: FIELD_TYPES.SELECT,
                 required: true,
-                options: ['Clothing', 'Toy', 'Book', 'School Supplies', 'Footwear', 'Accessories', 'Baby Care', 'Feeding', 'Nursery', 'Gift Set', 'Educational', 'Other'],
+                options: ['Clothing', 'Toy', 'Book', 'School Supplies', 'Footwear', 'Accessories', 'Baby Care', 'Feeding', 'Nursery', 'Gift Set', 'Educational', 'Games', 'Other'],
                 placeholder: 'Select product type'
             },
             {
@@ -1167,7 +1252,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Size (if applicable)',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'e.g., 2-3 years, 24 inches'
+                placeholder: 'e.g., 2-3 years, 18 inches'
             },
             {
                 name: 'material',
@@ -1181,16 +1266,8 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Safety Certified',
                 type: FIELD_TYPES.SELECT,
                 required: false,
-                options: ['Yes (ISI)', 'Yes (BIS)', 'Yes (International)', 'Not Certified'],
+                options: ['Yes (BIS)', 'Yes (CE)', 'Yes (ASTM)', 'No', 'Not Required'],
                 placeholder: 'Select certification'
-            },
-            {
-                name: 'bpa_free',
-                label: 'BPA Free (for feeding/toys)',
-                type: FIELD_TYPES.SELECT,
-                required: false,
-                options: ['Yes', 'No', 'N/A'],
-                default: 'N/A'
             },
             {
                 name: 'theme',
@@ -1216,7 +1293,77 @@ export const CATEGORY_ATTRIBUTES = {
         ]
     },
 
-    // Default fallback for unmatched categories
+    // ==================== ANNIVERSARY GIFTS ====================
+    'anniversary_gifts': {
+        label: 'Anniversary Gifts',
+        keywords: ['anniversary', 'gift', 'gifts', 'anniversary gifts', 'couple', 'love'],
+        fields: [
+            {
+                name: 'gift_type',
+                label: 'Gift Type',
+                type: FIELD_TYPES.SELECT,
+                required: true,
+                options: ['Photo Frame', 'Personalized Gift', 'Couple Gift Set', 'Jewelry', 'Home Decor', 'Flowers', 'Cake', 'Hamper', 'Experience Gift', 'Customized Item', 'Watch', 'Perfume', 'Other'],
+                placeholder: 'Select gift type'
+            },
+            {
+                name: 'anniversary_year',
+                label: 'Anniversary Year (if specific)',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['1st', '5th', '10th', '25th (Silver)', '50th (Golden)', 'Any Anniversary'],
+                placeholder: 'Select year'
+            },
+            {
+                name: 'personalization',
+                label: 'Personalization Available',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes - Name/Text', 'Yes - Photo', 'Yes - Both', 'No'],
+                default: 'No'
+            },
+            {
+                name: 'recipient',
+                label: 'For',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Husband', 'Wife', 'Couple', 'Parents', 'Grandparents', 'Friends', 'Anyone'],
+                placeholder: 'Select recipient'
+            },
+            {
+                name: 'material',
+                label: 'Material',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., Wood, Metal, Crystal'
+            },
+            {
+                name: 'size_dimensions',
+                label: 'Size/Dimensions',
+                type: FIELD_TYPES.TEXT,
+                required: false,
+                placeholder: 'e.g., 8x10 inches'
+            },
+            {
+                name: 'gift_wrapping',
+                label: 'Gift Wrapping Available',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes - Free', 'Yes - Paid', 'No'],
+                default: 'Yes - Free'
+            },
+            {
+                name: 'message_card',
+                label: 'Message Card Included',
+                type: FIELD_TYPES.SELECT,
+                required: false,
+                options: ['Yes', 'No'],
+                default: 'Yes'
+            }
+        ]
+    },
+
+    // ==================== DEFAULT (FALLBACK) ====================
     'default': {
         label: 'General Product',
         keywords: [],
@@ -1254,14 +1401,7 @@ export const CATEGORY_ATTRIBUTES = {
                 label: 'Color',
                 type: FIELD_TYPES.TEXT,
                 required: false,
-                placeholder: 'Product color'
-            },
-            {
-                name: 'occasion',
-                label: 'Occasion/Use',
-                type: FIELD_TYPES.TEXT,
-                required: false,
-                placeholder: 'When/where to use this product'
+                placeholder: 'Primary color'
             },
             {
                 name: 'handmade',
@@ -1270,116 +1410,81 @@ export const CATEGORY_ATTRIBUTES = {
                 required: false,
                 options: ['Yes', 'No'],
                 default: 'No'
-            },
-            {
-                name: 'warranty',
-                label: 'Warranty',
-                type: FIELD_TYPES.TEXT,
-                required: false,
-                placeholder: 'Warranty period if applicable'
-            },
-            {
-                name: 'special_features',
-                label: 'Special Features',
-                type: FIELD_TYPES.TEXTAREA,
-                required: false,
-                placeholder: 'Any special features or highlights'
             }
         ]
     }
 };
 
 /**
- * Get attributes for a given category
- * @param {string} categoryName - The category name from the product
- * @returns {object} - The matching category attributes or default
+ * Get attributes configuration for a given category name
+ * Matches against exact keys, keywords, and display names
  */
 export const getAttributesForCategory = (categoryName) => {
-    if (!categoryName) return CATEGORY_ATTRIBUTES.default;
-
-    const normalizedName = categoryName.toLowerCase().trim();
-
-    // Direct match first
-    const directMatch = Object.keys(CATEGORY_ATTRIBUTES).find(key =>
-        normalizedName === key.replace(/_/g, ' ') ||
-        normalizedName.replace(/\s+/g, '_') === key ||
-        normalizedName.replace(/\s+/g, '') === key.replace(/_/g, '')
-    );
-
-    if (directMatch) {
-        return CATEGORY_ATTRIBUTES[directMatch];
+    if (!categoryName) {
+        return CATEGORY_ATTRIBUTES['default'];
     }
 
-    // Keyword matching
+    const searchName = categoryName.toLowerCase().trim();
+
+    // Step 1: Try exact key match
+    if (CATEGORY_ATTRIBUTES[searchName]) {
+        return CATEGORY_ATTRIBUTES[searchName];
+    }
+
+    // Step 2: Try exact label match (case-insensitive)
     for (const [key, config] of Object.entries(CATEGORY_ATTRIBUTES)) {
-        if (key === 'default') continue;
-
-        const keywords = config.keywords || [];
-        const matchesKeyword = keywords.some(keyword =>
-            normalizedName.includes(keyword.toLowerCase()) ||
-            keyword.toLowerCase().includes(normalizedName)
-        );
-
-        if (matchesKeyword) {
+        if (config.label && config.label.toLowerCase() === searchName) {
             return config;
         }
     }
 
-    // Check if category name contains any key category terms
-    const categoryMappings = {
-        'teaware': 'handcrafted_teawares',
+    // Step 3: Try keyword matching
+    for (const [key, config] of Object.entries(CATEGORY_ATTRIBUTES)) {
+        if (config.keywords && config.keywords.length > 0) {
+            for (const keyword of config.keywords) {
+                if (searchName.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(searchName)) {
+                    return config;
+                }
+            }
+        }
+    }
+
+    // Step 4: Common term mapping
+    const categoryMapping = {
+        'bamboo and canes': 'bamboo_canes',
         'bamboo': 'bamboo_canes',
-        'cane': 'bamboo_canes',
-        'cake': 'cakes',
-        'saree': 'sarees',
-        'sari': 'sarees',
-        'banarasi': 'banarasi_saree',
-        'banaras': 'banarasi_saree',
-        'shawl': 'shawls',
-        'stole': 'shawls',
-        'jewel': 'tripura_jewellery',
-        'tripura': 'tripura_jewellery',
-        'women': 'women_wear',
+        'handcrafted teawares': 'handcrafted_teawares',
+        'teawares': 'handcrafted_teawares',
+        'tripura jewellery': 'tripura_jewellery',
+        'jewellery': 'tripura_jewellery',
+        'jewelry': 'tripura_jewellery',
+        'women wear': 'women_wear',
         'ladies': 'women_wear',
-        'kurti': 'women_wear',
-        'dress': 'women_wear',
-        'mug': 'mugs',
-        'cup': 'mugs',
-        'flower': 'flowers',
-        'plant': 'flowers',
-        'bouquet': 'flowers',
-        'car': 'car_accessories',
-        'auto': 'car_accessories',
-        'vehicle': 'car_accessories',
-        'household': 'household_appliances',
-        'home appliance': 'household_appliances',
-        'kitchen': 'household_appliances',
-        'electrical': 'electrical_appliances',
-        'electronic': 'electrical_appliances',
-        'electric': 'electrical_appliances',
-        'kid': 'kids',
-        'child': 'kids',
-        'baby': 'kids',
-        'toy': 'kids'
+        'womens': 'women_wear',
+        'banarasi saree': 'banarasi_saree',
+        'banarasi': 'banarasi_saree',
+        'household appliances': 'household_appliances',
+        'electrical appliances': 'electrical_appliances',
+        'anniversary gifts': 'anniversary_gifts',
+        'car accessories': 'car_accessories',
+        'kitchen appliances': 'kitchen_appliances',
+        'mixer grinder': 'household_appliances',
+        'grinder': 'household_appliances',
     };
 
-    for (const [term, categoryKey] of Object.entries(categoryMappings)) {
-        if (normalizedName.includes(term)) {
+    if (categoryMapping[searchName]) {
+        return CATEGORY_ATTRIBUTES[categoryMapping[searchName]];
+    }
+
+    // Step 5: Partial match on category mapping keys
+    for (const [mappedName, categoryKey] of Object.entries(categoryMapping)) {
+        if (searchName.includes(mappedName) || mappedName.includes(searchName)) {
             return CATEGORY_ATTRIBUTES[categoryKey];
         }
     }
 
-    return CATEGORY_ATTRIBUTES.default;
+    // Default fallback
+    return CATEGORY_ATTRIBUTES['default'];
 };
 
-/**
- * Get all available category configurations
- * @returns {object} - All category attributes
- */
-export const getAllCategories = () => CATEGORY_ATTRIBUTES;
-
-/**
- * Get common fields
- * @returns {array} - Common fields for all products
- */
-export const getCommonFields = () => COMMON_FIELDS;
+export default CATEGORY_ATTRIBUTES;

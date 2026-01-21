@@ -1,19 +1,25 @@
 import React from "react";
-import { getAttributesForCategory } from "../../utils/categoryAttributes.js";
+import { getAttributesForCategory } from "../../utils/categoryAttributes";
 
 const DynamicSpecifications = ({ product }) => {
-  if (!product?.attributes || !product?.categoryname?.name) return null;
+  const attributes = product?.attributes || {};
 
-  const categoryConfig = getAttributesForCategory(product.categoryname.name);
-  const attributes = product.attributes;
+  const categoryName =
+    typeof product?.categoryname === "string"
+      ? product.categoryname
+      : product?.categoryname?.name;
 
-  // sirf filled values
+  if (!categoryName) return null;
+
+  const categoryConfig = getAttributesForCategory(categoryName);
+  if (!categoryConfig?.fields?.length) return null;
+
   const visibleFields = categoryConfig.fields.filter(field => {
     const value = attributes[field.name];
     return value !== undefined && value !== null && value !== "";
   });
 
-  if (visibleFields.length === 0) return null;
+  if (!visibleFields.length) return null;
 
   return (
     <div className="bg-gray-50 rounded-2xl p-6">
@@ -22,11 +28,8 @@ const DynamicSpecifications = ({ product }) => {
       </h3>
 
       <div className="space-y-3">
-        {visibleFields.map((field) => (
-          <div
-            key={field.name}
-            className="flex justify-between border-b border-gray-200 py-2 last:border-0"
-          >
+        {visibleFields.map(field => (
+          <div key={field.name} className="flex justify-between py-2 border-b last:border-0">
             <span className="text-gray-500">{field.label}</span>
             <span className="text-gray-800 font-medium">
               {Array.isArray(attributes[field.name])

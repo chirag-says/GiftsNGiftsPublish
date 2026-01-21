@@ -21,11 +21,13 @@ import { MdClose } from "react-icons/md";
 import { FaFacebookF, FaTwitter, FaWhatsapp, FaLink } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/Appcontext";
+import { getStaticSpecifications } from "../../utils/productSpecifications.js";
 
 // Extracted Sub-Components
 import ProductImageGallery from "./ProductImageGallery";
 import ProductInfoSection from "./ProductInfoSection";
 import ReviewList from "./ReviewList";
+import DynamicSpecifications from "./DynamicSpecifications";
 
 /**
  * ProductSkeleton Component
@@ -294,34 +296,46 @@ function ProductDetail() {
       toast.error("Failed to update wishlist");
     }
   };
-
   const handleAddToCart = async () => {
+
+    // 🔴 CASE 1: NOT LOGGED IN
     if (!isLoggedin) {
       toast.warning("Please login to add to cart");
-      navigate("/login", { state: { from: location } });
+
+      navigate("/login", {
+        state: {
+          pendingCart: {
+            productId: product._id,
+            quantity,
+          },
+          redirectTo: "/cartlist",
+        },
+      });
       return;
     }
 
-    if (product.stock <= 0) {
-      toast.error("Product is out of stock");
-      return;
-    }
-
-    setIsAddingToCart(true);
-
+    // 🟢 CASE 2: ALREADY LOGGED IN
     try {
-      await api.post(
-        `/api/auth/Cart`,
-        { productId: product._id, quantity }
-      );
+      setIsAddingToCart(true);
+
+      await api.post("/api/auth/cart", {
+        productId: product._id,
+        quantity,
+      });
+
+      await fetchCart();
       toast.success("Added to cart!");
-      if (fetchCart) fetchCart();
+
+      // 🚀 DIRECT CART REDIRECT
+      navigate("/cartlist");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to add to cart");
     } finally {
       setIsAddingToCart(false);
     }
   };
+
+
 
   const handleShare = (platform) => {
     const url = window.location.href;
@@ -436,7 +450,7 @@ function ProductDetail() {
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-6 sm:mt-8 bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
+        <div className="mt-6 !bg-white sm:mt-8  rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
           {/* Tab Headers */}
           <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto" role="tablist">
             {["Description", "Specifications", "Reviews"].map((tab, idx) => (
@@ -515,51 +529,38 @@ function ProductDetail() {
 
             {/* Specifications */}
             {activeTab === 1 && (
-              <div className="grid md:grid-cols-2 gap-6" role="tabpanel" id="tabpanel-1">
-                <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
-                    <HiOutlineBadgeCheck className="text-indigo-600" />
-                    Product Details
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Brand", value: product.brand },
-                      { label: "Size", value: product.size },
-                      { label: "Material", value: product.materialComposition },
-                      { label: "Dimensions", value: product.productDimensions || product.itemDimensionsLxWxH },
-                      { label: "Weight", value: product.itemWeight },
-                      { label: "Net Quantity", value: product.netQuantity },
-                    ].filter(spec => spec.value).map((spec, idx) => (
-                      <div key={idx} className="flex justify-between py-3 border-b border-gray-200 last:border-0">
-                        <span className="text-gray-500">{spec.label}</span>
-                        <span className="text-gray-800 font-medium">{spec.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+  <div className="grid lg:grid-cols-2 gap-8">
 
-                <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
-                    <HiTag className="text-purple-600" />
-                    Additional Info
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Manufacturer", value: product.manufacturer },
-                      { label: "Country of Origin", value: product.countryOfOrigin },
-                      { label: "Department", value: product.department },
-                      { label: "ASIN", value: product.asin },
-                      { label: "Packer", value: product.packer },
-                    ].filter(spec => spec.value).map((spec, idx) => (
-                      <div key={idx} className="flex justify-between py-3 border-b border-gray-200 last:border-0">
-                        <span className="text-gray-500">{spec.label}</span>
-                        <span className="text-gray-800 font-medium">{spec.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+    {/* STATIC PRODUCT DETAILS */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+        📋 Product Specifications
+      </h3>
+
+      <div className="divide-y divide-gray-200">
+        {getStaticSpecifications(product).map((spec, idx) => (
+          <div
+            key={idx}
+            className="flex justify-between gap-6 py-3 text-sm"
+          >
+            <span className="text-gray-500 w-1/2">
+              {spec.label}
+            </span>
+            <span className="text-gray-900 font-medium w-1/2 text-right break-words">
+              {spec.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* DYNAMIC CATEGORY-WISE SPECIFICATIONS */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <DynamicSpecifications product={product} />
+    </div>
+
+  </div>
+)}
 
             {/* Reviews */}
             {activeTab === 2 && (

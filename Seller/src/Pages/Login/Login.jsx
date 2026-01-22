@@ -34,6 +34,7 @@ function Login() {
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
     const [pincode, setPincode] = useState('');
+const [tempToken, setTempToken] = useState(null);
 
     // Use onLoginSuccess instead of setatoken
     const { onLoginSuccess } = useContext(Admincontext);
@@ -127,155 +128,77 @@ function Login() {
         setConfirmPassword('');
     };
 
-    // Registration handler with comprehensive validation
-    const registerSubmit = async (e) => {
-        e.preventDefault();
-
-        // ============== VALIDATION RULES ==============
-
-        // Check all required fields
-        if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode) {
-            toast.error("All fields are required");
-            return;
-        }
-
-        // Name validation: minimum 2 characters, only letters and spaces
-        const trimmedName = name.trim();
-        if (trimmedName.length < 2) {
-            toast.error("Owner name must be at least 2 characters");
-            return;
-        }
-        if (!/^[a-zA-Z\s]+$/.test(trimmedName)) {
-            toast.error("Owner name should only contain letters and spaces");
-            return;
-        }
-
-        // Brand/Shop Name validation: minimum 2 characters
-        const trimmedNickName = nickName.trim();
-        if (trimmedNickName.length < 2) {
-            toast.error("Brand name must be at least 2 characters");
-            return;
-        }
-
-        // Phone validation: exactly 10 digits
-        const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits
-        if (cleanPhone.length !== 10) {
-            toast.error("Phone number must be exactly 10 digits");
-            return;
-        }
-        if (!/^[6-9]/.test(cleanPhone)) {
-            toast.error("Phone number must start with 6, 7, 8, or 9");
-            return;
-        }
-
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
-            toast.error("Please enter a valid email address");
-            return;
-        }
-
-        // Password validation: minimum 8 characters
-        if (password.length < 8) {
-            toast.error("Password must be at least 8 characters");
-            return;
-        }
-        // Password strength check (at least one letter and one number)
-        if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-            toast.error("Password must contain at least one letter and one number");
-            return;
-        }
-
-        // Street validation: minimum 5 characters
-        if (street.trim().length < 5) {
-            toast.error("Please enter a valid street address (at least 5 characters)");
-            return;
-        }
-
-        // City validation: minimum 2 characters, only letters
-        if (city.trim().length < 2 || !/^[a-zA-Z\s]+$/.test(city.trim())) {
-            toast.error("Please enter a valid city name");
-            return;
-        }
-
-        // State validation: minimum 2 characters, only letters
-        if (state.trim().length < 2 || !/^[a-zA-Z\s]+$/.test(state.trim())) {
-            toast.error("Please enter a valid state name");
-            return;
-        }
-
-        // Pincode validation: exactly 6 digits
-        const cleanPincode = pincode.toString().replace(/\D/g, '');
-        if (cleanPincode.length !== 6) {
-            toast.error("Pincode must be exactly 6 digits");
-            return;
-        }
-
-        // ============== SUBMIT REGISTRATION ==============
-        try {
-            const { data } = await api.post("/api/seller/register", {
-                name: trimmedName,
-                email: email.trim().toLowerCase(),
-                password,
-                nickName: trimmedNickName,
-                phone: cleanPhone,
-                street: street.trim(),
-                city: city.trim(),
-                state: state.trim(),
-                pincode: cleanPincode
-            });
-            if (data.success) {
-                toast.success(data.message);
-                setIsOtpScreen(true);
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Registration failed");
-        }
-    };
-
-    // OTP verification handler
-    const verifyOtp = async (e) => {
-        e.preventDefault();
-        try {
-            const { data } = await api.post("/api/seller/verify-otp", {
-                email, otp
-            });
-            if (data.success) {
-                // Token is set via HttpOnly cookie by server
-                // Use onLoginSuccess to update context state
-                onLoginSuccess(data.user);
-                navigate("/seller-profile");
-                toast.success("OTP verified, login success");
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || "OTP verification failed");
-        }
-    };
-
-    // Login handler
     const loginSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const { data } = await api.post("/api/seller/login", {
-                email, password
-            });
-            if (data.success) {
-                // Token is set via HttpOnly cookie by server
-                // Use onLoginSuccess to update context state
-                onLoginSuccess(data.user);
-                navigate("/");
-                toast.success("Login successful");
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Login failed");
-        }
-    };
+  e.preventDefault();
+  try {
+    const { data } = await api.post("/api/seller/login", { email, password });
+
+    if (data.success) {
+      onLoginSuccess(data.user);
+      toast.success("Login successful");
+      navigate("/");
+    } else {
+      toast.error(data.message);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Login failed");
+  }
+};
+
+const registerSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const { data } = await api.post("/api/seller/register", {
+      name,
+      email,
+      password,
+      nickName,
+      phone,
+      street,
+      city,
+      state,
+      pincode,
+    });
+
+    if (data.success) {
+      toast.success("OTP sent to email");
+      setTempToken(data.tempToken);   // ✅ IMPORTANT
+      setIsOtpScreen(true);
+    } else {
+      toast.error(data.message);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Registration failed");
+  }
+};
+
+const verifyOtp = async (e) => {
+  e.preventDefault();
+
+  if (!tempToken) {
+    toast.error("OTP session expired. Please register again.");
+    return;
+  }
+
+  try {
+    const { data } = await api.post("/api/seller/verify-otp", {
+      otp,
+      tempToken, // ✅ REQUIRED
+    });
+
+    if (data.success) {
+      onLoginSuccess(data.user);
+      toast.success("Account verified & Registration successfully ..");
+      navigate("/seller-profile");
+    } else {
+      toast.error(data.message);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || "OTP failed");
+  }
+};
+
+
     // ------------------------------------------
 
     // Helper function for input classes (Padding reduced from p-3 to p-2.5 for smaller height)

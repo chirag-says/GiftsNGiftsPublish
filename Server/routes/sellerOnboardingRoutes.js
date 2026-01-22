@@ -5,7 +5,7 @@
 
 import express from "express";
 import authseller from "../middleware/authseller.js";
-import upload, { secureDocumentUpload } from "../middleware/multer.js";
+import upload from "../middleware/multer.js";
 import {
     // Onboarding Status
     getOnboardingStatus,
@@ -50,7 +50,6 @@ import {
     updateRegulatedLicense,
     uploadRegulatedLicenseDocument,
     getRegulatedLicenses,
-    removeDocument,
     getSellerAllDocuments,
 } from "../controller/sellerOnboardingController.js";
 
@@ -68,34 +67,15 @@ sellerOnboardingRouter.put("/business-info", authseller, updateBusinessInfo);
 
 // ========================= DOCUMENT UPLOADS =========================
 sellerOnboardingRouter.get("/documents", authseller, getDocumentsStatus);
-sellerOnboardingRouter.post(
-  "/documents/kyc",
-  authseller,
-  ...secureDocumentUpload.single("document"),
-  uploadKycDocument
-);
-sellerOnboardingRouter.post(
-  "/documents/tax",
-  authseller,
-  ...secureDocumentUpload.single("document"),
-  uploadTaxDocument
-);
-sellerOnboardingRouter.post(
-  "/documents/general",
-  authseller,
-  ...secureDocumentUpload.single("document"),
-  uploadDocument
-);
+sellerOnboardingRouter.post("/documents/kyc", authseller, upload.single("document"), uploadKycDocument);
+sellerOnboardingRouter.post("/documents/tax", authseller, upload.single("document"), uploadTaxDocument);
+sellerOnboardingRouter.post("/documents/general", authseller, upload.single("document"), uploadDocument);
 
 // ========================= BANK DETAILS =========================
 sellerOnboardingRouter.get("/bank-details", authseller, getBankDetails);
 sellerOnboardingRouter.put("/bank-details", authseller, updateBankDetails);
-sellerOnboardingRouter.post(
-  "/bank-details/cancelled-cheque",
-  authseller,
-  ...secureDocumentUpload.single("cheque"),
-  uploadCancelledCheque
-);
+sellerOnboardingRouter.post("/bank-details/cancelled-cheque", authseller, upload.single("cheque"), uploadCancelledCheque);
+
 // ========================= DECLARATIONS =========================
 sellerOnboardingRouter.get("/declarations", authseller, getDeclarations);
 sellerOnboardingRouter.post("/declarations", authseller, acceptDeclarations);
@@ -112,30 +92,16 @@ sellerOnboardingRouter.delete("/warehouses/:index", authseller, removeWarehouse)
 
 // ========================= BRAND AUTHORIZATION =========================
 sellerOnboardingRouter.post("/brands", authseller, addBrandAuthorization);
-sellerOnboardingRouter.post(
-  "/brands/document",
-  authseller,
-  ...secureDocumentUpload.single("document"),
-  uploadBrandDocument
-);
+sellerOnboardingRouter.post("/brands/document", authseller, upload.single("document"), uploadBrandDocument);
+
 // ========================= REGULATED LICENSES =========================
 sellerOnboardingRouter.get("/licenses", authseller, getRegulatedLicenses);
 sellerOnboardingRouter.put("/licenses", authseller, updateRegulatedLicense);
-sellerOnboardingRouter.post(
-  "/licenses/document",
-  authseller,
-  ...secureDocumentUpload.single("document"),
-  uploadRegulatedLicenseDocument
-);
-sellerOnboardingRouter.delete(
-  "/documents/:category/:documentType",
-  authseller,
-  removeDocument
-);
-
+sellerOnboardingRouter.post("/licenses/document", authseller, upload.single("document"), uploadRegulatedLicenseDocument);
 sellerOnboardingRouter.get(
   "/documents/all",
   authseller,
   getSellerAllDocuments
 );
 export default sellerOnboardingRouter;
+

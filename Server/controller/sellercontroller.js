@@ -8,167 +8,131 @@ import orderModel from "../model/order.js";
 import usermodel from "../model/mongobd_usermodel.js";
 import { sendEmail } from "../config/mail.js";
 import SellerNotification from "../model/sellerNotification.js";
+// ================= UNIQUE SELLER ID GENERATOR =================
+const generateSellerUniqueId = (pincode, nickName) => {
+  const pinSuffix = pincode.toString().slice(-3);        // last 3 digits of pincode
+  const shopInitial = nickName.charAt(0).toUpperCase();  // first letter of nickname
+  const randomDigits = Math.floor(10 + Math.random() * 90); // 2 random digits
+
+  return `GNGDEL${pinSuffix}${shopInitial}${randomDigits}`;
+};
+
+const SELLER_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: "/"
+};
+
 
 
 // ========================= REGISTER SELLER =========================
+// ========================= REGISTER SELLER (OTP ONLY) =========================
 export const registerseller = async (req, res) => {
   try {
-    // Extract fields from request body
     const { name, email, password, nickName, phone, street, city, state, pincode, region } = req.body;
 
-    if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode)
-      return res.json({ success: false, message: "All fields including Address are required." });
-
-    // SECURITY: Type check to prevent NoSQL injection
-    if (typeof email !== 'string' || typeof password !== 'string') {
-      return res.json({ success: false, message: "Invalid input format" });
+    if (!name || !email || !password || !nickName || !phone || !street || !city || !state || !pincode) {
+      return res.json({ success: false, message: "All fields are required" });
     }
 
-    // SECURITY: Sanitize and validate email
     const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
     if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
       return res.json({ success: false, message: "Invalid email format" });
     }
 
-    // SECURITY: Validate password strength
+    const existing = await sellermodel.findOne({ email: sanitizedEmail });
+    if (existing) {
+      return res.json({ success: false, message: "Seller already exists" });
+    }
+
     if (password.length < 8) {
       return res.json({ success: false, message: "Password must be at least 8 characters" });
     }
 
-    // Use sanitized email for query
-    const existing = await sellermodel.findOne({ email: sanitizedEmail });
-    if (existing) return res.json({ success: false, message: "Seller already exists" });
-
-    // UNIQUE ID GENERATION LOGIC
-    // Logic: GNGDEL + Last 3 Digits of Pincode + First letter of Shop/Brand Name (nickName)
-    const pinSuffix = pincode.toString().slice(-3);
-    const shopInitial = nickName.charAt(0).toUpperCase();
-
-    // Append 2 random digits to ensure database uniqueness
-    const randomDigits = Math.floor(10 + Math.random() * 90);
-    const generatedId = `GNGDEL${pinSuffix}${shopInitial}${randomDigits}`;
-
-    const hashed = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const seller = await sellermodel.create({
-      uniqueId: generatedId,
-      name: name.trim(),
-      email: sanitizedEmail, // Use sanitized email
-      password: hashed,
-      nickName: nickName.trim(),
-      phone,
-      region: region,
-      otp,
-      otpExpire: Date.now() + 10 * 60 * 1000,
-      verified: false,
-      address: { street, city, state, pincode },
-      lastLogin: Date.now()
-    });
+    // 🔐 TEMP REGISTRATION TOKEN (10 mins)
+    const tempToken = jwt.sign(
+      {
+        name,
+        email: sanitizedEmail,
+        password,
+        nickName,
+        phone,
+        street,
+        city,
+        state,
+        pincode,
+        region,
+        otp
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
 
-    await sendEmail(sanitizedEmail, "Your OTP Verification Code", `
-            <h1>Welcome to GNG!</h1>
-            <p>Your OTP is <b>${otp}</b></p>
-            <p>Your Unique Seller ID is: <b>${generatedId}</b></p>
-        `);
+    await sendEmail(
+      sanitizedEmail,
+      "Verify your Seller Account",
+      `<p>Your OTP is <b>${otp}</b></p>`
+    );
 
     res.json({
       success: true,
-      message: "Registered successfully",
-      uniqueId: generatedId,
-      email: sanitizedEmail
+      message: "OTP sent to email",
+      tempToken
     });
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    res.status(500).json({ success: false, message: "Registration failed. Please try again." });
+    res.status(500).json({ success: false, message: "Registration failed" });
   }
 };
+
 
 // ========================= LOGIN SELLER =========================
 export const loginseller = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // SECURITY: Type check to prevent NoSQL injection
-    if (typeof email !== 'string' || typeof password !== 'string') {
-      return res.json({ success: false, message: "Invalid credentials" });
-    }
-
-    // SECURITY: Sanitize email
-    const sanitizedEmail = validator.normalizeEmail(email.trim().toLowerCase());
-    if (!sanitizedEmail || !validator.isEmail(sanitizedEmail)) {
+    const sanitizedEmail = validator.normalizeEmail(email?.trim().toLowerCase());
+    if (!sanitizedEmail || !password) {
       return res.json({ success: false, message: "Invalid credentials" });
     }
 
     const seller = await sellermodel.findOne({ email: sanitizedEmail });
-
-    if (!seller) return res.json({ success: false, message: "Invalid credentials" });
-
-    // SECURITY: Check if seller is blocked
-    if (seller.isBlocked) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account has been blocked. Contact support."
-      });
+    if (!seller) {
+      return res.json({ success: false, message: "Invalid credentials" });
     }
 
-    // SECURITY: Check if seller is suspended
-    if (seller.status === 'Suspended') {
-      return res.status(403).json({
-        success: false,
-        message: "Your account has been suspended. Contact support."
-      });
-    }
-
-    if (!seller.verified) {
-      return res.json({
-        success: false,
-        message: "Please verify your email first",
-        requiresVerification: true,
-        email: sanitizedEmail
-      });
+    if (seller.isBlocked || seller.status === "Suspended") {
+      return res.status(403).json({ success: false, message: "Account access denied" });
     }
 
     const match = await bcrypt.compare(password, seller.password);
-    if (!match) return res.json({ success: false, message: "Invalid credentials" });
-
-    // INACTIVITY CHECK LOGIC
-    let responseMessage = "Login successful";
-
-    if (seller.lastLogin) {
-      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 Days
-      const timeDiff = Date.now() - new Date(seller.lastLogin).getTime();
-
-      if (timeDiff > thirtyDaysInMs) {
-        responseMessage = "You have not done any transaction in one month. How can we assist you?";
-      }
+    if (!match) {
+      return res.json({ success: false, message: "Invalid credentials" });
     }
 
-    // Update Last Login to current time
     seller.lastLogin = Date.now();
     await seller.save();
 
-    // SECURITY: JWT with role and expiry (7 days)
-    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: seller._id, role: "seller" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // SECURITY: Token is ONLY set via HttpOnly cookie - never in response body
-    // Cross-origin cookie settings for frontend on different port
-    res.cookie("stoken", token, {
-      httpOnly: true,
-      secure: true,              // Required for SameSite=None (works on localhost too)
-      sameSite: "none",          // Required for cross-origin (different ports)
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/"
-    });
+    res.cookie("stoken", token, SELLER_COOKIE_OPTIONS);
 
     res.json({
       success: true,
-      message: responseMessage,
+      message: "Login successful",
       user: {
+        id: seller._id,
         name: seller.name,
         email: seller.email,
-        id: seller._id,
         uniqueId: seller.uniqueId,
         region: seller.region
       }
@@ -176,49 +140,96 @@ export const loginseller = async (req, res) => {
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-    res.status(500).json({ success: false, message: "Login failed. Please try again." });
+    res.status(500).json({ success: false, message: "Login failed" });
   }
 };
-
-// (Keep verifyOtp, getSeller, etc. exactly as they were in your code)
-// ...
-// ========================= VERIFY OTP =========================
-
+// ========================= VERIFY OTP & CREATE SELLER =========================
 export const verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { otp, tempToken } = req.body;
 
-    const seller = await sellermodel.findOne({ email });
+    if (!otp || !tempToken) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP or session token missing"
+      });
+    }
 
-    if (!seller)
-      return res.json({ success: false, message: "Seller not found" });
+    let payload;
+    try {
+      payload = jwt.verify(tempToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "OTP session expired"
+      });
+    }
 
-    if (seller.otp !== otp || seller.otpExpire < Date.now())
-      return res.json({ success: false, message: "Invalid or expired OTP" });
+    if (payload.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
+      });
+    }
 
-    seller.verified = true;
-    seller.otp = null;
-    seller.otpExpire = null;
-    await seller.save();
+    // prevent duplicate seller creation
+    const existingSeller = await sellermodel.findOne({ email: payload.email });
+    if (existingSeller) {
+      return res.status(409).json({
+        success: false,
+        message: "Seller already verified"
+      });
+    }
 
-    // SECURITY: JWT with role for auth middleware verification
-    const token = jwt.sign({ id: seller._id, role: 'seller' }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    res.cookie("stoken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/"
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
+    // 🔥 GENERATE UNIQUE SELLER ID
+const uniqueId = generateSellerUniqueId(
+  payload.pincode,
+  payload.nickName
+);
+    const seller = await sellermodel.create({
+       uniqueId, // ✅ ADD THIS
+      name: payload.name,
+      email: payload.email,
+      password: hashedPassword,
+      nickName: payload.nickName,
+      phone: payload.phone,
+      region: payload.region,
+      verified: true,
+      address: {
+        street: payload.street,
+        city: payload.city,
+        state: payload.state,
+        pincode: payload.pincode
+      }
     });
 
-    res.json({
+    await sendEmail(
+  seller.email,
+  "Seller Account Verified 🎉",
+  `
+    <h2>Welcome to GNG!</h2>
+    <p>Your seller account has been verified successfully.</p>
+    <p><b>Your Unique Seller ID:</b> ${seller.uniqueId}</p>
+    <p>Please keep this ID for future reference.</p>
+  `
+);
+
+    const token = jwt.sign(
+      { id: seller._id, role: "seller" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("stoken", token, SELLER_COOKIE_OPTIONS);
+
+    return res.json({
       success: true,
-      message: "OTP verified",
+      message: "Account verified & Registration successfully....",
       user: {
+        id: seller._id,
         name: seller.name,
         email: seller.email,
-        id: seller._id,
         uniqueId: seller.uniqueId,
         region: seller.region
       }
@@ -226,9 +237,42 @@ export const verifyOtp = async (req, res) => {
 
   } catch (error) {
     console.error("VERIFY OTP ERROR:", error);
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "OTP verification failed"
+    });
   }
 };
+
+
+export const isSellerAuthenticated = async (req, res) => {
+  try {
+    const seller = await sellermodel
+      .findById(req.sellerId)
+      .select("-password");
+
+    if (!seller) {
+      return res.status(401).json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      seller: {
+        id: seller._id,
+        name: seller.name,
+        email: seller.email,
+        uniqueId: seller.uniqueId,
+        verified: seller.verified,
+        approved: seller.approved,
+        status: seller.status
+      }
+    });
+  } catch {
+    res.status(401).json({ success: false });
+  }
+};
+
+
 
 
 // ========================= LOGIN SELLER =========================
@@ -1034,33 +1078,33 @@ export const sellerResetPassword = async (req, res) => {
 };
 
 // ========================= CHECK SELLER AUTHENTICATED =========================
-export const isSellerAuthenticated = async (req, res) => {
-  try {
-    const sellerId = req.sellerId;
-    const seller = await sellermodel.findById(sellerId).select('-password -otp -resetOtp');
+// export const isSellerAuthenticated = async (req, res) => {
+//   try {
+//     const sellerId = req.sellerId;
+//     const seller = await sellermodel.findById(sellerId).select('-password -otp -resetOtp');
 
-    if (!seller) {
-      return res.json({ success: false, message: "Seller not found" });
-    }
+//     if (!seller) {
+//       return res.json({ success: false, message: "Seller not found" });
+//     }
 
-    return res.json({
-      success: true,
-      seller: {
-        id: seller._id,
-        name: seller.name,
-        email: seller.email,
-        nickName: seller.nickName,
-        uniqueId: seller.uniqueId,
-        verified: seller.verified,
-        approved: seller.approved,
-        status: seller.status
-      }
-    });
-  } catch (error) {
-    console.error("Auth Check Error:", error);
-    res.status(500).json({ success: false, message: "Authentication check failed" });
-  }
-};
+//     return res.json({
+//       success: true,
+//       seller: {
+//         id: seller._id,
+//         name: seller.name,
+//         email: seller.email,
+//         nickName: seller.nickName,
+//         uniqueId: seller.uniqueId,
+//         verified: seller.verified,
+//         approved: seller.approved,
+//         status: seller.status
+//       }
+//     });
+//   } catch (error) {
+//     console.error("Auth Check Error:", error);
+//     res.status(500).json({ success: false, message: "Authentication check failed" });
+//   }
+// };
 
 // ========================= LOGOUT SELLER =========================
 export const logoutSeller = async (req, res) => {

@@ -1283,8 +1283,6 @@ export const updateBasicSellerProfile = async (req, res) => {
 };
 
 
-
-
 /**
  * Get full seller business information
  * Returns ALL businessInfo fields filled during onboarding
@@ -1293,33 +1291,62 @@ export const updateBasicSellerProfile = async (req, res) => {
 export const getSellerBusinessDetails = async (req, res) => {
   try {
     const seller = await sellermodel.findById(req.seller._id).select(
-      "businessInfo status onboardingCompleted verificationStatus storeLogo"
+      "businessInfo documents status onboardingCompleted verificationStatus"
     );
 
     if (!seller) {
-      return res.status(404).json({
-        success: false,
-        message: "Seller not found",
-      });
+      return res.status(404).json({ success: false, message: "Seller not found" });
+    }
+
+    const bi = seller.businessInfo || {};
+    const type = bi.businessType || "Individual";
+
+    // Base fields (always safe)
+    const businessInfo = {
+      businessType: type,
+      businessName: bi.businessName || "",
+      tradeName: bi.tradeName || "",
+      ownerName: bi.ownerName || "",
+
+      businessAddress: bi.businessAddress || "",
+      businessCity: bi.businessCity || "",
+      businessState: bi.businessState || "",
+      businessPincode: bi.businessPincode || "",
+
+      panNumber: bi.panNumber || "",
+      personalPanNumber: bi.personalPanNumber || "",
+      businessPanNumber: bi.businessPanNumber || "",
+
+      gstNumber: bi.gstNumber || "",
+      gstPrincipalPlace: bi.gstPrincipalPlace || "",
+
+      msmeNumber: bi.msmeNumber || "",
+      udyamNumber: bi.udyamNumber || "",
+
+      // ✅ LOGO FROM KYC
+      logo: seller.documents?.businessLogo?.url || "",
+    };
+
+    // Business-type specific (ONLY IF EXISTS)
+    if (["LLP", "Private Limited", "Public Limited"].includes(type)) {
+      businessInfo.dateOfIncorporation = bi.dateOfIncorporation || "";
+    }
+
+    if (type === "LLP") {
+      businessInfo.llpNumber = bi.llpNumber || "";
+    }
+
+    if (["Private Limited", "Public Limited"].includes(type)) {
+      businessInfo.cin = bi.cin || "";
+    }
+
+    if (type === "Partnership") {
+      businessInfo.registrationNumber = bi.registrationNumber || "";
     }
 
     res.json({
       success: true,
-      businessInfo: {
-        businessType: seller.businessInfo?.businessType || "",
-        businessName: seller.businessInfo?.businessName || "",
-        tradeName: seller.businessInfo?.tradeName || "",
-        panNumber: seller.businessInfo?.panNumber || "",
-        gstNumber: seller.businessInfo?.gstNumber || "",
-        udyamNumber: seller.businessInfo?.udyamNumber || "",
-        businessAddress: seller.businessInfo?.businessAddress || "",
-        businessCity: seller.businessInfo?.businessCity || "",
-        businessState: seller.businessInfo?.businessState || "",
-        businessPincode: seller.businessInfo?.businessPincode || "",
-        logo: seller.storeLogo
-          ? `${process.env.BASE_URL}/${seller.storeLogo}`
-          : "",
-      },
+      businessInfo,
       sellerStatus: seller.status,
       verificationStatus: seller.verificationStatus,
       onboardingCompleted: seller.onboardingCompleted,
@@ -1363,45 +1390,62 @@ export const getSellerAllDocuments = async (req, res) => {
 };
 export const updateSellerBusinessDetails = async (req, res) => {
   try {
-    const {
-      businessType,
-      businessName,
-      tradeName,
-      businessAddress,
-      businessCity,
-      businessState,
-      businessPincode,
-    } = req.body;
-
     const seller = await sellermodel.findById(req.seller._id);
-
     if (!seller) {
-      return res.status(404).json({
-        success: false,
-        message: "Seller not found",
-      });
+      return res.status(404).json({ success: false, message: "Seller not found" });
     }
 
-    seller.businessInfo.businessType = businessType ?? seller.businessInfo.businessType;
-    seller.businessInfo.businessName = businessName ?? seller.businessInfo.businessName;
-    seller.businessInfo.tradeName = tradeName ?? seller.businessInfo.tradeName;
-    seller.businessInfo.businessAddress = businessAddress ?? seller.businessInfo.businessAddress;
-    seller.businessInfo.businessCity = businessCity ?? seller.businessInfo.businessCity;
-    seller.businessInfo.businessState = businessState ?? seller.businessInfo.businessState;
-    seller.businessInfo.businessPincode = businessPincode ?? seller.businessInfo.businessPincode;
+    const bi = seller.businessInfo;
+    const type = req.body.businessType ?? bi.businessType;
+
+    // ===== COMMON =====
+    bi.businessType = type;
+    bi.businessName = req.body.businessName ?? bi.businessName;
+    bi.tradeName = req.body.tradeName ?? bi.tradeName;
+
+    bi.businessAddress = req.body.businessAddress ?? bi.businessAddress;
+    bi.businessCity = req.body.businessCity ?? bi.businessCity;
+    bi.businessState = req.body.businessState ?? bi.businessState;
+    bi.businessPincode = req.body.businessPincode ?? bi.businessPincode;
+
+    bi.panNumber = req.body.panNumber ?? bi.panNumber;
+    bi.personalPanNumber = req.body.personalPanNumber ?? bi.personalPanNumber;
+    bi.businessPanNumber = req.body.businessPanNumber ?? bi.businessPanNumber;
+
+    bi.gstNumber = req.body.gstNumber ?? bi.gstNumber;
+    bi.gstPrincipalPlace = req.body.gstPrincipalPlace ?? bi.gstPrincipalPlace;
+
+    bi.msmeNumber = req.body.msmeNumber ?? bi.msmeNumber;
+    bi.udyamNumber = req.body.udyamNumber ?? bi.udyamNumber;
+
+    // ===== TYPE SPECIFIC =====
+    if (["LLP", "Private Limited", "Public Limited"].includes(type)) {
+      bi.dateOfIncorporation = req.body.dateOfIncorporation ?? bi.dateOfIncorporation;
+    }
+
+    if (type === "LLP") {
+      bi.llpNumber = req.body.llpNumber ?? bi.llpNumber;
+      bi.cin = undefined;
+    }
+
+    if (["Private Limited", "Public Limited"].includes(type)) {
+      bi.cin = req.body.cin ?? bi.cin;
+      bi.llpNumber = undefined;
+    }
+
+    if (type === "Partnership") {
+      bi.registrationNumber = req.body.registrationNumber ?? bi.registrationNumber;
+    }
 
     await seller.save();
 
     res.json({
       success: true,
       message: "Business details updated successfully",
-      businessInfo: seller.businessInfo,
+      businessInfo: bi,
     });
   } catch (error) {
     console.error("Update business info error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

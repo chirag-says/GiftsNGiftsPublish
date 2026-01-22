@@ -73,19 +73,19 @@ function SellerProfile() {
   };
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  // Phone fields ke liye 10 digits ki restriction
-  if (name === "phone" || name === "alternatePhone") {
-    // Sirf numbers allow karein aur length 10 tak restrict karein
-    const onlyNums = value.replace(/[^0-9]/g, '');
-    if (onlyNums.length > 10) return; 
-    
-    setProfile((prev) => ({ ...prev, [name]: onlyNums }));
-  } else {
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  }
-};
+    // Phone fields ke liye 10 digits ki restriction
+    if (name === "phone" || name === "alternatePhone") {
+      // Sirf numbers allow karein aur length 10 tak restrict karein
+      const onlyNums = value.replace(/[^0-9]/g, '');
+      if (onlyNums.length > 10) return;
+
+      setProfile((prev) => ({ ...prev, [name]: onlyNums }));
+    } else {
+      setProfile((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
   const handleAddressChange = (e) => {
     const currentAddress = profile.address || {};
@@ -181,7 +181,6 @@ function SellerProfile() {
                       toast.success("Seller ID copied!");
                     }}
                     className="ml-1 p-1 hover:bg-indigo-500 rounded transition"
-                    title="Copy Seller ID"
                   >
                     📋
                   </button>

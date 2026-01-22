@@ -10,6 +10,14 @@ const BusinessInfoStep = () => {
   const { data: docsData } = useSellerDocuments();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({});
+const BUSINESS_FIELD_MAP = {
+  Individual: ["businessName", "tradeName", "panNumber"],
+  Proprietorship: ["businessName", "tradeName", "panNumber"],
+  Partnership: ["businessName", "registrationNumber", "panNumber"],
+  LLP: ["businessName", "llpNumber", "panNumber", "dateOfIncorporation"],
+  "Private Limited": ["businessName", "cin", "panNumber", "dateOfIncorporation"],
+  "Public Limited": ["businessName", "cin", "panNumber", "dateOfIncorporation"],
+};
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -116,17 +124,90 @@ const BusinessInfoStep = () => {
         <div className="p-8 md:p-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-12">
 
-            {/* LEGAL INFO */}
-            <Section title="Registration Details" icon={FiCheckCircle}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <EditableField label="Business Type" name="businessType" isEditing={isEditing} value={isEditing ? form.businessType : businessInfo.businessType} onChange={handleChange} />
-                <EditableField label="Entity Name" name="businessName" isEditing={isEditing} value={isEditing ? form.businessName : businessInfo.businessName} onChange={handleChange} />
-                <EditableField label="Trade Name" name="tradeName" isEditing={isEditing} value={isEditing ? form.tradeName : businessInfo.tradeName} onChange={handleChange} />
-                <ReadOnly label="PAN Number" value={businessInfo.panNumber} />
-                <ReadOnly label="GST Details" value={businessInfo.gstNumber} />
-                <ReadOnly label="Udyam Number" value={businessInfo.udyamNumber} />
-              </div>
-            </Section>
+          {(() => {
+  const activeFields =
+    BUSINESS_FIELD_MAP[businessInfo.businessType] || [];
+
+  return (
+    <Section title="Registration Details" icon={FiCheckCircle}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        {/* Business Type – always visible */}
+        <ReadOnly
+          label="Business Type"
+          value={businessInfo.businessType}
+        />
+
+        {/* Business Name */}
+        {activeFields.includes("businessName") && (
+          <EditableField
+            label="Business / Company Name"
+            name="businessName"
+            isEditing={isEditing}
+            value={isEditing ? form.businessName : businessInfo.businessName}
+            onChange={handleChange}
+          />
+        )}
+
+        {/* Trade Name */}
+        {activeFields.includes("tradeName") && (
+          <EditableField
+            label="Trade Name"
+            name="tradeName"
+            isEditing={isEditing}
+            value={isEditing ? form.tradeName : businessInfo.tradeName}
+            onChange={handleChange}
+          />
+        )}
+
+        {/* Partnership Registration Number */}
+        {activeFields.includes("registrationNumber") && (
+          <ReadOnly
+            label="Registration Number"
+            value={businessInfo.registrationNumber}
+          />
+        )}
+
+        {/* LLP Number */}
+        {activeFields.includes("llpNumber") && (
+          <ReadOnly
+            label="LLP Number"
+            value={businessInfo.llpNumber}
+          />
+        )}
+
+        {/* CIN */}
+        {activeFields.includes("cin") && (
+          <ReadOnly
+            label="CIN Number"
+            value={businessInfo.cin}
+          />
+        )}
+
+        {/* Date of Incorporation */}
+        {activeFields.includes("dateOfIncorporation") && (
+          <ReadOnly
+            label="Date of Incorporation"
+            value={
+              businessInfo.dateOfIncorporation
+                ? new Date(
+                    businessInfo.dateOfIncorporation
+                  ).toLocaleDateString()
+                : "—"
+            }
+          />
+        )}
+
+        {/* Always visible */}
+        <ReadOnly label="PAN Number" value={businessInfo.panNumber} />
+        <ReadOnly label="GST Number" value={businessInfo.gstNumber} />
+        <ReadOnly label="Udyam Number" value={businessInfo.udyamNumber} />
+
+      </div>
+    </Section>
+  );
+})()}
+
 
             {/* ADDRESS INFO */}
             <Section title="Headquarters Address" icon={FiMapPin}>

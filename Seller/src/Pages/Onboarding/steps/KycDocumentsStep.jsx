@@ -105,7 +105,7 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            toast.error('Please upload JPG, PNG,PDF or WebP images only');
+            toast.error('Please upload JPG, PNG, WebP images only');
             return;
         }
 
@@ -227,7 +227,7 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
                             <input
                                 type="file"
                                 className="hidden"
-                                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                                accept=".jpg,.jpeg,.png,.webp"
                                 onChange={(e) => handleUpload(doc.key, category, e.target.files[0])}
                             />
                         </label>
@@ -240,13 +240,13 @@ function KycDocumentsStep({ onComplete, businessType = 'Individual' }) {
                             <>
                                 <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
                                 <span className="text-sm text-gray-500">Click to upload</span>
-                                <span className="text-xs text-gray-400 mt-1">JPG, PNG, PDF, WebP (Max 5MB)</span>
+                                <span className="text-xs text-gray-400 mt-1">JPG, PNG,  WebP (Max 5MB)</span>
                             </>
                         )}
                         <input
                             type="file"
                             className="hidden"
-                            accept=".jpg,.jpeg,.png,.webp,.pdf"
+                            accept=".jpg,.jpeg,.png,.webp"
                             onChange={(e) => handleUpload(doc.key, category, e.target.files[0])}
                         />
 

@@ -4,22 +4,29 @@ import { Collapse } from 'react-collapse';
 import { Checkbox, FormControlLabel, Slider, Button } from '@mui/material';
 import { FaAngleUp, FaAngleDown } from 'react-icons/fa';
 
-function LeftFilter({ onApplyFilters }) {
-  const [isOpenCatFilter, setIsOpenCatFilter] = useState(false);
+function LeftFilter({ onApplyFilters, initialCatId }) {
+  const [isOpenCatFilter, setIsOpenCatFilter] = useState(true);
   const [isOpenPriceFilter, setIsOpenPriceFilter] = useState(true);
   const [isOpenDiscountFilter, setIsOpenDiscountFilter] = useState(true);
-  const [category, setCategory] = useState([]);
+  
+  const [categoryList, setCategoryList] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [priceRange, setPriceRange] = useState([0, 10000]);
-  const [sort, setSort] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Sync with the URL category when it loads
+  useEffect(() => {
+    if (initialCatId) {
+      setSelectedCategories([initialCatId]);
+    }
+  }, [initialCatId]);
 
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const response = await api.get('/api/getcategories');
-        setCategory(response.data);
+        setCategoryList(response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -32,102 +39,77 @@ function LeftFilter({ onApplyFilters }) {
       selectedCategories,
       selectedDiscount,
       priceRange,
-      sort
+      sort: ""
     });
     setShowFilters(false);
   };
 
-  const handleCategoryChange = (cat) => {
+  const handleCategoryChange = (id) => {
     setSelectedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
   };
 
   const handleDiscountChange = (val) => {
+    // If clicking the same discount, it deselects (null), otherwise sets the new value
     setSelectedDiscount(prev => (prev === val ? null : val));
   };
 
   return (
-    <>
-      {/* Toggle Button */}
-      <div className="block lg:hidden px-4 py-2">
+    <div className="p-5 space-y-6">
+      <div className="block lg:hidden">
         <button
-          className="text-white px-4 py-2 rounded w-full"
-          style={{ backgroundColor: '#7d0492' }}
+          className="bg-[#7d0492] text-white px-4 py-2 rounded-lg w-full font-bold"
           onClick={() => setShowFilters(!showFilters)}
         >
-          Filter
+          {showFilters ? "Close Filters" : "Filter Products"}
         </button>
       </div>
 
-      {/* Sidebar Filters */}
-      <aside
-        className={`sidebar px-4 py-4 space-y-4 bg-white rounded-md shadow-sm 
-        ${showFilters ? 'block' : 'hidden'} lg:block w-full sm:max-w-sm lg:max-w-full`}
-      >
-        {/* Category Filter */}
-        <div className="box w-full ">
-          <h3 className="text-base flex justify-between items-center font-semibold">
-            <span className="text-sm md:text-base">Shop by Category</span>
-            <Button
-              className="!min-w-0 !p-1 !text-[#7d0492] md:!p-2"
-              onClick={() => setIsOpenCatFilter(!isOpenCatFilter)}
-            >
-              {isOpenCatFilter ?   <FaAngleDown />: <FaAngleUp />}
-            </Button>
-          </h3>
-
+      <div className={`${showFilters ? 'block' : 'hidden'} lg:block space-y-8`}>
+        {/* Category section */}
+        <div className="border-b border-slate-100 pb-4">
+          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenCatFilter(!isOpenCatFilter)}>
+            <h3 className="font-bold text-slate-800">Categories</h3>
+            {isOpenCatFilter ? <FaAngleUp /> : <FaAngleDown />}
+          </div>
           <Collapse isOpened={isOpenCatFilter}>
-            <div className="py-2 flex flex-col gap-1 text-sm">
-              {category.map((cat, index) => (
+            <div className="flex flex-col mt-3 max-h-48 overflow-y-auto">
+              {categoryList.map((cat) => (
                 <FormControlLabel
-                  key={index}
+                  key={cat._id}
                   control={
                     <Checkbox
                       size="small"
+                      sx={{ color: '#7d0492', '&.Mui-checked': { color: '#7d0492' } }}
                       checked={selectedCategories.includes(cat._id)}
                       onChange={() => handleCategoryChange(cat._id)}
                     />
                   }
-                  label={cat.categoryname}
+                  label={<span className="text-sm font-medium text-slate-600">{cat.categoryname}</span>}
                 />
               ))}
             </div>
           </Collapse>
         </div>
 
-        {/* Price Filter */}
-        <div className="box w-full">
-          <h3 className="text-base flex justify-between items-center font-semibold">
-            <span className="text-sm md:text-base">Price</span>
-            <Button
-              className="!min-w-0 !p-1 md:!p-2 !text-[#7d0492]"
-              onClick={() => setIsOpenPriceFilter(!isOpenPriceFilter)}
-            >
-              {isOpenPriceFilter ? <FaAngleUp /> : <FaAngleDown />}
-            </Button>
-          </h3>
-
+        {/* Price section */}
+        <div className="border-b border-slate-100 pb-4">
+          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenPriceFilter(!isOpenPriceFilter)}>
+            <h3 className="font-bold text-slate-800">Price Range</h3>
+            {isOpenPriceFilter ? <FaAngleUp /> : <FaAngleDown />}
+          </div>
           <Collapse isOpened={isOpenPriceFilter}>
-            <div className="w-full">
-              <div className="py-2">
-                <Slider
-                  value={priceRange}
-                  onChange={(e, newValue) => setPriceRange(newValue)}
-                  valueLabelDisplay="auto"
-                  min={0}
-                  max={10000}
-                  sx={{
-                    color: '#7d0492',
-                    '& .MuiSlider-thumb': {
-                      '&:hover, &.Mui-focusVisible, &.Mui-active': {
-                        boxShadow: '0px 0px 0px 8px rgba(125, 4, 146, 0.16)',
-                      },
-                    },
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-sm text-gray-600 px-1">
+            <div className="px-2 mt-4">
+              <Slider
+                value={priceRange}
+                onChange={(e, val) => setPriceRange(val)}
+                min={0}
+                max={10000}
+                valueLabelDisplay="auto"
+                sx={{ color: '#7d0492' }}
+              />
+              <div className="flex justify-between text-xs font-bold text-slate-400">
                 <span>₹{priceRange[0]}</span>
                 <span>₹{priceRange[1]}</span>
               </div>
@@ -135,50 +117,42 @@ function LeftFilter({ onApplyFilters }) {
           </Collapse>
         </div>
 
-        {/* Discount Filter */}
-        <div className="box w-full">
-          <h3 className="text-base flex justify-between items-center font-semibold">
-            <span className="text-sm md:text-base">Discount</span>
-            <Button
-              className="!min-w-0 !p-1 md:!p-2 !text-[#7d0492]"
-              onClick={() => setIsOpenDiscountFilter(!isOpenDiscountFilter)}
-            >
-              {isOpenDiscountFilter ? <FaAngleUp /> : <FaAngleDown />}
-            </Button>
-          </h3>
-
+        {/* Discount section - THE FIX IS HERE */}
+        <div className="pb-2">
+          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenDiscountFilter(!isOpenDiscountFilter)}>
+            <h3 className="font-bold text-slate-800">Discount</h3>
+            {isOpenDiscountFilter ? <FaAngleUp /> : <FaAngleDown />}
+          </div>
           <Collapse isOpened={isOpenDiscountFilter}>
-            <div className="py-2 flex flex-col gap-1 text-sm">
-              {[10, 20, 30, 40, 50].map((discount, index) => (
+            <div className="flex flex-col mt-3">
+              {[10, 20, 30, 40, 50].map((d) => (
                 <FormControlLabel
-                  key={index}
+                  key={d}
                   control={
                     <Checkbox
                       size="small"
-                      checked={selectedDiscount === discount}
-                      onChange={() => handleDiscountChange(discount)}
+                      sx={{ color: '#7d0492', '&.Mui-checked': { color: '#7d0492' } }}
+                      checked={selectedDiscount === d}
+                      onChange={() => handleDiscountChange(d)}
                     />
                   }
-                  label={`${discount}% or more`}
+                  label={<span className="text-sm font-medium text-slate-600">{d}% or more</span>}
                 />
               ))}
             </div>
           </Collapse>
         </div>
 
-        {/* Apply Button */}
-        <div className="text-center mt-4">
-          <Button
-            style={{ backgroundColor: '#7d0492' }}
-            variant="contained"
-            fullWidth
-            onClick={handleApply}
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </aside>
-    </>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleApply}
+          sx={{ backgroundColor: '#7d0492', borderRadius: '12px', py: 1.5, fontWeight: 'bold', '&:hover': { backgroundColor: '#5a036a' } }}
+        >
+          Apply Filters
+        </Button>
+      </div>
+    </div>
   );
 }
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    HiOutlineBadgeCheck,
     HiStar,
     HiOutlineShieldCheck,
     HiShoppingCart,
@@ -8,69 +7,76 @@ import {
     HiHeart,
     HiOutlineTruck,
     HiOutlineRefresh,
-    HiTag,
 } from "react-icons/hi";
-import { MdVerified } from "react-icons/md";
 import { BiMinus, BiPlus, BiLoaderAlt } from "react-icons/bi";
 
 /**
- * SizeSelector Component
+ * SizeSelector Component - Enhanced with better focus states and layout
  */
 export const SizeSelector = ({ sizes, selectedSize, onSelect }) => (
-    <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">Size</h3>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Size selection">
-            {sizes.map((size, idx) => (
-                <button
-                    key={idx}
-                    type="button"
-                    onClick={() => onSelect(size.trim())}
-                    role="radio"
-                    aria-checked={selectedSize === size.trim()}
-                    className={`px-4 py-2 rounded-md border text-sm font-medium transition-all ${selectedSize === size.trim()
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-300 hover:border-gray-400 bg-white text-gray-700'
-                        }`}
-                >
-                    {size.trim()}
-                </button>
-            ))}
+    <div className="mb-8">
+        <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Select Size</h3>
+            <button className="text-xs text-indigo-600 hover:underline font-medium">Size Guide</button>
+        </div>
+        <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Size selection">
+            {sizes.map((size, idx) => {
+                const isSelected = selectedSize === size.trim();
+                return (
+                    <button
+                        key={idx}
+                        type="button"
+                        onClick={() => onSelect(size.trim())}
+                        role="radio"
+                        aria-checked={isSelected}
+                        className={`min-w-[3rem] h-11 px-4 rounded-lg border text-sm font-bold transition-all duration-200 
+                            ${isSelected 
+                                ? 'border-gray-900 bg-gray-900 text-white shadow-md' 
+                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:shadow-sm'
+                            }`}
+                    >
+                        {size.trim()}
+                    </button>
+                );
+            })}
         </div>
     </div>
 );
 
 /**
- * QuantitySelector Component
+ * QuantitySelector Component - Modern pill design
  */
 export const QuantitySelector = ({ quantity, onDecrease, onIncrease, maxStock }) => (
-    <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">Quantity</h3>
-        <div className="inline-flex items-center border border-gray-300 rounded-md" role="group" aria-label="Quantity selector">
+    <div className="mb-8">
+        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Quantity</h3>
+        <div className="inline-flex items-center bg-gray-50 border border-gray-200 rounded-xl p-1" role="group">
             <button
                 type="button"
                 onClick={onDecrease}
                 disabled={quantity <= 1}
-                aria-label="Decrease quantity"
-                className="p-2 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition disabled:opacity-30"
             >
                 <BiMinus className="w-4 h-4" />
             </button>
-            <span className="px-4 py-2 font-medium text-gray-900 min-w-[50px] text-center border-x border-gray-300" aria-live="polite">
+            <span className="px-6 font-bold text-gray-900 tabular-nums min-w-[3rem] text-center">
                 {quantity}
             </span>
             <button
                 type="button"
                 onClick={onIncrease}
                 disabled={quantity >= maxStock}
-                aria-label="Increase quantity"
-                className="p-2 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition disabled:opacity-30"
             >
                 <BiPlus className="w-4 h-4" />
             </button>
         </div>
         {maxStock <= 10 && maxStock > 0 && (
-            <p className="text-orange-600 text-sm mt-2" role="alert">
-                Only {maxStock} left in stock - order soon
+            <p className="text-rose-600 text-xs font-medium mt-2 flex items-center gap-1" role="alert">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                </span>
+                Only {maxStock} items left in stock
             </p>
         )}
     </div>
@@ -78,7 +84,7 @@ export const QuantitySelector = ({ quantity, onDecrease, onIncrease, maxStock })
 
 /**
  * ProductInfoSection Component
- * Clean, professional product information panel
+ * Clean, high-end professional product information panel
  */
 const ProductInfoSection = ({
     product,
@@ -95,87 +101,69 @@ const ProductInfoSection = ({
     const savings = product.oldprice - product.price;
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 flex flex-col">
-            {/* Brand */}
-            {product.brand && (
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline mb-1">
-                    {product.brand}
-                </a>
-            )}
-
-            {/* Title */}
-            <h1 className="text-xl sm:text-2xl font-medium text-gray-900 leading-tight mb-2">
-                {product.title}
-            </h1>
-
-            {/* Rating */}
-            {reviewStats && reviewStats.totalReviews > 0 && (
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <HiStar
-                                key={star}
-                                className={`w-4 h-4 ${star <= Math.round(reviewStats.avgRating)
-                                        ? 'text-amber-400'
-                                        : 'text-gray-300'
-                                    }`}
-                            />
-                        ))}
-                    </div>
-                    <span className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
-                        {reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? 'rating' : 'ratings'}
+        <div className="p-4 sm:p-8 lg:p-10 flex flex-col max-w-2xl mx-auto lg:mx-0">
+            {/* Header & Title */}
+            <div className="mb-6">
+                {product.brand && (
+                    <span className="inline-block px-2 py-1 bg-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-500 rounded mb-3">
+                        {product.brand}
                     </span>
-                </div>
-            )}
+                )}
+                <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 leading-[1.15] tracking-tight">
+                    {product.title}
+                </h1>
+            </div>
 
-            {/* Divider */}
-            <hr className="border-gray-200 mb-4" />
-
-            {/* Price Section */}
-            <div className="mb-4">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                    {product.oldprice > product.price && (
-                        <span className="text-sm text-gray-500">
-                            -{product.discount}%
+            {/* Ratings & Status */}
+            <div className="flex flex-wrap items-center gap-4 mb-8">
+                {reviewStats?.totalReviews > 0 && (
+                    <div className="flex items-center gap-3 py-1 px-3 bg-amber-50 rounded-full">
+                        <div className="flex items-center">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <HiStar
+                                    key={star}
+                                    className={`w-4 h-4 ${star <= Math.round(reviewStats.avgRating) ? 'text-amber-500' : 'text-gray-200'}`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-sm font-semibold text-amber-700">
+                            {reviewStats.avgRating} <span className="text-amber-400 mx-1">•</span> {reviewStats.totalReviews} Reviews
                         </span>
-                    )}
-                    <span className="text-2xl sm:text-3xl font-medium text-gray-900">
-                        ₹{product.price?.toLocaleString()}
-                    </span>
-                </div>
-                {product.oldprice > product.price && (
-                    <div className="text-sm text-gray-500 mt-1">
-                        M.R.P.: <span className="line-through">₹{product.oldprice?.toLocaleString()}</span>
-                        {savings > 0 && (
-                            <span className="text-green-600 ml-2">
-                                Save ₹{savings.toLocaleString()}
-                            </span>
-                        )}
                     </div>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                    Inclusive of all taxes
+                <div className="h-4 w-[1px] bg-gray-200 hidden sm:block"></div>
+                {product.availability === "In Stock" ? (
+                    <span className="text-emerald-600 text-sm font-bold flex items-center gap-1">
+                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> In Stock
+                    </span>
+                ) : (
+                    <span className="text-rose-600 text-sm font-bold">Currently Unavailable</span>
+                )}
+            </div>
+
+            {/* Price Section */}
+            <div className="mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-4">
+                    <span className="text-4xl font-black text-gray-900 tracking-tighter">
+                        ₹{product.price?.toLocaleString()}
+                    </span>
+                    {product.oldprice > product.price && (
+                        <div className="flex flex-col">
+                            <span className="text-sm text-gray-400 line-through font-medium">
+                                ₹{product.oldprice?.toLocaleString()}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                                {product.discount}% OFF
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <p className="text-[11px] text-gray-400 font-medium mt-2 uppercase tracking-wide">
+                    Inclusive of all taxes • Save ₹{savings.toLocaleString()} today
                 </p>
             </div>
 
-            {/* Availability */}
-            <div className="mb-4">
-                {product.availability === "In Stock" ? (
-                    <span className="text-green-600 text-lg font-medium">
-                        In Stock
-                    </span>
-                ) : product.availability === "Low Stock" ? (
-                    <span className="text-orange-600 font-medium">
-                        Only a few left in stock
-                    </span>
-                ) : (
-                    <span className="text-red-600 font-medium">
-                        Currently unavailable
-                    </span>
-                )}
-            </div>
-
-            {/* Size Selection */}
+            {/* Selectors */}
             {product.size && (
                 <SizeSelector
                     sizes={product.size.split(',')}
@@ -184,7 +172,6 @@ const ProductInfoSection = ({
                 />
             )}
 
-            {/* Quantity */}
             {product.stock > 0 && (
                 <QuantitySelector
                     quantity={quantity}
@@ -195,24 +182,19 @@ const ProductInfoSection = ({
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-10">
                 <button
                     type="button"
                     onClick={onAddToCart}
                     disabled={isAddingToCart || product.stock <= 0}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-gray-900 py-3 rounded-full font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="sm:col-span-4 flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white h-14 rounded-xl font-bold transition-all shadow-lg shadow-indigo-200 disabled:bg-gray-200 disabled:shadow-none disabled:cursor-not-allowed"
                 >
                     {isAddingToCart ? (
-                        <>
-                            <BiLoaderAlt className="w-5 h-5 animate-spin" />
-                            Adding...
-                        </>
-                    ) : product.stock <= 0 ? (
-                        "Out of Stock"
+                        <BiLoaderAlt className="w-6 h-6 animate-spin" />
                     ) : (
                         <>
-                            <HiShoppingCart className="w-5 h-5" />
-                            Add to Cart
+                            <HiShoppingCart className="w-6 h-6" />
+                            {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
                         </>
                     )}
                 </button>
@@ -220,52 +202,53 @@ const ProductInfoSection = ({
                 <button
                     type="button"
                     onClick={onToggleWishlist}
-                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-full font-medium transition-colors border ${isWishlisted
-                            ? 'bg-red-50 border-red-200 text-red-600'
-                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                    className={`sm:col-span-1 flex items-center justify-center h-14 rounded-xl transition-all border-2 active:scale-90 ${
+                        isWishlisted 
+                        ? 'bg-rose-50 border-rose-200 text-rose-500' 
+                        : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-600'
+                    }`}
+                    title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 >
-                    {isWishlisted ? <HiHeart className="w-5 h-5" /> : <HiOutlineHeart className="w-5 h-5" />}
-                    {isWishlisted ? 'Added to Wishlist' : 'Add to Wishlist'}
+                    {isWishlisted ? <HiHeart className="w-7 h-7" /> : <HiOutlineHeart className="w-7 h-7" />}
                 </button>
             </div>
 
-            {/* Product Features */}
-            <div className="border-t border-gray-200 pt-4 space-y-3">
-                <div className="flex items-start gap-3">
-                    <HiOutlineTruck className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+            {/* Trust Badges / Features */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-8 border-y border-gray-100">
+                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
+                    <HiOutlineTruck className="w-6 h-6 text-indigo-500" />
                     <div>
-                        <p className="text-sm font-medium text-gray-900">Free Delivery</p>
-                        <p className="text-xs text-gray-500">On orders above ₹499</p>
+                        <p className="text-xs font-bold text-gray-900 uppercase">Free Shipping</p>
+                        <p className="text-[11px] text-gray-500">Orders over ₹499</p>
                     </div>
                 </div>
-                <div className="flex items-start gap-3">
-                    <HiOutlineRefresh className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
+                    <HiOutlineRefresh className="w-6 h-6 text-indigo-500" />
                     <div>
-                        <p className="text-sm font-medium text-gray-900">Easy Returns</p>
-                        <p className="text-xs text-gray-500">7-day return policy</p>
+                        <p className="text-xs font-bold text-gray-900 uppercase">7-Day Return</p>
+                        <p className="text-[11px] text-gray-500">Easy exchange</p>
                     </div>
                 </div>
-                <div className="flex items-start gap-3">
-                    <HiOutlineShieldCheck className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
+                    <HiOutlineShieldCheck className="w-6 h-6 text-indigo-500" />
                     <div>
-                        <p className="text-sm font-medium text-gray-900">Secure Payment</p>
-                        <p className="text-xs text-gray-500">100% secure transactions</p>
+                        <p className="text-xs font-bold text-gray-900 uppercase">Secure Pay</p>
+                        <p className="text-[11px] text-gray-500">100% Encrypted</p>
                     </div>
                 </div>
             </div>
 
             {/* Seller Info */}
             {(product.manufacturer || product.countryOfOrigin) && (
-                <div className="mt-4 pt-4 border-t border-gray-200 text-sm space-y-1">
+                <div className="mt-8 space-y-2">
                     {product.manufacturer && (
-                        <p className="text-gray-600">
-                            Sold by: <span className="text-blue-600 hover:underline cursor-pointer">{product.manufacturer}</span>
+                        <p className="text-[13px] text-gray-500 italic">
+                            Sold and dispatched by <span className="text-indigo-600 font-semibold not-italic hover:underline cursor-pointer">{product.manufacturer}</span>
                         </p>
                     )}
                     {product.countryOfOrigin && (
-                        <p className="text-gray-500">
-                            Country of Origin: {product.countryOfOrigin}
+                        <p className="text-[11px] text-gray-400 font-medium uppercase tracking-widest">
+                            Origin: {product.countryOfOrigin}
                         </p>
                     )}
                 </div>

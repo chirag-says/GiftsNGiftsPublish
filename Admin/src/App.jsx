@@ -81,7 +81,7 @@ function Layout({ children }) {
       {/* Main Content Area - Header + Children */}
       <div className="flex flex-col flex-1 min-w-0 h-full">
         <Header />
-        <main className="flex-1 w-full bg-gray-50 overflow-y-auto sm:px-5 relative">
+        <main className="flex-1 w-full py-4 bg-gray-50 overflow-y-auto sm:px-5 relative">
           <ToastContainer
             position="top-right"
             autoClose={3000}

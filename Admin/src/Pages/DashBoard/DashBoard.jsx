@@ -56,7 +56,7 @@ function DashBoard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 relative overflow-x-hidden font-sans pb-10">
+        <div className="min-h-screen bg-gray-50 relative overflow-x-hidden font-sans pb-10">
 
             {/* --- DESIGN ELEMENT: Colorful Top Background --- */}
             <div className="absolute top-0 left-0 w-full h-[300px] sm:h-[350px] bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-50 rounded-b-[30px] sm:rounded-b-[40px] -z-10"></div>
@@ -65,7 +65,7 @@ function DashBoard() {
             <div className="hidden sm:block absolute top-10 right-10 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
             <div className="hidden sm:block absolute top-10 left-10 w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
 
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-2 py-6 sm:py-4 space-y-6 sm:space-y-4">
 
                 {/* 1. Colorful Header Section */}
                 <div className="relative p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg overflow-hidden">

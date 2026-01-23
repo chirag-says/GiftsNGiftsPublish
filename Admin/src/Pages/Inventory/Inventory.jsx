@@ -170,7 +170,7 @@ function Inventory() {
             {tabValue === 0 && (
                 <>
                     {/* Top Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1  md:grid-cols-3 gap-6 mb-8">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between">
                             <div>
                                 <p className="text-gray-500 font-medium text-sm">Total Inventory Value</p>

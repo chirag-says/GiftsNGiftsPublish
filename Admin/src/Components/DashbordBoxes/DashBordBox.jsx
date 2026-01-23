@@ -86,7 +86,7 @@ export default function DashBordBox() {
           640: { slidesPerView: 2 },
           1024: { slidesPerView: 4 }
         }}
-        className="dashboardBoxesSlider !pb-4 px-2"
+        className="dashboardBoxesSlider  px-2"
       >
         {cards.map((item, index) => (
           <SwiperSlide key={index}>

@@ -32,9 +32,9 @@ function Banner() {
           <img src={banner} alt="Banner Main" className="w-full h-40 sm:h-45 md:h-55 lg:h-90" />
         </SwiperSlide>
        
-       <SwiperSlide>
+       {/* <SwiperSlide>
           <img src={three} alt="Banner Main" className="w-full h-40 sm:h-45 md:h-55 lg:h-90" />
-        </SwiperSlide>
+        </SwiperSlide> */}
       </Swiper>
     </div>
   );

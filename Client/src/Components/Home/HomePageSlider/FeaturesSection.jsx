@@ -26,7 +26,7 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-16 bg-[#fdfcfb] px-6 relative overflow-hidden">
+    <section className="!py-10 bg-[#fdfcfb] px-6 relative overflow-hidden">
       {/* Premium Texture Overlay */}
       <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />
       
@@ -67,7 +67,7 @@ const FeaturesSection = () => {
 
               {/* Icon Section: "Artisan Seal" Style */}
               <div className="relative mb-10">
-                <div className="w-20 h-20 flex items-center justify-center rounded-full border border-[#d4af37]/20 relative z-10 transition-transform duration-700 group-hover:rotate-[360deg]">
+                <div className="w-20 h-20 flex items-center justify-center rounded-full border border-[#d4af37]/20 relative z-10 transition-transform duration-700 ">
                   {feature.icon}
                 </div>
                 {/* Expanding Ring on Hover */}

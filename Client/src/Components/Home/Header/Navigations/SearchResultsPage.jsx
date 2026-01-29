@@ -118,7 +118,7 @@ const SearchResultsPage = () => {
             max={maxPrice}
             value={selectedMaxPrice}
             onChange={(e) => setSelectedMaxPrice(Number(e.target.value))}
-            className="w-full accent-[#7d0492] mb-4"
+            className="w-full accent-[#322619] mb-4"
           />
 
           <h4 className="font-semibold text-sm mb-4">Discount</h4>
@@ -154,14 +154,14 @@ const SearchResultsPage = () => {
 
           <button
             onClick={handleApplyFilters}
-            className="mt-5 w-full bg-[#7d0492] text-white px-4 py-2 rounded hover:bg-purple-700"
+            className="mt-5 w-full bg-[#322619] text-white px-4 py-2 rounded "
           >
             Apply Filter
           </button>
         </div>
 
         {/* Products */}
-        <div className="w-full lg:w-3/4 bg-white rounded shadow-md">
+        <div className="w-full  bg-white rounded shadow-md">
           {loading ? (
             <p className="text-gray-500">Loading products...</p>
           ) : filteredProducts.length > 0 ? (
@@ -181,7 +181,7 @@ const SearchResultsPage = () => {
                     />
                   </div>
                   <div className="text-center p-2">
-                    <h3 className="text-gray-700 text-[13px] sm:text-[15px] md:text-[16px] font-semibold mb-1">
+                    <h3 className="text-gray-700 text-[11px] sm:text-[15px] md:text-[12px]  mb-1">
                       {product.title}
                     </h3>
                     <div className="flex justify-center items-center gap-2 text-center">

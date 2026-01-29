@@ -11,28 +11,25 @@ import {
 import { BiMinus, BiPlus, BiLoaderAlt } from "react-icons/bi";
 
 /**
- * SizeSelector Component - Enhanced with better focus states and layout
+ * SizeSelector - Updated with heritage border colors
  */
 export const SizeSelector = ({ sizes, selectedSize, onSelect }) => (
     <div className="mb-8">
         <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Select Size</h3>
-            <button className="text-xs text-indigo-600 hover:underline font-medium">Size Guide</button>
+            <h3 className="text-sm font-bold text-[#322619] uppercase tracking-widest">Select Size</h3>
+            <button className="text-xs text-[#B58D2F] hover:underline font-semibold">Size Guide</button>
         </div>
-        <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Size selection">
+        <div className="flex flex-wrap gap-3">
             {sizes.map((size, idx) => {
                 const isSelected = selectedSize === size.trim();
                 return (
                     <button
                         key={idx}
-                        type="button"
                         onClick={() => onSelect(size.trim())}
-                        role="radio"
-                        aria-checked={isSelected}
-                        className={`min-w-[3rem] h-11 px-4 rounded-lg border text-sm font-bold transition-all duration-200 
+                        className={`min-w-[3.5rem] h-11 px-4 rounded-full border-2 text-sm font-bold transition-all duration-300 
                             ${isSelected 
-                                ? 'border-gray-900 bg-gray-900 text-white shadow-md' 
-                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:shadow-sm'
+                                ? 'border-[#B58D2F] bg-[#B58D2F] text-white shadow-md' 
+                                : 'border-[#EDE3D2] bg-white text-[#544231] hover:border-[#B58D2F]'
                             }`}
                     >
                         {size.trim()}
@@ -44,47 +41,35 @@ export const SizeSelector = ({ sizes, selectedSize, onSelect }) => (
 );
 
 /**
- * QuantitySelector Component - Modern pill design
+ * QuantitySelector - Matches the rounded-pill button style
  */
 export const QuantitySelector = ({ quantity, onDecrease, onIncrease, maxStock }) => (
     <div className="mb-8">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Quantity</h3>
-        <div className="inline-flex items-center bg-gray-50 border border-gray-200 rounded-xl p-1" role="group">
+        <h3 className="text-sm font-bold text-[#322619] uppercase tracking-widest mb-3">Quantity</h3>
+        <div className="inline-flex items-center bg-[#F9F6F0] border-2 border-[#EDE3D2] rounded-full p-1">
             <button
-                type="button"
                 onClick={onDecrease}
                 disabled={quantity <= 1}
-                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition disabled:opacity-30"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition disabled:opacity-30 text-[#322619]"
             >
-                <BiMinus className="w-4 h-4" />
+                <BiMinus className="w-5 h-5" />
             </button>
-            <span className="px-6 font-bold text-gray-900 tabular-nums min-w-[3rem] text-center">
+            <span className="px-6 font-bold text-[#322619] tabular-nums min-w-[3rem] text-center">
                 {quantity}
             </span>
             <button
-                type="button"
                 onClick={onIncrease}
                 disabled={quantity >= maxStock}
-                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition disabled:opacity-30"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition disabled:opacity-30 text-[#322619]"
             >
-                <BiPlus className="w-4 h-4" />
+                <BiPlus className="w-5 h-5" />
             </button>
         </div>
-        {maxStock <= 10 && maxStock > 0 && (
-            <p className="text-rose-600 text-xs font-medium mt-2 flex items-center gap-1" role="alert">
-                <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                </span>
-                Only {maxStock} items left in stock
-            </p>
-        )}
     </div>
 );
 
 /**
- * ProductInfoSection Component
- * Clean, high-end professional product information panel
+ * ProductInfoSection - Main Component
  */
 const ProductInfoSection = ({
     product,
@@ -101,65 +86,52 @@ const ProductInfoSection = ({
     const savings = product.oldprice - product.price;
 
     return (
-        <div className="p-4 sm:p-8 lg:p-10 flex flex-col max-w-2xl mx-auto lg:mx-0">
-            {/* Header & Title */}
+        <div className="p-4 sm:p-8 lg:p-10 flex flex-col max-w-2xl mx-auto lg:mx-0 bg-white">
+            {/* Brand & Title */}
             <div className="mb-6">
                 {product.brand && (
-                    <span className="inline-block px-2 py-1 bg-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-500 rounded mb-3">
+                    <span className="text-[#B58D2F] text-xs font-bold uppercase tracking-[0.2em] mb-2 block">
                         {product.brand}
                     </span>
                 )}
-                <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 leading-[1.15] tracking-tight">
+                <h1 className="font-serif text-[#322619] text-3xl sm:text-3xl font-bold leading-tight mb-3">
                     {product.title}
                 </h1>
+                {/* Golden Line like the Banner */}
+                <div className="w-20 h-1 bg-[#B58D2F] mb-6"></div>
             </div>
 
-            {/* Ratings & Status */}
-            <div className="flex flex-wrap items-center gap-4 mb-8">
-                {reviewStats?.totalReviews > 0 && (
-                    <div className="flex items-center gap-3 py-1 px-3 bg-amber-50 rounded-full">
-                        <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <HiStar
-                                    key={star}
-                                    className={`w-4 h-4 ${star <= Math.round(reviewStats.avgRating) ? 'text-amber-500' : 'text-gray-200'}`}
-                                />
-                            ))}
-                        </div>
-                        <span className="text-sm font-semibold text-amber-700">
-                            {reviewStats.avgRating} <span className="text-amber-400 mx-1">•</span> {reviewStats.totalReviews} Reviews
-                        </span>
+            {/* Ratings & Price Box */}
+            <div className="mb-10 p-8 bg-[#F9F6F0] rounded-3xl border border-[#EDE3D2] relative overflow-hidden">
+                {/* Rating Badge */}
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="flex bg-white px-3 py-1 rounded-full shadow-sm border border-[#EDE3D2]">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <HiStar
+                                key={star}
+                                className={`w-4 h-4 ${star <= Math.round(reviewStats.avgRating) ? 'text-[#B58D2F]' : 'text-gray-200'}`}
+                            />
+                        ))}
+                        <span className="ml-2 text-xs font-bold text-[#322619]">{reviewStats.avgRating}</span>
                     </div>
-                )}
-                <div className="h-4 w-[1px] bg-gray-200 hidden sm:block"></div>
-                {product.availability === "In Stock" ? (
-                    <span className="text-emerald-600 text-sm font-bold flex items-center gap-1">
-                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> In Stock
+                    <span className="text-xs font-medium text-[#544231] underline cursor-pointer">
+                        {reviewStats.totalReviews} Reviews
                     </span>
-                ) : (
-                    <span className="text-rose-600 text-sm font-bold">Currently Unavailable</span>
-                )}
-            </div>
+                </div>
 
-            {/* Price Section */}
-            <div className="mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-4">
-                    <span className="text-4xl font-black text-gray-900 tracking-tighter">
+                <div className="flex items-baseline gap-4">
+                    <span className="text-4xl font-serif font-black text-[#322619]">
                         ₹{product.price?.toLocaleString()}
                     </span>
                     {product.oldprice > product.price && (
-                        <div className="flex flex-col">
-                            <span className="text-sm text-gray-400 line-through font-medium">
-                                ₹{product.oldprice?.toLocaleString()}
-                            </span>
-                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                                {product.discount}% OFF
-                            </span>
-                        </div>
+                        <span className="text-lg text-[#544231]/50 line-through decoration-[#B58D2F]/40">
+                            ₹{product.oldprice?.toLocaleString()}
+                        </span>
                     )}
                 </div>
-                <p className="text-[11px] text-gray-400 font-medium mt-2 uppercase tracking-wide">
-                    Inclusive of all taxes • Save ₹{savings.toLocaleString()} today
+                <p className="text-[11px] text-[#544231] font-bold mt-3 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Save ₹{savings.toLocaleString()} on this handcrafted piece
                 </p>
             </div>
 
@@ -181,13 +153,12 @@ const ProductInfoSection = ({
                 />
             )}
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-10">
+            {/* Main Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-10">
                 <button
-                    type="button"
                     onClick={onAddToCart}
                     disabled={isAddingToCart || product.stock <= 0}
-                    className="sm:col-span-4 flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white h-14 rounded-xl font-bold transition-all shadow-lg shadow-indigo-200 disabled:bg-gray-200 disabled:shadow-none disabled:cursor-not-allowed"
+                    className="sm:col-span-4 flex items-center justify-center gap-3 bg-[#B58D2F] hover:bg-[#322619] text-white h-16 rounded-full font-bold transition-all duration-500 shadow-xl shadow-[#B58D2F]/20 disabled:bg-gray-200"
                 >
                     {isAddingToCart ? (
                         <BiLoaderAlt className="w-6 h-6 animate-spin" />
@@ -200,59 +171,32 @@ const ProductInfoSection = ({
                 </button>
 
                 <button
-                    type="button"
                     onClick={onToggleWishlist}
-                    className={`sm:col-span-1 flex items-center justify-center h-14 rounded-xl transition-all border-2 active:scale-90 ${
+                    className={`sm:col-span-1 flex items-center justify-center h-16 rounded-full transition-all border-2 active:scale-95 ${
                         isWishlisted 
-                        ? 'bg-rose-50 border-rose-200 text-rose-500' 
-                        : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-600'
+                        ? 'bg-[#322619] border-[#322619] text-white' 
+                        : 'bg-white border-[#EDE3D2] text-[#322619] hover:border-[#B58D2F]'
                     }`}
-                    title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 >
                     {isWishlisted ? <HiHeart className="w-7 h-7" /> : <HiOutlineHeart className="w-7 h-7" />}
                 </button>
             </div>
 
-            {/* Trust Badges / Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-8 border-y border-gray-100">
-                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
-                    <HiOutlineTruck className="w-6 h-6 text-indigo-500" />
-                    <div>
-                        <p className="text-xs font-bold text-gray-900 uppercase">Free Shipping</p>
-                        <p className="text-[11px] text-gray-500">Orders over ₹499</p>
-                    </div>
+            {/* Heritage Trust Badges */}
+            <div className="grid grid-cols-3 gap-4 py-8 border-t-2 border-dashed border-[#EDE3D2]">
+                <div className="flex flex-col items-center text-center gap-2">
+                    <HiOutlineTruck className="w-6 h-6 text-[#B58D2F]" />
+                    <p className="text-[10px] font-bold text-[#322619] uppercase">Pan India Delivery</p>
                 </div>
-                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
-                    <HiOutlineRefresh className="w-6 h-6 text-indigo-500" />
-                    <div>
-                        <p className="text-xs font-bold text-gray-900 uppercase">7-Day Return</p>
-                        <p className="text-[11px] text-gray-500">Easy exchange</p>
-                    </div>
+                <div className="flex flex-col items-center text-center gap-2 border-x border-[#EDE3D2]">
+                    <HiOutlineRefresh className="w-6 h-6 text-[#B58D2F]" />
+                    <p className="text-[10px] font-bold text-[#322619] uppercase">Artisan Support</p>
                 </div>
-                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2">
-                    <HiOutlineShieldCheck className="w-6 h-6 text-indigo-500" />
-                    <div>
-                        <p className="text-xs font-bold text-gray-900 uppercase">Secure Pay</p>
-                        <p className="text-[11px] text-gray-500">100% Encrypted</p>
-                    </div>
+                <div className="flex flex-col items-center text-center gap-2">
+                    <HiOutlineShieldCheck className="w-6 h-6 text-[#B58D2F]" />
+                    <p className="text-[10px] font-bold text-[#322619] uppercase">Secure Payments</p>
                 </div>
             </div>
-
-            {/* Seller Info */}
-            {(product.manufacturer || product.countryOfOrigin) && (
-                <div className="mt-8 space-y-2">
-                    {product.manufacturer && (
-                        <p className="text-[13px] text-gray-500 italic">
-                            Sold and dispatched by <span className="text-indigo-600 font-semibold not-italic hover:underline cursor-pointer">{product.manufacturer}</span>
-                        </p>
-                    )}
-                    {product.countryOfOrigin && (
-                        <p className="text-[11px] text-gray-400 font-medium uppercase tracking-widest">
-                            Origin: {product.countryOfOrigin}
-                        </p>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

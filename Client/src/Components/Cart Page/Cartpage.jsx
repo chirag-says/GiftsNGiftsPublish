@@ -4,9 +4,10 @@ import CartItems from "./CartItems";
 import Totalprice from "./Totalprice";
 import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
-import { Button, Divider } from "@mui/material";
+import { Button } from "@mui/material";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { toast } from 'react-toastify';
+import { HiArrowLeft } from "react-icons/hi";
 
 function Cartpage() {
   const navigate = useNavigate();
@@ -14,9 +15,7 @@ function Cartpage() {
   const [selectedItems, setSelectedItems] = useState([]);
   const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
+  useEffect(() => { fetchCart(); }, []);
 
   useEffect(() => {
     if (cartItems.length > 0) {
@@ -24,7 +23,6 @@ function Cartpage() {
         setSelectedItems(cartItems.map(item => item.product._id));
         setInitialized(true);
       } else {
-        // Remove IDs that are no longer in cart
         setSelectedItems(prev => prev.filter(id => cartItems.some(item => item.product._id === id)));
       }
     }
@@ -42,46 +40,41 @@ function Cartpage() {
     try {
       await api.delete(`/api/auth/delete/${cartItemId}`);
       setCartItems((prev) => prev.filter((item) => item.product._id !== cartItemId));
-    } catch (err) {
-      console.error("Error removing cart item:", err);
-    }
+    } catch (err) { console.error("Error removing cart item:", err); }
   };
 
   const handleUpdateQuantity = async (productId, newQty) => {
     try {
-      await api.put('/api/auth/update-quantity',
-        { productId, quantity: newQty }
-      );
+      await api.put('/api/auth/update-quantity', { productId, quantity: newQty });
       setCartItems((prevItems) =>
         prevItems.map((item) => item.product._id === productId ? { ...item, quantity: newQty } : item)
       );
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error updating quantity");
-    }
+    } catch (err) { toast.error(err.response?.data?.message || "Error updating quantity"); }
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6">
+    <section className="min-h-screen bg-[#fcfcf9] py-12 px-4 sm:px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Page Title */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-[#fb541b] p-2 rounded-lg">
-            <ShoppingBagOutlinedIcon className="text-white" />
+        {/* Page Title with Signature Golden Line */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="bg-[#B58D2F] p-3 rounded-2xl shadow-lg shadow-[#B58D2F]/20">
+              <ShoppingBagOutlinedIcon className="text-white" />
+            </div>
+            <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#322619]">Your Shopping Bag</h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Your Shopping Bag</h1>
+          <div className="w-24 h-1 bg-[#B58D2F]"></div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-10 items-start">
           {/* Left Part: List of Items */}
-          <div className="w-full lg:w-[68%]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-50">
-                <span className="text-sm text-gray-500">
-                  You have <span className="font-bold text-gray-900">{cartItems.length} items</span> in your cart
-                </span>
-              </div>
-
-              <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto custom-scrollbar">
+          <div className="w-full lg:w-[65%]">
+            <div className="p-2">
+               <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-[#544231]/60 mb-6">
+                You have <span className="text-[#B58D2F]">{cartItems.length} items</span> in your cart
+              </p>
+              
+              <div className="space-y-4 max-h-[700px] overflow-y-auto no-scrollbar pr-2">
                 {cartItems.length > 0 ? (
                   cartItems.map((item) => (
                     <CartItems
@@ -96,15 +89,14 @@ function Cartpage() {
                     />
                   ))
                 ) : (
-                  <div className="py-20 text-center flex flex-col items-center">
-                    <p className="text-gray-400 mb-6">Your cart feels a bit light...</p>
-                    <Button
-                      variant="outlined"
+                  <div className="py-24 text-center bg-white rounded-[2.5rem] border border-dashed border-[#EDE3D2]">
+                    <p className="font-serif text-xl text-[#544231] mb-8">Your bag is currently empty of treasures.</p>
+                    <button
                       onClick={() => navigate('/')}
-                      className="!border-[#fb541b] !text-[#fb541b]"
+                      className="bg-[#322619] text-[#F9F6F0] px-10 py-4 rounded-full font-bold hover:bg-[#B58D2F] transition-all shadow"
                     >
-                      Start Shopping
-                    </Button>
+                      Explore Collections
+                    </button>
                   </div>
                 )}
               </div>
@@ -112,15 +104,15 @@ function Cartpage() {
 
             <button
               onClick={() => navigate('/')}
-              className="mt-6 text-sm font-medium text-gray-500 hover:text-[#fb541b] transition-colors"
+              className="mt-8 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#544231] hover:text-[#B58D2F] transition-colors"
             >
-              ← Continue Shopping
+              <HiArrowLeft className="text-lg" /> Back to Collections
             </button>
           </div>
 
-          {/* Right Part: Checkout Summary (Sticky) */}
-          <div className="w-full lg:w-[32%] lg:sticky lg:top-24">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          {/* Right Part: Checkout Summary */}
+          <div className="w-full lg:w-[35%] lg:sticky lg:top-28">
+            <div className="bg-white rounded-[2.5rem] shadow shadow-[#322619]/5 border border-[#EDE3D2] p-8">
               <Totalprice
                 handlePlaceOrder={() => navigate("/addaddress", { state: { selectedItems } })}
                 selectedItemIds={selectedItems}
@@ -129,14 +121,13 @@ function Cartpage() {
                 fullWidth
                 onClick={() => {
                   if (selectedItems.length === 0) {
-                    toast.warning("Please select at least one item to checkout.");
+                    toast.warning("Select a piece to continue.");
                     return;
                   }
                   navigate("/addaddress", { state: { selectedItems } });
                 }}
-                variant="contained"
                 disabled={selectedItems.length === 0}
-                className="!mt-6 !bg-[#fb541b] !py-3 !rounded-xl !font-bold !text-lg !shadow-orange-200 !shadow-lg hover:!bg-[#e44a15]"
+                className="!mt-8 !bg-[#322619] !text-[#F9F6F0] !py-5 !rounded-full !font-bold !text-sm !tracking-[0.2em] !shadow-2xl hover:!bg-[#B58D2F] !transition-all"
               >
                 Proceed to Checkout
               </Button>

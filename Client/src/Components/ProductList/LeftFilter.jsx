@@ -3,6 +3,7 @@ import api from '../../utils/api';
 import { Collapse } from 'react-collapse';
 import { Checkbox, FormControlLabel, Slider, Button } from '@mui/material';
 import { FaAngleUp, FaAngleDown } from 'react-icons/fa';
+import { HiFilter } from 'react-icons/hi';
 
 function LeftFilter({ onApplyFilters, initialCatId }) {
   const [isOpenCatFilter, setIsOpenCatFilter] = useState(true);
@@ -15,7 +16,7 @@ function LeftFilter({ onApplyFilters, initialCatId }) {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Sync with the URL category when it loads
+  // --- Logic Kept Intact ---
   useEffect(() => {
     if (initialCatId) {
       setSelectedCategories([initialCatId]);
@@ -51,42 +52,56 @@ function LeftFilter({ onApplyFilters, initialCatId }) {
   };
 
   const handleDiscountChange = (val) => {
-    // If clicking the same discount, it deselects (null), otherwise sets the new value
     setSelectedDiscount(prev => (prev === val ? null : val));
   };
 
   return (
-    <div className="p-5 space-y-6">
-      <div className="block lg:hidden">
+    <div className="p-4 sm:p-6 bg-white rounded border border-[#EDE3D2] shadow-sm">
+      {/* Mobile Toggle Button - Matches Home Page Theme */}
+      <div className="block lg:hidden mb-4">
         <button
-          className="bg-[#7d0492] text-white px-4 py-2 rounded-lg w-full font-bold"
+          className="bg-[#322619] text-[#F9F6F0] px-6 py-3 rounded-full w-full font-bold flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all"
           onClick={() => setShowFilters(!showFilters)}
         >
-          {showFilters ? "Close Filters" : "Filter Products"}
+          <HiFilter className="text-[#B58D2F]" />
+          {showFilters ? "Close Selection" : "Refine Search"}
         </button>
       </div>
 
-      <div className={`${showFilters ? 'block' : 'hidden'} lg:block space-y-8`}>
+      <div className={`${showFilters ? 'block' : 'hidden'} lg:block space-y-10`}>
+        
+        {/* Header - Boutique Style */}
+        <div className="hidden lg:block pb-2">
+           <h2 className="font-serif text-2xl font-bold text-[#322619] mb-2 tracking-tight">Filter </h2>
+           <div className="w-16 h-1 bg-[#B58D2F]"></div>
+        </div>
+
         {/* Category section */}
-        <div className="border-b border-slate-100 pb-4">
-          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenCatFilter(!isOpenCatFilter)}>
-            <h3 className="font-bold text-slate-800">Categories</h3>
-            {isOpenCatFilter ? <FaAngleUp /> : <FaAngleDown />}
+        <div className="pb-2">
+          <div 
+            className="flex justify-between items-center cursor-pointer group" 
+            onClick={() => setIsOpenCatFilter(!isOpenCatFilter)}
+          >
+            <h3 className="font-serif text-lg font-bold text-[#322619] group-hover:text-[#B58D2F] transition-colors">Categories</h3>
+            {isOpenCatFilter ? <FaAngleUp className="text-[#B58D2F]" /> : <FaAngleDown className="text-[#B58D2F]" />}
           </div>
           <Collapse isOpened={isOpenCatFilter}>
-            <div className="flex flex-col mt-3 max-h-48 overflow-y-auto">
+            <div className="flex flex-col mt-4 max-h-56 overflow-y-auto no-scrollbar py-1">
               {categoryList.map((cat) => (
                 <FormControlLabel
                   key={cat._id}
                   control={
                     <Checkbox
                       size="small"
-                      sx={{ color: '#7d0492', '&.Mui-checked': { color: '#7d0492' } }}
+                      sx={{ 
+                        color: '#EDE3D2', 
+                        '&.Mui-checked': { color: '#B58D2F' } 
+                      }}
                       checked={selectedCategories.includes(cat._id)}
                       onChange={() => handleCategoryChange(cat._id)}
                     />
                   }
-                  label={<span className="text-sm font-medium text-slate-600">{cat.categoryname}</span>}
+                  label={<span className="text-sm font-medium text-[#544231] tracking-wide">{cat.categoryname}</span>}
                 />
               ))}
             </div>
@@ -94,22 +109,30 @@ function LeftFilter({ onApplyFilters, initialCatId }) {
         </div>
 
         {/* Price section */}
-        <div className="border-b border-slate-100 pb-4">
-          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenPriceFilter(!isOpenPriceFilter)}>
-            <h3 className="font-bold text-slate-800">Price Range</h3>
-            {isOpenPriceFilter ? <FaAngleUp /> : <FaAngleDown />}
+        <div className="pb-2">
+          <div 
+            className="flex justify-between items-center cursor-pointer group" 
+            onClick={() => setIsOpenPriceFilter(!isOpenPriceFilter)}
+          >
+            <h3 className="font-serif text-lg font-bold text-[#322619] group-hover:text-[#B58D2F] transition-colors">Price</h3>
+            {isOpenPriceFilter ? <FaAngleUp className="text-[#B58D2F]" /> : <FaAngleDown className="text-[#B58D2F]" />}
           </div>
           <Collapse isOpened={isOpenPriceFilter}>
-            <div className="px-2 mt-4">
+            <div className="px-3 mt-6">
               <Slider
                 value={priceRange}
                 onChange={(e, val) => setPriceRange(val)}
                 min={0}
                 max={10000}
                 valueLabelDisplay="auto"
-                sx={{ color: '#7d0492' }}
+                sx={{ 
+                  color: '#B58D2F',
+                  '& .MuiSlider-thumb': { backgroundColor: '#322619', border: '2px solid #B58D2F' },
+                  '& .MuiSlider-track': { height: 4 },
+                  '& .MuiSlider-rail': { color: '#EDE3D2', height: 4 }
+                }}
               />
-              <div className="flex justify-between text-xs font-bold text-slate-400">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-[#544231]/40 mt-2">
                 <span>₹{priceRange[0]}</span>
                 <span>₹{priceRange[1]}</span>
               </div>
@@ -117,37 +140,55 @@ function LeftFilter({ onApplyFilters, initialCatId }) {
           </Collapse>
         </div>
 
-        {/* Discount section - THE FIX IS HERE */}
-        <div className="pb-2">
-          <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsOpenDiscountFilter(!isOpenDiscountFilter)}>
-            <h3 className="font-bold text-slate-800">Discount</h3>
-            {isOpenDiscountFilter ? <FaAngleUp /> : <FaAngleDown />}
+        {/* Discount section */}
+        <div className="pb-2 border-b border-dashed border-[#EDE3D2]">
+          <div 
+            className="flex justify-between items-center cursor-pointer group" 
+            onClick={() => setIsOpenDiscountFilter(!isOpenDiscountFilter)}
+          >
+            <h3 className="font-serif text-lg font-bold text-[#322619] group-hover:text-[#B58D2F] transition-colors">Discounts</h3>
+            {isOpenDiscountFilter ? <FaAngleUp className="text-[#B58D2F]" /> : <FaAngleDown className="text-[#B58D2F]" />}
           </div>
           <Collapse isOpened={isOpenDiscountFilter}>
-            <div className="flex flex-col mt-3">
+            <div className="flex flex-col mt-4 py-1">
               {[10, 20, 30, 40, 50].map((d) => (
                 <FormControlLabel
                   key={d}
                   control={
                     <Checkbox
                       size="small"
-                      sx={{ color: '#7d0492', '&.Mui-checked': { color: '#7d0492' } }}
+                      sx={{ 
+                        color: '#EDE3D2', 
+                        '&.Mui-checked': { color: '#B58D2F' } 
+                      }}
                       checked={selectedDiscount === d}
                       onChange={() => handleDiscountChange(d)}
                     />
                   }
-                  label={<span className="text-sm font-medium text-slate-600">{d}% or more</span>}
+                  label={<span className="text-sm font-medium text-[#544231] tracking-wide">{d}% or more</span>}
                 />
               ))}
             </div>
           </Collapse>
         </div>
 
+        {/* Apply Button - Matches Checkout Styling */}
         <Button
           variant="contained"
           fullWidth
           onClick={handleApply}
-          sx={{ backgroundColor: '#7d0492', borderRadius: '12px', py: 1.5, fontWeight: 'bold', '&:hover': { backgroundColor: '#5a036a' } }}
+          sx={{ 
+            backgroundColor: '#322619', 
+            borderRadius: '50px', 
+            py: 1.8, 
+            fontWeight: 'bold', 
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            fontSize: '0.75rem',
+            boxShadow: '0 10px 20px -5px rgba(50, 38, 25, 0.3)',
+            '&:hover': { backgroundColor: '#B58D2F' },
+            transition: 'all 0.4s'
+          }}
         >
           Apply Filters
         </Button>

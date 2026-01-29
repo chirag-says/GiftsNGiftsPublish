@@ -86,18 +86,18 @@ function ProductList() {
   };
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen font-sans antialiased">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
-        <header className="mb-5">
-          <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">
+    <div className="bg-[#fcfcf9]  min-h-screen font-sans antialiased">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
+        <header className="mb-2">
+          <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2">
             <Link to="/" className="hover:text-purple-600">Home</Link>
             <span className="text-slate-300">/</span>
             <span className="text-slate-900">Collections</span>
           </nav>
           
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-2">
             <div>
-              <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight capitalize mb-2">
+              <h1 className="text-4xl sm:text-3xl font-black text-slate-900 tracking-tight capitalize mb-2">
                 {activeCategoryName}
               </h1>
               <p className="text-slate-500 font-medium text-lg">
@@ -139,7 +139,7 @@ function ProductList() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       {product.discount > 0 && (
-                        <div className="absolute top-4 left-4 bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
+                        <div className="absolute top-4 left-4 bg-yellow-900 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
                           {product.discount}% OFF
                         </div>
                       )}

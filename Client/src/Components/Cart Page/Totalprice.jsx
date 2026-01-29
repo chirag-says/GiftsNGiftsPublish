@@ -1,8 +1,9 @@
-import { Divider, Button } from "@mui/material";
+import { Divider } from "@mui/material";
 import { useContext } from 'react';
 import { AppContext } from '../context/Appcontext.jsx';
+import { HiSparkles } from "react-icons/hi";
 
-function Totalprice({ handlePlaceOrder, selectedItemIds }) {
+function Totalprice({ selectedItemIds }) {
   const { cartItems: contextCartItems } = useContext(AppContext);
   const allCartItems = contextCartItems || [];
 
@@ -15,43 +16,45 @@ function Totalprice({ handlePlaceOrder, selectedItemIds }) {
   const discountAmount = totalOriginalPrice - totalDiscountedPrice;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-wider">Order Summary</h3>
+    <div className="w-full">
+      <h3 className="font-serif text-xl font-bold text-[#322619] mb-8 border-b-2 border-dashed border-[#EDE3D2] pb-4 uppercase tracking-widest">
+        Summary
+      </h3>
 
-        <div className="space-y-4">
-          <div className="flex justify-between text-gray-500 text-sm">
-            <span>Price ({cartItems.length} items)</span>
-            <span>₹{totalOriginalPrice.toFixed(2)}</span>
-          </div>
+      <div className="space-y-5">
+        <div className="flex justify-between text-[#544231]/70 text-sm font-medium">
+          <span>Pieces ({cartItems.length})</span>
+          <span>₹{totalOriginalPrice.toLocaleString()}</span>
+        </div>
 
-          <div className="flex justify-between text-green-600 text-sm">
-            <span>Discount</span>
-            <span>- ₹{discountAmount.toFixed(2)}</span>
-          </div>
+        <div className="flex justify-between text-emerald-600 text-sm font-bold">
+          <span>Artisan Discount</span>
+          <span>- ₹{discountAmount.toLocaleString()}</span>
+        </div>
 
-          <div className="flex justify-between text-gray-500 text-sm">
-            <span>Delivery Charges</span>
-            <span className="text-green-600 font-medium">FREE</span>
-          </div>
+        <div className="flex justify-between text-[#544231]/70 text-sm font-medium">
+          <span>Shipping</span>
+          <span className="text-[#B58D2F] font-bold">Free of Charge</span>
+        </div>
 
-          <Divider className="!my-4" />
+        <Divider className="!my-6 !border-[#EDE3D2] !border-dashed" />
 
-          <div className="flex justify-between items-end">
-            <span className="text-gray-800 font-bold">Total Amount</span>
-            <div className="text-right">
-              <p className="text-2xl font-black text-gray-900 leading-none">₹{totalDiscountedPrice.toFixed(2)}</p>
-            </div>
+        <div className="flex justify-between items-end">
+          <span className="text-[#322619] font-serif text-lg font-bold uppercase tracking-widest">Total</span>
+          <div className="text-right">
+            <p className="text-4xl font-black text-[#322619] tracking-tighter leading-none">
+              ₹{totalDiscountedPrice.toLocaleString()}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#fb541b]/5 pb-2 pt-4 text-center">
-        <p className="text-sm font-medium text-[#fb541b]">
-          🎊 You saved ₹{discountAmount.toFixed(2)}!
+      <div className="mt-8 bg-[#B58D2F]/10 p-4 rounded-2xl border border-[#B58D2F]/20 flex items-center gap-3">
+        <HiSparkles className="text-[#B58D2F] text-xl" />
+        <p className="text-xs font-bold text-[#B58D2F] uppercase tracking-wider">
+          You saved ₹{discountAmount.toLocaleString()} today!
         </p>
       </div>
-
     </div>
   );
 }

@@ -6,123 +6,87 @@ import { HiOutlineBadgeCheck } from "react-icons/hi";
 
 function CartItems({ product, cartItemId, onRemove, onUpdateQuantity, quantity, isSelected, onSelect }) {
   return (
-    <div className="group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 py-5 px-4 mb-4 bg-white rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 hover:border-orange-100">
+    <div className="group relative flex flex-col sm:flex-row items-center gap-6 p-6 bg-white rounded-[2rem] border border-[#EDE3D2] transition-all duration-500 ">
 
       {/* Selection Checkbox */}
       {onSelect && (
         <Checkbox
           checked={isSelected}
           onChange={() => onSelect(cartItemId)}
-          sx={{ '&.Mui-checked': { color: '#fb541b' } }}
+          sx={{ '&.Mui-checked': { color: '#B58D2F' }, '& .MuiSvgIcon-root': { fontSize: 28 } }}
         />
       )}
 
-      {/* 1. Image Section - Centered on mobile, left-aligned on desktop */}
-      <div className="relative w-full sm:w-35 h-40 sm:h-35 bg-gray-50 rounded-xl flex items-center justify-center p-3 flex-shrink-0 overflow-hidden">
+      {/* Image Section */}
+      <div className="relative w-full sm:w-32 h-32 bg-[#F9F6F0] rounded-2xl flex items-center justify-center p-4 flex-shrink-0 overflow-hidden border border-[#EDE3D2]/50">
         <Link to={`/products/${product._id}`} className="w-full h-full">
           <img
             src={product?.image || "https://placehold.co/150"}
             alt={product?.title}
-            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500 rounded-xl"
+            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700"
           />
         </Link>
-        {/* Subtle Discount Tag on Image */}
         {product.oldprice > product.price && (
-          <div className="absolute top-2 left-2 bg-[#fb541b] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-            -{Math.round(((product.oldprice - product.price) / product.oldprice) * 100)}%
+          <div className="absolute top-0 left-0 bg-[#A34343] text-white text-[9px] font-black uppercase tracking-tighter px-3 py-1 rounded-br-xl shadow-sm">
+            {Math.round(((product.oldprice - product.price) / product.oldprice) * 100)}% Off
           </div>
         )}
       </div>
 
-      {/* 2. Main Content Area */}
-      <div className="flex-1 w-full flex flex-col justify-between py-1">
-
-        {/* Top Info Row */}
-        <div className="flex justify-between items-start gap-4 mb-3">
+      {/* Main Content Area */}
+      <div className="flex-1 w-full flex flex-col justify-between">
+        <div className="flex justify-between items-start gap-4 mb-4">
           <div className="space-y-1">
             <Link to={`/products/${product._id}`}>
-              <h3 className="text-gray-900 font-extrabold text-sm sm:text-base hover:text-[#fb541b] transition-colors line-clamp-1 leading-snug">
+              <h3 className="font-serif text-[#322619] font-bold text-lg hover:text-[#B58D2F] transition-colors line-clamp-1">
                 {product.title}
               </h3>
             </Link>
-            <div className="flex items-center gap-1.5 text-gray-400">
-              <HiOutlineBadgeCheck className="text-blue-500" />
-              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
-                {product.brand || "Authentic Item"}
+            <div className="flex items-center gap-2">
+              <HiOutlineBadgeCheck className="text-[#B58D2F] text-lg" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#544231]/60">
+                {product.brand || "Artisan Craft"}
               </span>
             </div>
           </div>
 
           <button
             onClick={() => onRemove(cartItemId)}
-            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 shadow-sm sm:shadow-none"
-            title="Remove from bag"
+            className="p-3 text-[#544231]/40 hover:text-[#A34343] hover:bg-red-50 rounded-full transition-all"
           >
-            <IoTrashOutline size={20} />
+            <IoTrashOutline size={22} />
           </button>
         </div>
 
-        {/* Bottom Interaction Row */}
-        <div className="flex items-center justify-between mt-auto">
-
-          {/* Stylized Quantity Selector */}
-          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl gap-1">
+        <div className="flex items-center justify-between">
+          {/* Pill Quantity Selector */}
+          <div className="flex items-center bg-[#F9F6F0] border border-[#EDE3D2] p-1 rounded-full">
             <button
               onClick={() => quantity > 1 && onUpdateQuantity(cartItemId, quantity - 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#322619] shadow-sm hover:bg-[#B58D2F] hover:text-white transition-all disabled:opacity-20"
               disabled={quantity <= 1}
             > – </button>
-
-            <span className="w-8 text-center text-xs font-black text-gray-800">
-              {quantity}
-            </span>
-
+            <span className="w-10 text-center text-sm font-bold text-[#322619]">{quantity}</span>
             <button
               onClick={() => onUpdateQuantity(cartItemId, quantity + 1)}
               disabled={quantity >= product.stock}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:text-[#fb541b] active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-[#322619] shadow-sm hover:bg-[#B58D2F] hover:text-white transition-all disabled:opacity-20"
             > + </button>
           </div>
 
-          {/* Pricing Section */}
-          <div className="flex flex-col items-end">
+          <div className="text-right">
             <div className="flex items-baseline gap-2">
-              <span className="text-gray-400 text-xs line-through decoration-gray-300">
-                ₹{(product.oldprice * quantity).toFixed(0)}
-              </span>
-              <span className="text-gray-900 font-black text-xl tracking-tight">
-                ₹{(product.price * quantity).toFixed(0)}
-              </span>
+              <span className="text-[#544231]/30 text-xs line-through">₹{(product.oldprice * quantity).toFixed(0)}</span>
+              <span className="text-[#322619] font-black text-2xl tracking-tighter">₹{(product.price * quantity).toFixed(0)}</span>
             </div>
-
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[10px] font-bold text-green-600">
-                Saving ₹{((product.oldprice - product.price) * quantity).toFixed(0)}
-              </span>
-            </div>
+            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">
+              Saving ₹{((product.oldprice - product.price) * quantity).toFixed(0)}
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-CartItems.propTypes = {
-  product: PropTypes.shape({
-    _id: PropTypes.string,
-    title: PropTypes.string,
-    image: PropTypes.string,
-    brand: PropTypes.string,
-    price: PropTypes.number,
-    oldprice: PropTypes.number,
-  }).isRequired,
-  cartItemId: PropTypes.string.isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onUpdateQuantity: PropTypes.func.isRequired,
-  quantity: PropTypes.number.isRequired,
-  isSelected: PropTypes.bool,
-  onSelect: PropTypes.func,
-};
 
 export default CartItems;

@@ -117,13 +117,13 @@ const Navigation = () => {
 
                   {/* Desktop Profile Dropdown */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-4 w-72 bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-50 overflow-hidden animate-in fade-in slide-in-from-top-5 duration-300">
+                    <div className="absolute right-0 mt-4 w-72 bg-white rounded-[1rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-50 overflow-hidden animate-in fade-in slide-in-from-top-5 duration-300">
                       <div className="p-6 bg-[#0F3D2E] text-white">
-                        <p className="text-[10px] text-[#C5A059] font-black uppercase tracking-widest mb-1">Authentic Member</p>
-                        <p className="text-lg font-serif italic truncate leading-tight">{userData?.name}</p>
+                        <p className="text-[10px] text-[#C5A059] font-black uppercase tracking-widest mb-1">{userData?.email}</p>
+                        <p className="text-lg font-serif truncate ">{userData?.name}</p>
                       </div>
                       <div className="p-3">
-                        <DropdownItem icon={<FiUser />} label="Heritage Profile" to="/myProfile" />
+                        <DropdownItem icon={<FiUser />} label="My Profile" to="/myProfile" />
                         <DropdownItem icon={<FiPackage />} label="My Orders" to="/orders" />
                         <div className="my-2 border-t border-gray-50" />
                         <button
@@ -176,30 +176,68 @@ const Navigation = () => {
           </div>
 
           {/* Mobile Footer (Account) */}
-          <div className="mt-auto pt-6 border-t border-gray-100">
-            {userData ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#0F3D2E] text-white flex items-center justify-center font-bold">{userData.name[0]}</div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">{userData.name}</p>
-                    <p className="text-xs text-[#C5A059]">Verified Member</p>
-                  </div>
-                </div>
-                <Button fullWidth onClick={() => navigate('/myProfile')} className="!justify-start !text-gray-700 !normal-case !font-bold"><FiUser className="mr-3" /> Profile</Button>
-                <Button fullWidth onClick={logout} className="!justify-start !text-red-500 !normal-case !font-bold"><FiLogOut className="mr-3" /> Logout</Button>
-              </div>
-            ) : (
-              <Button 
-                fullWidth 
-                variant="contained" 
-                onClick={() => navigate('/login')}
-                className="!bg-[#0F3D2E] !rounded-xl !py-4 !font-black !tracking-widest"
-              >
-                SIGN IN
-              </Button>
-            )}
+<div className="mt-auto pt-8 px-2 border-t border-stone-100 bg-[#FDFBF7]/50">
+  {userData ? (
+    <div className="space-y-4">
+      {/* User Profile Summary */}
+      <div className="flex items-center gap-4 mb-6 p-3 bg-white rounded-2xl border border-stone-100 shadow-sm">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full bg-[#1A3A32] text-white flex items-center justify-center font-serif text-lg font-bold ring-2 ring-[#C5A059]/30 ring-offset-2">
+            {userData.name[0]}
           </div>
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+        </div>
+        
+        <div className="flex-grow">
+          <p className="text-sm font-serif font-bold text-[#1A3A32] leading-tight">
+            {userData.name}
+          </p>
+          <div className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-[#C5A059]/10 rounded-md border border-[#C5A059]/20">
+            <span className="w-1 h-1 rounded-full bg-[#C5A059]"></span>
+            <p className="text-[10px] font-bold text-[#C5A059] uppercase tracking-widest">
+              Patron Member
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Actions */}
+      <div className="grid grid-cols-1 gap-2">
+        <Button 
+          fullWidth 
+          onClick={() => navigate('/myProfile')} 
+          className="!justify-start !text-[#1A3A32] !normal-case !font-bold !py-3 !px-4 !rounded-xl hover:!bg-white !transition-all"
+        >
+          <FiUser className="mr-3 text-[#C5A059]" size={18} /> 
+          Account Settings
+        </Button>
+        
+        <Button 
+          fullWidth 
+          onClick={logout} 
+          className="!justify-start !text-stone-500 hover:!text-red-600 !normal-case !font-semibold !py-3 !px-4 !rounded-xl hover:!bg-red-50 !transition-all"
+        >
+          <FiLogOut className="mr-3" size={18} /> 
+          Sign Out
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <div className="p-2">
+      <Button 
+        fullWidth 
+        variant="contained" 
+        onClick={() => navigate('/login')}
+        className="!bg-[#1A3A32] !rounded-xl !py-4 !font-bold !tracking-[0.2em] !shadow-lg !shadow-[#1A3A32]/10 hover:!bg-[#C5A059] !transition-all"
+      >
+        SIGN IN
+      </Button>
+      <p className="text-center text-[11px] text-stone-400 mt-4 italic">
+        Join our community of heritage lovers
+      </p>
+    </div>
+  )}
+</div>
         </div>
       </div>
     </>

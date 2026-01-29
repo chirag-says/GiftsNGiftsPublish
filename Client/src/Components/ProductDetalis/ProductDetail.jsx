@@ -407,7 +407,7 @@ function ProductDetail() {
       </div>
 
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200">
+      <div className="bg-gray-50  py-2">
         <div className="container mx-auto px-4 py-2">
           <nav className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-gray-900 hover:underline transition whitespace-nowrap">Home</Link>
@@ -420,7 +420,7 @@ function ProductDetail() {
       </div>
 
       {/* Main Product Section */}
-      <div className="container mx-auto px-4 py-4 sm:py-6">
+      <div className="container mx-auto px-4 ">
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
             {/* Left - Image Gallery */}
@@ -733,7 +733,7 @@ function ProductDetail() {
                           />
                         </div>
                         <div className="p-3">
-                          <h3 className="text-sm text-gray-700 line-clamp-2 mb-1 group-hover:text-blue-600">{item.title}</h3>
+                          <h3 className="text-sm text-gray-700 line-clamp-2 mb-1 group-hover:text-[#c5a059]">{item.title}</h3>
                           <div className="flex items-baseline gap-1">
                             <span className="text-sm font-medium text-gray-900">₹{item.price?.toLocaleString()}</span>
                             {item.oldprice > item.price && (

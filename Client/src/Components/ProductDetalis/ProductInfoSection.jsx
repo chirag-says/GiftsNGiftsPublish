@@ -27,8 +27,8 @@ export const SizeSelector = ({ sizes, selectedSize, onSelect }) => (
                         key={idx}
                         onClick={() => onSelect(size.trim())}
                         className={`min-w-[3.5rem] h-11 px-4 rounded-full border-2 text-sm font-bold transition-all duration-300 
-                            ${isSelected 
-                                ? 'border-[#B58D2F] bg-[#B58D2F] text-white shadow-md' 
+                            ${isSelected
+                                ? 'border-[#B58D2F] bg-[#B58D2F] text-white shadow-md'
                                 : 'border-[#EDE3D2] bg-white text-[#544231] hover:border-[#B58D2F]'
                             }`}
                     >
@@ -98,7 +98,36 @@ const ProductInfoSection = ({
                     {product.title}
                 </h1>
                 {/* Golden Line like the Banner */}
-                <div className="w-20 h-1 bg-[#B58D2F] mb-6"></div>
+                <div className="w-20 h-1 bg-[#B58D2F] mb-4"></div>
+
+                {/* Origin State & Occasions */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {product.state && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-semibold rounded-full border border-teal-200">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                            {product.state}
+                        </span>
+                    )}
+                    {product.occasions && product.occasions.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {product.occasions.slice(0, 3).map((occasion, idx) => (
+                                <span
+                                    key={idx}
+                                    className="px-2.5 py-1 bg-pink-50 text-pink-600 text-xs font-medium rounded-full border border-pink-200"
+                                >
+                                    {occasion}
+                                </span>
+                            ))}
+                            {product.occasions.length > 3 && (
+                                <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                                    +{product.occasions.length - 3} more
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Ratings & Price Box */}
@@ -172,11 +201,10 @@ const ProductInfoSection = ({
 
                 <button
                     onClick={onToggleWishlist}
-                    className={`sm:col-span-1 flex items-center justify-center h-16 rounded-full transition-all border-2 active:scale-95 ${
-                        isWishlisted 
-                        ? 'bg-[#322619] border-[#322619] text-white' 
-                        : 'bg-white border-[#EDE3D2] text-[#322619] hover:border-[#B58D2F]'
-                    }`}
+                    className={`sm:col-span-1 flex items-center justify-center h-16 rounded-full transition-all border-2 active:scale-95 ${isWishlisted
+                            ? 'bg-[#322619] border-[#322619] text-white'
+                            : 'bg-white border-[#EDE3D2] text-[#322619] hover:border-[#B58D2F]'
+                        }`}
                 >
                     {isWishlisted ? <HiHeart className="w-7 h-7" /> : <HiOutlineHeart className="w-7 h-7" />}
                 </button>

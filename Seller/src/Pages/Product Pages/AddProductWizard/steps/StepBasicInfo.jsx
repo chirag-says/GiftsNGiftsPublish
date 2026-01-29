@@ -1,8 +1,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useWizard } from '../AddProductWizard';
-import { TextField } from '@mui/material';
-import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete } from 'react-icons/md';
+import { TextField, Select, MenuItem, FormControl } from '@mui/material';
+import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete, MdLocationCity, MdCelebration, MdCheckCircle } from 'react-icons/md';
+
+// Indian States (focusing on Northeast and all India)
+const INDIAN_STATES = [
+    // Northeast States (Primary focus for GNG)
+    'Tripura', 'Assam', 'Meghalaya', 'Manipur', 'Mizoram', 'Nagaland', 'Arunachal Pradesh', 'Sikkim',
+    // Other States
+    'Andhra Pradesh', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
+    'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Odisha', 'Punjab',
+    'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+];
+
+// Occasions for product tagging
+const OCCASIONS = [
+    'Diwali', 'Holi', 'Durga Puja', 'Bihu', 'Christmas', 'Eid',
+    'Wedding', 'Anniversary', 'Birthday', 'Housewarming',
+    'Corporate Gifting', 'Festive Season', 'Daily Use', 'Home Decor',
+    'Puja', 'Traditional Ceremony', 'Other'
+];
 
 function StepBasicInfo() {
     const { productData, updateProductData, errors } = useWizard();
@@ -205,6 +225,103 @@ function StepBasicInfo() {
                         }}
                     />
                 </motion.div>
+
+                {/* Origin State */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center">
+                            <MdLocationCity className="text-teal-600" size={18} />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-800 text-sm">Origin State</h3>
+                            <p className="text-xs text-gray-500">Select the state where this product is crafted (if applicable)</p>
+                        </div>
+                    </div>
+
+                    <FormControl fullWidth size="small">
+                        <Select
+                            value={productData.state}
+                            onChange={(e) => updateProductData('state', e.target.value)}
+                            displayEmpty
+                            sx={{
+                                borderRadius: '10px',
+                                backgroundColor: '#f9fafb',
+                            }}
+                        >
+                            <MenuItem value="">
+                                <em>Select State (Optional)</em>
+                            </MenuItem>
+                            {INDIAN_STATES.map((state) => (
+                                <MenuItem key={state} value={state}>
+                                    {state}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <div className="mt-3 flex items-start gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <MdInfo className="flex-shrink-0 mt-0.5 text-gray-400" size={14} />
+                        <p>
+                            <span className="font-medium">Why this matters:</span> Highlighting regional origin helps customers discover authentic local handicrafts
+                        </p>
+                    </div>
+                </motion.div>
+
+                {/* Occasions */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-pink-100 flex items-center justify-center">
+                            <MdCelebration className="text-pink-600" size={18} />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-800 text-sm">Suitable Occasions</h3>
+                            <p className="text-xs text-gray-500">Select occasions where this product is perfect (if applicable)</p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        {OCCASIONS.map((occasion) => {
+                            const isSelected = productData.occasions?.includes(occasion);
+                            return (
+                                <button
+                                    key={occasion}
+                                    type="button"
+                                    onClick={() => {
+                                        const current = productData.occasions || [];
+                                        if (isSelected) {
+                                            updateProductData('occasions', current.filter(o => o !== occasion));
+                                        } else {
+                                            updateProductData('occasions', [...current, occasion]);
+                                        }
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${isSelected
+                                        ? 'bg-pink-500 text-white border-pink-500 shadow-sm'
+                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'
+                                        }`}
+                                >
+                                    {occasion}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {productData.occasions?.length > 0 && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-pink-600">
+                            <MdCheckCircle size={16} />
+                            <span>{productData.occasions.length} occasion(s) selected</span>
+                        </div>
+                    )}
+                </motion.div>
             </div>
 
             {/* Preview Card */}
@@ -220,18 +337,37 @@ function StepBasicInfo() {
                             <MdDescription className="text-gray-400" size={24} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">
                                     {productData.categoryName}
                                 </span>
                                 <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded font-medium">
                                     {productData.subcategoryName}
                                 </span>
+                                {productData.state && (
+                                    <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded font-medium">
+                                        📍 {productData.state}
+                                    </span>
+                                )}
                             </div>
                             <h3 className="text-base font-bold text-gray-800 mb-1 truncate">{productData.title}</h3>
                             <p className="text-sm text-gray-600 line-clamp-2">{productData.description}</p>
                             {productData.brand && (
                                 <p className="text-xs text-gray-500 mt-2">by {productData.brand}</p>
+                            )}
+                            {productData.occasions?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                    {productData.occasions.slice(0, 3).map(occ => (
+                                        <span key={occ} className="px-2 py-0.5 bg-pink-100 text-pink-600 text-xs rounded">
+                                            {occ}
+                                        </span>
+                                    ))}
+                                    {productData.occasions.length > 3 && (
+                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                                            +{productData.occasions.length - 3} more
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

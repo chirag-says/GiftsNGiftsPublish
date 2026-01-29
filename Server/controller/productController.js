@@ -24,6 +24,9 @@ export const addProduct = async (req, res) => {
       materialComposition, outerMaterial, length, careInstructions,
       aboutThisItem,
 
+      // ▶ State & Occasion fields
+      state, occasions,
+
       stock
     } = req.body;
 
@@ -43,6 +46,8 @@ export const addProduct = async (req, res) => {
       countryOfOrigin, bestSellerRank,
       materialComposition, outerMaterial, length, careInstructions,
       aboutThisItem,
+      state,
+      occasions: occasions ? (Array.isArray(occasions) ? occasions : JSON.parse(occasions)) : [],
 
       images: imageArray,
       sellerId,
@@ -91,7 +96,9 @@ export const updateProduct = async (req, res) => {
       'netQuantity', 'genericName', 'asin', 'itemPartNumber',
       'dateFirstAvailable', 'manufacturer', 'packer', 'department',
       'countryOfOrigin', 'bestSellerRank', 'materialComposition',
-      'outerMaterial', 'length', 'careInstructions', 'aboutThisItem'
+      'outerMaterial', 'length', 'careInstructions', 'aboutThisItem',
+      // State & Occasion fields
+      'state', 'occasions'
     ];
 
     // BLOCKED FIELDS - These should NEVER be updatable via this endpoint:

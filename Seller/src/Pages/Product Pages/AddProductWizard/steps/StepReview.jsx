@@ -11,7 +11,9 @@ import {
     MdLocalShipping,
     MdEdit,
     MdInfo,
-    MdInventory
+    MdInventory,
+    MdLocationCity,
+    MdCelebration
 } from 'react-icons/md';
 
 function StepReview() {
@@ -102,13 +104,18 @@ function StepReview() {
                     </div>
 
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">
                                 {productData.categoryName}
                             </span>
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded font-medium">
                                 {productData.subcategoryName}
                             </span>
+                            {productData.state && (
+                                <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded font-medium">
+                                    📍 {productData.state}
+                                </span>
+                            )}
                         </div>
 
                         <h3 className="text-lg font-bold text-gray-800 mb-1">{productData.title || 'Product Title'}</h3>
@@ -131,7 +138,7 @@ function StepReview() {
 
                         <div className="flex items-center gap-2 mb-3">
                             <span className={`w-2 h-2 rounded-full ${productData.stock > 10 ? 'bg-emerald-500' :
-                                    productData.stock > 5 ? 'bg-amber-500' : 'bg-red-500'
+                                productData.stock > 5 ? 'bg-amber-500' : 'bg-red-500'
                                 }`}></span>
                             <span className="text-xs text-gray-600">
                                 {productData.stock > 10 ? 'In Stock' : productData.stock > 5 ? 'Low Stock' : 'Limited'}
@@ -142,6 +149,21 @@ function StepReview() {
                         <p className="text-sm text-gray-600 line-clamp-2">
                             {productData.description || 'Product description...'}
                         </p>
+
+                        {productData.occasions?.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                                {productData.occasions.slice(0, 4).map(occ => (
+                                    <span key={occ} className="px-2 py-0.5 bg-pink-100 text-pink-600 text-xs rounded">
+                                        {occ}
+                                    </span>
+                                ))}
+                                {productData.occasions.length > 4 && (
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                                        +{productData.occasions.length - 4} more
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </motion.div>
@@ -160,6 +182,38 @@ function StepReview() {
                         </div>
                     </div>
                 </Section>
+
+                {/* State & Occasions */}
+                {(productData.state || productData.occasions?.length > 0) && (
+                    <Section title="Region & Occasions" icon={MdLocationCity}>
+                        <div className="space-y-3">
+                            {productData.state && (
+                                <div>
+                                    <p className="text-xs text-gray-500">Origin State</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <MdLocationCity className="text-teal-600" size={16} />
+                                        <span className="font-medium text-gray-800 text-sm">{productData.state}</span>
+                                    </div>
+                                </div>
+                            )}
+                            {productData.occasions?.length > 0 && (
+                                <div>
+                                    <p className="text-xs text-gray-500">Suitable Occasions</p>
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                        {productData.occasions.map(occ => (
+                                            <Chip
+                                                key={occ}
+                                                label={occ}
+                                                size="small"
+                                                sx={{ fontSize: '0.65rem', height: '22px', bgcolor: '#fce7f3', color: '#db2777' }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </Section>
+                )}
 
                 {/* Pricing */}
                 <Section title="Pricing" icon={MdAttachMoney}>

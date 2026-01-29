@@ -77,6 +77,18 @@ const addproductSchema = new mongoose.Schema({
   careInstructions: { type: String },        // "Do not Iron or Bleach..."
   aboutThisItem: { type: String },           // Long description or bullet points
 
+  // ⭐ State & Occasion Fields (For Regional Handicrafts)
+  state: { type: String, default: '' },      // Origin state (e.g., "Tripura", "Assam", "Meghalaya")
+  occasions: [{                               // Applicable occasions
+    type: String,
+    enum: [
+      'Diwali', 'Holi', 'Durga Puja', 'Bihu', 'Christmas', 'Eid',
+      'Wedding', 'Anniversary', 'Birthday', 'Housewarming',
+      'Corporate Gifting', 'Festive Season', 'Daily Use', 'Home Decor',
+      'Puja', 'Traditional Ceremony', 'Other'
+    ]
+  }],
+
   approved: { type: Boolean, default: false },
 
   images: [

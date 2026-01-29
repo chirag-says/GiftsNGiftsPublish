@@ -55,6 +55,10 @@ const initialProductData = {
     highlights: '',
     brand: '',
 
+    // State & Occasion (for regional handicrafts)
+    state: '',
+    occasions: [],
+
     // Pricing
     oldprice: '',
     sellingPrice: '',
@@ -319,6 +323,12 @@ function AddProductWizard() {
             if (productData.packer) formData.append('packer', productData.packer);
             if (productData.productDimensions) formData.append('productDimensions', productData.productDimensions);
             if (productData.itemWeight) formData.append('itemWeight', productData.itemWeight);
+
+            // State & Occasion fields
+            if (productData.state) formData.append('state', productData.state);
+            if (productData.occasions && productData.occasions.length > 0) {
+                formData.append('occasions', JSON.stringify(productData.occasions));
+            }
 
             // Importer details
             formData.append('isImported', productData.isImported);

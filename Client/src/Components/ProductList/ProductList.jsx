@@ -67,7 +67,7 @@ function ProductList() {
           sort: appliedFilters.sort,
         },
       });
-      
+
       setProducts(response.data.data);
 
       // Update Header Title
@@ -94,7 +94,7 @@ function ProductList() {
             <span className="text-slate-300">/</span>
             <span className="text-slate-900">Collections</span>
           </nav>
-          
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-2">
             <div>
               <h1 className="text-4xl sm:text-3xl font-black text-slate-900 tracking-tight capitalize mb-2">
@@ -110,18 +110,18 @@ function ProductList() {
         <div className="flex flex-col lg:flex-row gap-10 mt-8">
           <aside className="w-full lg:w-72 shrink-0">
             <div className="lg:sticky lg:top-24 bg-white border border-slate-100 shadow-sm rounded-xl">
-              <LeftFilter 
-                onApplyFilters={applyFilters} 
-                initialCatId={currentCategoryId} 
+              <LeftFilter
+                onApplyFilters={applyFilters}
+                initialCatId={currentCategoryId}
               />
             </div>
           </aside>
 
           <main className="flex-1">
             {loading ? (
-               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, i) => (
-                   <div key={i} className="animate-pulse bg-white rounded-3xl aspect-[4/5] border border-slate-100" />
+                  <div key={i} className="animate-pulse bg-white rounded-3xl aspect-[4/5] border border-slate-100" />
                 ))}
               </div>
             ) : products.length > 0 ? (
@@ -145,6 +145,14 @@ function ProductList() {
                       )}
                     </div>
                     <div className="mt-5 px-3 pb-2">
+                      {product.state && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-teal-50 text-teal-600 text-[10px] font-semibold rounded-full mb-2">
+                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          {product.state}
+                        </span>
+                      )}
                       <h3 className="text-slate-800 text-base font-bold line-clamp-2 min-h-[2.5rem]">
                         {product.title}
                       </h3>

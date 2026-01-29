@@ -3,7 +3,7 @@ import React from "react";
 import {  useNavigate } from "react-router-dom";
 // import { MdErrorOutline } from "react-icons/md";
 import { BiArrowBack } from "react-icons/bi";
-import NotFoundImage from "../../assets/nfound.svg"; // Add your own SVG image here
+// import NotFoundImage from "../../assets/nfound.svg"; // Add your own SVG image here
 
 const ErrorPage = () => {
   const navigate = useNavigate();
@@ -15,11 +15,11 @@ const ErrorPage = () => {
       {/* Icon and Header */}
       {/* <MdErrorOutline className="text-red-500 text-7xl mb-4" /> */}
  {/* Image */}
-      <img
+      {/* <img
         src={NotFoundImage}
         alt="Page Not Found"
         className="!w-40 h-20 "
-      />
+      /> */}
 
       <h2 className="text-2xl font-semibold text-gray-700 ">404 Page Not Found</h2>
 

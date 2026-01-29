@@ -1,179 +1,243 @@
 import React, { useContext, useState, useRef, useEffect, memo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Badge, IconButton, Tooltip, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { AppContext } from "../../../context/Appcontext";
 
 // Icons
 import { MdOutlineShoppingCart, MdSearch } from "react-icons/md";
-import { FiHeart, FiUser, FiLogOut, FiPackage, FiChevronRight } from "react-icons/fi";
+import { FiHeart, FiUser, FiLogOut, FiPackage, FiChevronRight, FiX } from "react-icons/fi";
 import Search from "./Search";
-import logo from "../../../../assets/new_gng.png";
+import NavCategory from "./NavCategry.jsx"; 
+import logo from "../../../../assets/roshni/main logo.png";
 
-// Optimized Styled Component for Badges
 const StyledBadge = styled(Badge)({
   "& .MuiBadge-badge": {
-    backgroundColor: "#7d0492",
+    backgroundColor: "#C5A059",
     color: "#fff",
     fontSize: "10px",
-    fontWeight: "800",
-    height: "18px",
-    minWidth: "18px",
-
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    fontWeight: "900",
+    border: "2px solid #fff",
   },
 });
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userData, logout, cartItems, wishlistItems } = useContext(AppContext);
+  
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
   const userMenuRef = useRef(null);
 
-  // Handle click outside to close menu
+  // Scroll logic for premium background transition
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close menus on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setUserMenuOpen(false);
+  }, [location]);
+
+  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <header className="sticky top-0 bg-[#7d0492] w-full z-[1000] shadow-md transition-all duration-300">
-      <nav className="container mx-auto px-4 py-3 md:py-4">
-        <div className="flex items-center justify-between gap-4 md:gap-10">
+    <>
+      <header className={`fixed top-0 left-0 w-full z-[1000] transition-all duration-500 ${scrolled ? 'translate-y-0' : 'translate-y-0'}`}>
+        {/* Top Accent Line */}
+        <div className="h-[2px] bg-gradient-to-r from-[#0F3D2E] via-[#C5A059] to-[#0F3D2E]" />
+        
+        <div className={`transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white border-b border-gray-50"}`}>
+          <nav className="container mx-auto ">
+            <div className="flex items-center justify-between">
+              
+              {/* Left: Mobile Toggle & Desktop Search Trigger (Optional) */}
+              <div className="flex-1 flex items-center lg:hidden">
+                <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="relative w-10 h-10 flex flex-col justify-center items-center group"
+                >
+                  <span className={`block w-6 h-0.5 bg-[#0F3D2E] transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'}`} />
+                  <span className={`block w-6 h-0.5 bg-[#0F3D2E] my-0.5 transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                  <span className={`block w-6 h-0.5 bg-[#0F3D2E] transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-1'}`} />
+                </button>
+              </div>
 
-          {/* Logo Section */}
-          <Link to="/" className="flex-shrink-0 transition-transform active:scale-95">
-            <img
-              src={logo}
-              alt="Logo"
-              className="h-10 md:h-14 w-auto object-contain brightness-110"
-            />
-          </Link>
+              {/* Center/Left: Logo */}
+              <Link to="/" className="flex-shrink-0 lg:mr-20">
+                <img src={logo} alt="GiftsnGifts" className="h-10 md:h-22 w-auto object-contain transition-transform hover:scale-105 duration-300" />
+              </Link>
 
-          {/* Search Section - Desktop */}
-          <div className="hidden md:block flex-grow max-w-2xl">
+              {/* Center Desktop: Search Bar */}
+              <div className="hidden lg:block flex-[2] max-w-3xl ">
+                <Search />
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex-1 pl-5 flex items-center justify-end gap-1 md:gap-5">
+                <div className="lg:hidden">
+                  <IconButton onClick={() => navigate('/search-results')} className="!text-[#0F3D2E]"><MdSearch size={26} /></IconButton>
+                </div>
+                
+                <NavIcon title="Wishlist" icon={<FiHeart />} to="/wishlist" badgeCount={wishlistItems.length} hideMobile />
+                
+                <NavIcon title="Cart" icon={<MdOutlineShoppingCart />} to="/cartlist" badgeCount={cartItems.length} />
+
+                {/* Profile Section */}
+                <div className="relative ml-2 pl-4 border-l border-gray-100 hidden sm:block" ref={userMenuRef}>
+                  {userData ? (
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="w-10 h-10 rounded-full bg-[#0F3D2E] text-white flex items-center justify-center font-bold text-sm border-2 border-white ring-1 ring-gray-100 shadow-md hover:ring-[#C5A059] transition-all duration-300"
+                    >
+                      {userData.name[0].toUpperCase()}
+                    </button>
+                  ) : (
+                    <Button
+                      onClick={() => navigate("/login")}
+                      variant="contained"
+                      className="!bg-[#0F3D2E] !text-white !rounded-full !px-6 !py-2.5 !text-[11px] !font-black !tracking-widest !normal-case hover:!bg-[#C5A059] !transition-all shadow-none"
+                    >
+                      SIGN IN
+                    </Button>
+                  )}
+
+                  {/* Desktop Profile Dropdown */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-4 w-72 bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-50 overflow-hidden animate-in fade-in slide-in-from-top-5 duration-300">
+                      <div className="p-6 bg-[#0F3D2E] text-white">
+                        <p className="text-[10px] text-[#C5A059] font-black uppercase tracking-widest mb-1">Authentic Member</p>
+                        <p className="text-lg font-serif italic truncate leading-tight">{userData?.name}</p>
+                      </div>
+                      <div className="p-3">
+                        <DropdownItem icon={<FiUser />} label="Heritage Profile" to="/myProfile" />
+                        <DropdownItem icon={<FiPackage />} label="My Orders" to="/orders" />
+                        <div className="my-2 border-t border-gray-50" />
+                        <button
+                          onClick={logout}
+                          className="w-full flex items-center gap-4 px-5 py-4 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                        >
+                          <FiLogOut size={18} /> Log Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </nav>
+          
+          {/* Secondary Nav: Categories (Hidden on Scroll or Mobile) */}
+          <div className={`hidden lg:block transition-all duration-300 ${scrolled ? 'h-0 opacity-0 overflow-hidden' : 'h-auto opacity-100'}`}>
+            <NavCategory />
+          </div>
+        </div>
+      </header>
+
+      {/* --- MOBILE HERITAGE DRAWER --- */}
+      <div className={`fixed inset-0 z-[1100] transition-visibility duration-500 ${mobileMenuOpen ? "visible" : "invisible"}`}>
+        {/* Backdrop */}
+        <div 
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500 ${mobileMenuOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        
+        {/* Drawer Content */}
+        <div className={`absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-2xl transition-transform duration-500 ease-out p-6 flex flex-col ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="flex items-center justify-between mb-8">
+            <img src={logo} alt="Logo" className="h-10 w-auto" />
+            <IconButton onClick={() => setMobileMenuOpen(false)} className="!bg-gray-50"><FiX /></IconButton>
+          </div>
+
+          <div className="mb-8">
             <Search />
           </div>
 
-          {/* Action Icons */}
-          <div className="flex items-center gap-1 md:gap-3">
-            <NavIcon
-              title="Search"
-              icon={<MdSearch />}
-              onClick={() => navigate('/search-results')}
-              mobileOnly
-            />
+          <div className="flex-grow overflow-y-auto space-y-2">
+            <p className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.2em] mb-4">Explore Heritage</p>
+            <MobileNavItem label="Home" to="/" />
+            <MobileNavItem label="Shop by State" to="/states" />
+            <MobileNavItem label="Collections" to="/collections" />
+            <MobileNavItem label="Our Artisans" to="/artisans" />
+            <MobileNavItem label="About Us" to="/about" />
+          </div>
 
-            <NavIcon
-              title="Wishlist"
-              icon={<FiHeart />}
-              to="/wishlist"
-              badgeCount={wishlistItems.length}
-              hideMobile
-            />
-
-            <NavIcon
-              title="Cart"
-              icon={<MdOutlineShoppingCart />}
-              to="/cartlist"
-              badgeCount={cartItems.length}
-            />
-
-            {/* Auth / Profile Section */}
-            <div className="relative ml-2 border-l border-white/20 pl-3 md:pl-5" ref={userMenuRef}>
-              {userData ? (
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-[#7d0492] flex items-center justify-center font-bold text-sm shadow-inner hover:ring-4 hover:ring-white/20 transition-all"
-                >
-                  {userData.name[0].toUpperCase()}
-                </button>
-              ) : (
-                <Button
-                  onClick={() => navigate("/login")}
-                  variant="outlined"
-                  className="!text-white !border-white/40 !rounded-full !pb-2 !pt-2 !px-5 !text-xs !font-bold hover:!bg-white hover:!text-[#7d0492] !transition-all"
-                >
-                  Sign In
-                </Button>
-              )}
-
-              {/* Enhanced Dropdown Menu */}
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-4 w-64 bg-white rounded-2xl shadow-[0_15px_50px_-12px_rgba(0,0,0,0.25)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="pt-4 px-5 bg-gray-50/80 border-b">
-                    <p className="text-[10px] text-[#7d0492] font-black uppercase tracking-[0.15em] mb-1">Account</p>
-                    <p className="text-sm font-bold text-gray-800 truncate">{userData?.name}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{userData?.email}</p>
-                  </div>
-
-                  <div className="py-2 px-2">
-                    <DropdownItem icon={<FiUser />} label="My Profile" to="/myProfile" onClick={() => setUserMenuOpen(false)} />
-                    <DropdownItem icon={<FiPackage />} label="Orders" to="/orders" onClick={() => setUserMenuOpen(false)} />
-                    <DropdownItem icon={<FiHeart />} label="Wishlist" to="/wishlist" onClick={() => setUserMenuOpen(false)} />
-
-                    <div className="my-2 border-t border-gray-50" />
-
-                    <button
-                      onClick={() => { logout(); setUserMenuOpen(false); }}
-                      className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FiLogOut className="text-lg" /> Logout
-                      </div>
-                    </button>
+          {/* Mobile Footer (Account) */}
+          <div className="mt-auto pt-6 border-t border-gray-100">
+            {userData ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-[#0F3D2E] text-white flex items-center justify-center font-bold">{userData.name[0]}</div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">{userData.name}</p>
+                    <p className="text-xs text-[#C5A059]">Verified Member</p>
                   </div>
                 </div>
-              )}
-            </div>
+                <Button fullWidth onClick={() => navigate('/myProfile')} className="!justify-start !text-gray-700 !normal-case !font-bold"><FiUser className="mr-3" /> Profile</Button>
+                <Button fullWidth onClick={logout} className="!justify-start !text-red-500 !normal-case !font-bold"><FiLogOut className="mr-3" /> Logout</Button>
+              </div>
+            ) : (
+              <Button 
+                fullWidth 
+                variant="contained" 
+                onClick={() => navigate('/login')}
+                className="!bg-[#0F3D2E] !rounded-xl !py-4 !font-black !tracking-widest"
+              >
+                SIGN IN
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* Mobile Search Row */}
-        <div className="md:hidden mt-3">
-          <Search />
-        </div>
-      </nav>
-    </header>
+      </div>
+    </>
   );
 };
 
-// Reusable Nav Icon Component
-const NavIcon = ({ icon, title, to, badgeCount, onClick, mobileOnly, hideMobile }) => {
-  const content = (
-    <IconButton onClick={onClick} className="!text-white hover:!bg-white/10 !transition-colors">
-      <StyledBadge badgeContent={badgeCount}>
-        {React.cloneElement(icon, { size: 24 })}
-      </StyledBadge>
-    </IconButton>
-  );
+const NavIcon = ({ icon, title, to, badgeCount, onClick, mobileOnly, hideMobile }) => (
+  <div className={`${mobileOnly ? 'md:hidden' : ''} ${hideMobile ? 'hidden lg:block' : ''}`}>
+    <Tooltip title={title}>
+      {to ? (
+        <Link to={to}>
+          <IconButton className="!text-gray-800 hover:!bg-[#F9F7F2] hover:!text-[#C5A059] !p-2 md:!p-3 transition-all duration-300">
+            <StyledBadge badgeContent={badgeCount}>{React.cloneElement(icon, { size: 24 })}</StyledBadge>
+          </IconButton>
+        </Link>
+      ) : (
+        <IconButton onClick={onClick} className="!text-gray-800 hover:!bg-[#F9F7F2] !p-2 md:!p-3 transition-all duration-300">
+          {React.cloneElement(icon, { size: 24 })}
+        </IconButton>
+      )}
+    </Tooltip>
+  </div>
+);
 
-  return (
-    <div className={`${mobileOnly ? 'md:hidden' : ''} ${hideMobile ? 'hidden sm:block' : ''}`}>
-      <Tooltip title={title}>
-        {to ? <Link to={to}>{content}</Link> : content}
-      </Tooltip>
-    </div>
-  );
-};
-
-// Reusable Dropdown Item Component
-const DropdownItem = ({ icon, label, to, onClick }) => (
-  <Link
-    to={to}
-    onClick={onClick}
-    className="flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-[#7d0492] rounded-xl transition-all group"
-  >
-    <div className="flex items-center gap-3">
-      <span className="text-lg text-gray-400 group-hover:text-[#7d0492] transition-colors">{icon}</span>
+const DropdownItem = ({ icon, label, to }) => (
+  <Link to={to} className="flex items-center justify-between px-5 py-4 text-xs font-bold uppercase tracking-widest text-gray-600 hover:bg-[#F9F7F2] hover:text-[#0F3D2E] rounded-2xl transition-all group">
+    <div className="flex items-center gap-4">
+      <span className="text-xl text-gray-300 group-hover:text-[#C5A059] transition-colors">{icon}</span>
       {label}
     </div>
-    <FiChevronRight className="text-gray-300 group-hover:text-[#7d0492] transition-colors" />
+    <FiChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+  </Link>
+);
+
+const MobileNavItem = ({ label, to }) => (
+  <Link to={to} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl text-sm font-bold text-gray-700 hover:bg-[#F9F7F2] hover:text-[#0F3D2E] transition-all">
+    {label}
+    <FiChevronRight className="text-[#C5A059]" />
   </Link>
 );
 

@@ -11,8 +11,6 @@ import {
   FaTwitter,
   FaInstagram,
   FaYoutube,
-  FaApple,
-  FaGooglePlay
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Button, Checkbox, FormControlLabel } from "@mui/material";
@@ -22,30 +20,30 @@ function Footer() {
     { icon: <LiaShippingFastSolid />, title: "Free Shipping", desc: "On orders over ₹999" },
     { icon: <LiaUndoAltSolid />, title: "Easy Returns", desc: "30-day return policy" },
     { icon: <LiaShieldAltSolid />, title: "Secure Payment", desc: "100% protected" },
-    { icon: <LiaGiftSolid />, title: "Premium Packaging", desc: "Gift wrapping available" },
+    { icon: <LiaGiftSolid />, title: "Premium Packaging", desc: "Authentic eco-wrap" },
     { icon: <LiaHeadsetSolid />, title: "24/7 Support", desc: "Expert assistance" },
   ];
 
   const footerLinks = {
-    shop: ["New Arrivals", "Best Sellers", "Gift Cards", "Sale", "Corporate Gifts"],
-    company: ["Our Story", "Careers", "Press", "Terms & Conditions", "Privacy Policy"],
+    shop: ["Naga Handlooms", "Bamboo Crafts", "Assam Silk", "Traditional Jewelry", "Corporate Gifts"],
+    company: ["Our Story", "Artisan Impact", "Press", "Terms & Conditions", "Privacy Policy"],
     support: ["Track Order", "Returns & Exchanges", "Shipping Info", "FAQs", "Contact Us"]
   };
 
   return (
-    <footer className="bg-slate-950 text-slate-300 font-sans mt-auto">
+    <footer className="bg-[#fcfcf9] text-slate-700 font-sans mt-auto border-t border-stone-200">
 
-      {/* 1. Trust Indicators - Clean & Minimal */}
-      <div className="border-b border-slate-800/60 bg-slate-900/20 backdrop-blur-sm">
+      {/* 1. Trust Indicators - Earthy Style */}
+      <div className="bg-white border-b border-stone-100">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 py-10">
             {trustFeatures.map((item, idx) => (
               <div key={idx} className="flex flex-col items-center text-center group cursor-default">
-                <div className="text-3xl mb-3 text-indigo-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-3xl mb-3 text-amber-700/80 group-hover:-translate-y-1 transition-transform duration-300">
                   {item.icon}
                 </div>
-                <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
-                <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
+                <h3 className="text-sm font-bold text-stone-800 uppercase tracking-tight">{item.title}</h3>
+                <p className="text-xs text-stone-500 mt-1">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -54,55 +52,43 @@ function Footer() {
 
       {/* 2. Main Footer Content */}
       <div className="container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12">
 
-          {/* Brand Column (Span 4) */}
+          {/* Brand Column */}
           <div className="lg:col-span-4 space-y-6">
             <Link to="/" className="inline-block">
-              {/* Logo Placeholder */}
-              <h2 className="text-3xl font-bold text-white tracking-tight">
-                GiftsNGifts<span className="text-indigo-500">.</span>
+              {/* Logo matches the Serif font in your banners */}
+              <h2 className="text-3xl font-serif font-bold text-stone-900 tracking-tight">
+                GiftsNGifts<span className="text-amber-600">.</span>
               </h2>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Curating the world's finest gifts for every occasion. We believe in the art of giving and the joy of receiving.
+            <p className="text-stone-600 text-[15px] leading-relaxed max-w-sm italic">
+              "Bringing the soul of North East India to your doorstep. Every piece tells a story of tradition, craft, and the hands that made it."
             </p>
 
-            {/* Contact Box */}
-            <div className="pt-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Need Help?</p>
-              <p className="text-xl font-semibold text-white hover:text-indigo-400 transition-colors cursor-pointer">
-                +91 9876 543 210
-              </p>
-              <p className="text-sm text-slate-500 mt-1">Mon - Fri: 9:00 - 20:00</p>
-            </div>
-
-            {/* App Badges */}
-            <div className="flex gap-3 pt-2">
-              <button className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 transition-all">
-                <FaApple className="text-xl text-white" />
-                <div className="text-left leading-none">
-                  <span className="block text-[10px] text-slate-400">Download on the</span>
-                  <span className="text-xs font-bold text-white">App Store</span>
-                </div>
-              </button>
-              <button className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 transition-all">
-                <FaGooglePlay className="text-lg text-white" />
-                <div className="text-left leading-none">
-                  <span className="block text-[10px] text-slate-400">Get it on</span>
-                  <span className="text-xs font-bold text-white">Google Play</span>
-                </div>
-              </button>
+            <div className="pt-2">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Connect with us</p>
+              <div className="flex gap-3">
+                {[FaFacebookF, FaTwitter, FaInstagram, FaYoutube].map((Icon, idx) => (
+                  <Link
+                    key={idx}
+                    to="/"
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-stone-100 text-stone-600 hover:bg-stone-800 hover:text-white transition-all duration-300"
+                  >
+                    <Icon size={16} />
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Links Columns (Span 2 each) */}
+          {/* Links Columns */}
           <div className="lg:col-span-2">
-            <h4 className="text-white font-semibold mb-6">Shop</h4>
-            <ul className="space-y-3 text-sm">
+            <h4 className="text-stone-900 font-bold uppercase text-xs tracking-widest mb-6 border-b border-amber-200 pb-2 inline-block">Shop</h4>
+            <ul className="space-y-3 text-[14px]">
               {footerLinks.shop.map((link, i) => (
                 <li key={i}>
-                  <Link to="/" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200 block hover:translate-x-1 transform">
+                  <Link to="/" className="text-stone-500 hover:text-amber-700 transition-colors duration-200 block">
                     {link}
                   </Link>
                 </li>
@@ -111,11 +97,11 @@ function Footer() {
           </div>
 
           <div className="lg:col-span-2">
-            <h4 className="text-white font-semibold mb-6">Company</h4>
-            <ul className="space-y-3 text-sm">
+            <h4 className="text-stone-900 font-bold uppercase text-xs tracking-widest mb-6 border-b border-amber-200 pb-2 inline-block">Company</h4>
+            <ul className="space-y-3 text-[14px]">
               {footerLinks.company.map((link, i) => (
                 <li key={i}>
-                  <Link to="/" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200 block hover:translate-x-1 transform">
+                  <Link to="/" className="text-stone-500 hover:text-amber-700 transition-colors duration-200 block">
                     {link}
                   </Link>
                 </li>
@@ -123,58 +109,56 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter Column (Span 4) */}
-          <div className="lg:col-span-4 pl-0 lg:pl-8">
-            <div className="bg-indigo-900/10 rounded-2xl p-6 border border-indigo-500/10">
-              <h4 className="text-white font-bold text-lg mb-2">Join Our Newsletter</h4>
-              <p className="text-sm text-slate-400 mb-6">
-                Sign up for exclusive offers, original stories, activist awareness, and more.
+          {/* Newsletter Column - Clean & Organic */}
+          <div className="lg:col-span-4">
+            <div className="bg-stone-100/50 rounded-2xl p-8 border border-stone-200">
+              <h4 className="text-stone-900 font-serif text-xl font-bold mb-2">Join the Tribe</h4>
+              <p className="text-sm text-stone-600 mb-6 font-light">
+                Subscribe to receive updates on new artisan collections and cultural stories.
               </p>
 
               <form className="space-y-4">
-                <div className="relative">
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-white placeholder:text-slate-600 transition-all"
-                  />
-                </div>
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-md focus:outline-none focus:border-stone-800 text-sm transition-all"
+                />
 
                 <Button
                   variant="contained"
                   fullWidth
                   sx={{
-                    bgcolor: '#6366f1', // Indigo-500
-                    textTransform: 'none',
-                    py: 1.2,
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    borderRadius: '8px',
+                    bgcolor: '#44403c', // Stone-800
+                    color: 'white',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    py: 1.5,
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    borderRadius: '4px',
                     boxShadow: 'none',
-                    '&:hover': { bgcolor: '#4f46e5', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }
+                    '&:hover': { bgcolor: '#1c1917', boxShadow: 'none' }
                   }}
                 >
-                  Subscribe Now
+                  Subscribe
                 </Button>
 
-                <div className="-ml-3">
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        size="small"
-                        sx={{
-                          color: '#64748b',
-                          '&.Mui-checked': { color: '#6366f1' }
-                        }}
-                      />
-                    }
-                    label={
-                      <span className="text-xs text-slate-500">
-                        I agree to the <Link to="/" className="underline hover:text-indigo-400">Privacy Policy</Link>
-                      </span>
-                    }
-                  />
-                </div>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      sx={{
+                        color: '#a8a29e',
+                        '&.Mui-checked': { color: '#78350f' }
+                      }}
+                    />
+                  }
+                  label={
+                    <span className="text-[11px] text-stone-500 leading-none">
+                      I agree to the <Link to="/" className="underline hover:text-stone-800">Privacy Policy</Link>
+                    </span>
+                  }
+                />
               </form>
             </div>
           </div>
@@ -182,35 +166,20 @@ function Footer() {
       </div>
 
       {/* 3. Bottom Bar */}
-      <div className="border-t border-slate-800/60 bg-slate-950">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-
-            {/* Copyright */}
-            <div className="text-xs text-slate-500 font-medium order-2 md:order-1">
-              © 2025 Gifts n Gifts Inc. All rights reserved.
+      <div className="bg-stone-50 border-t border-stone-200">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex flex-col md:row justify-between items-center gap-4">
+            <div className="text-[11px] text-stone-400 font-medium tracking-wider uppercase">
+              © 2026 GiftsnGifts Inc. • Handcrafted with love in North East India
             </div>
-
-            {/* Social Icons */}
-            <div className="flex gap-4 order-1 md:order-2">
-              {[FaFacebookF, FaTwitter, FaInstagram, FaYoutube].map((Icon, idx) => (
-                <Link
-                  key={idx}
-                  to="/"
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-900 text-slate-400 hover:bg-indigo-600 hover:text-white transition-all duration-300"
-                >
-                  <Icon size={14} />
-                </Link>
-              ))}
-            </div>
-
-            {/* Payments */}
-            <div className="order-3 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
-              <img
-                src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/payment-method-c454fb.svg"
-                alt="Payment Methods"
-                className="h-4 md:h-5"
-              />
+            
+            <div className="flex items-center gap-6 grayscale opacity-60">
+                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">Safe Payments:</p>
+                <img
+                  src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/payment-method-c454fb.svg"
+                  alt="Payment Methods"
+                  className="h-3.5"
+                />
             </div>
           </div>
         </div>

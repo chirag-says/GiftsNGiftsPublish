@@ -23,9 +23,7 @@ const NavCatSlider = () => {
       const categoryArray = Array.isArray(response.data)
         ? response.data
         : response.data.categories || [];
-
       setCategories(categoryArray);
-      setError(null);
     } catch (err) {
       setError("Failed to load categories.");
     } finally {
@@ -41,42 +39,43 @@ const NavCatSlider = () => {
     return `${base}/${imageUrl.replace(/^\/+/, "")}`;
   };
 
-  if (isLoading || error || categories.length === 0) {
-    return null;
-  }
+  if (isLoading || error || categories.length === 0) return null;
 
   return (
-    <div className="bg-white border-b border-gray-100 pb-6">
+    <div className="bg-[#faf9f6]  border-b border-[#e7ddcf] py-12">
+      <div className="container mx-auto  relative group/slider">
+        
+         {/* Elegant Header matching ShopByOccasion */}
+        <div className="flex flex-col items-center mb-10 text-center">
+          <div className="flex items-center gap-4 mb-2">
+            <span className="h-[1px] w-8 bg-[#d4af37]" />
+            <span className="text-[#d4af37] text-[10px] uppercase tracking-[0.4em] font-semibold">
+              Gifts for Loved Ones
+            </span>
+            <span className="h-[1px] w-8 bg-[#d4af37]" />
+          </div>
+          <h2 
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-3xl md:text-4xl text-[#332a21] tracking-tight"
+          >
+            	Featured Collections
+          </h2>
+        </div>
 
-      {/* 1. Promo Header - Clean & Minimal */}
-      <div className="md:py-3 py-2.5 bg-gray-50 border-b border-gray-100 mb-6">
-        <h5 className="text-[11px] sm:text-[14px] tracking-wide font-semibold text-gray-600 text-center ">
-          Celebrate Occasions with India's #1 Online Gift Store
-        </h5>
-      </div>
-
-      <div className="container mx-auto px-4 relative group/slider">
         <Swiper
           modules={[Autoplay, Navigation]}
-          spaceBetween={16}
+          spaceBetween={10}
           slidesPerView={4}
           navigation={{
             nextEl: '.nav-cat-next',
             prevEl: '.nav-cat-prev',
           }}
-          autoplay={{
-            delay: 4000,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: true
-          }}
           breakpoints={{
-            320: { slidesPerView: 3, spaceBetween: 12 },
-            480: { slidesPerView: 4, spaceBetween: 16 },
+            320: { slidesPerView: 3, spaceBetween: 15 },
             640: { slidesPerView: 5, spaceBetween: 20 },
-            850: { slidesPerView: 7, spaceBetween: 24 },
-            1100: { slidesPerView: 9, spaceBetween: 28 },
+            1024: { slidesPerView: 8, spaceBetween: 25 },
           }}
-          className="!px-2 !py-2"
+          className="!px-2"
         >
           {categories.map((category, index) => (
             <SwiperSlide key={index}>
@@ -85,20 +84,27 @@ const NavCatSlider = () => {
                 state={{ category: category.categoryname }}
                 className="group flex flex-col items-center cursor-pointer"
               >
-                {/* 2. Image Container - Gradient Ring Effect */}
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full p-[2px] bg-gradient-to-tr from-gray-200 to-gray-200 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all duration-300">
-                  <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
+                {/* 1. Medallion Container */}
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all duration-500">
+                  
+                  {/* Inner Gold Ring (Visible on Hover) */}
+                  <div className="absolute inset-0 rounded-full border border-[#d4af37]/0 group-hover:border-[#d4af37]/60 group-hover:scale-110 transition-all duration-500" />
+                  
+                  {/* Outer Frame */}
+                  <div className="w-[90%] h-[90%] rounded-full p-[3px] bg-white border border-[#e7ddcf] group-hover:border-[#d4af37] shadow-sm transition-all duration-500 overflow-hidden">
                     <img
                       src={getCategoryImageUrl(category)}
                       alt={category.categoryname}
-                      className="w-full h-full object-cover rounded-full transform transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
+                      className="w-full h-full object-cover rounded-full filter grayscale-[30%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
                     />
                   </div>
+
+                  {/* Little Gold Dot Ornament */}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#d4af37] rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
                 </div>
 
-                {/* 3. Text Label */}
-                <h3 className="mt-3 text-[11px] sm:text-[13px] font-semibold text-gray-600 group-hover:text-purple-700 text-center leading-tight transition-colors line-clamp-1 px-1 capitalize">
+                {/* 2. Text Label - Serif Font */}
+                <h3 className="mt-4 text-[12px] sm:text-[14px] font-serif font-medium text-[#4a3728] group-hover:text-[#d4af37] text-center tracking-wide transition-colors capitalize">
                   {category.categoryname}
                 </h3>
               </Link>
@@ -106,12 +112,12 @@ const NavCatSlider = () => {
           ))}
         </Swiper>
 
-        {/* 4. Floating Navigation Arrows */}
-        <button className="nav-cat-prev absolute top-[40%] -left-2 sm:-left-4 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white text-gray-700 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 hover:bg-purple-600 hover:text-white hover:scale-110 disabled:opacity-0 disabled:invisible opacity-0 group-hover/slider:opacity-100 cursor-pointer">
-          <HiChevronLeft size={20} />
+        {/* 3. Luxury Navigation Arrows */}
+        <button className="nav-cat-prev absolute top-[45%] -left-2 sm:-left-5 z-20 w-10 h-10 bg-white/80 backdrop-blur-sm text-[#4a3728] rounded-full shadow-md border border-[#e7ddcf] flex items-center justify-center transition-all duration-300 hover:bg-[#d4af37] hover:text-white opacity-0 group-hover/slider:opacity-100 -translate-x-2 group-hover/slider:translate-x-0">
+          <HiChevronLeft size={24} strokeWidth={1}/>
         </button>
-        <button className="nav-cat-next absolute top-[40%] -right-2 sm:-right-4 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white text-gray-700 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 hover:bg-purple-600 hover:text-white hover:scale-110 disabled:opacity-0 disabled:invisible opacity-0 group-hover/slider:opacity-100 cursor-pointer">
-          <HiChevronRight size={20} />
+        <button className="nav-cat-next absolute top-[45%] -right-2 sm:-right-5 z-20 w-10 h-10 bg-white/80 backdrop-blur-sm text-[#4a3728] rounded-full shadow-md border border-[#e7ddcf] flex items-center justify-center transition-all duration-300 hover:bg-[#d4af37] hover:text-white opacity-0 group-hover/slider:opacity-100 translate-x-2 group-hover/slider:translate-x-0">
+          <HiChevronRight size={24} strokeWidth={1} />
         </button>
       </div>
     </div>

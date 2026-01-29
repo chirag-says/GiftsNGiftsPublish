@@ -7,6 +7,9 @@ import Footer from "./Components/Home/Footer/Footer.jsx";
 import Loading from "./Components/Loading/Loading.jsx";
 import ScrollToTop from "./Components/ScrollToTop.jsx";
 import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary.jsx";
+import StateSlider from "./Components/Home/HomePageSlider/StateSlider.jsx";
+import CollectionPage from "./Components/Home/CollectionPage.jsx";
+import ArtisanStorySection from "./Components/Home/Artician/ArtisanStorySection.jsx";
 
 // ============================================
 // PERFORMANCE: Lazy-loaded components (code splitting)
@@ -67,6 +70,7 @@ function App() {
       <Header />
 
       {/* PERFORMANCE: Suspense wrapper for lazy-loaded routes */}
+      <main className="pt-[70px] lg:pt-[140px] ">
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" exact={true} element={<Home />} />
@@ -98,9 +102,13 @@ function App() {
           <Route path="/refund-policy" element={<RefundPlicy />} />
           <Route path="*" element={<ErrorPage />} />
           <Route path="/reset-password" element={<Reset_pass />} />
+  <Route path="/stop-by-state" element={<StateSlider />} />
+  <Route path="/collection" element={<CollectionPage />} />
+<Route path="/artician" element={<ArtisanStorySection />} />
 
         </Routes>
       </Suspense>
+      </main>
 
       <Footer />
 

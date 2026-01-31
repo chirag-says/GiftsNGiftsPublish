@@ -42,6 +42,8 @@ import categoryRequestRoutes from "./routes/categoryRequestRoutes.js";
 import subcategoryRequestRoutes from "./routes/subcategoryRequestRoutes.js";
 import sellerOnboardingRoutes from "./routes/sellerOnboardingRoutes.js";
 import adminVerificationRoutes from "./routes/adminVerificationRoutes.js";
+import occasionRoutes from "./routes/occasionRoutes.js";
+import b2bOrderRoutes from "./routes/b2bOrderRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,7 +96,7 @@ app.use(
         mediaSrc: ["'self'", "https://res.cloudinary.com"],
         connectSrc: [
           "'self'",
-          "https://api.giftsngifts.in", 
+          "https://api.giftsngifts.in",
           "https://api.razorpay.com",
           "https://lumberjack.razorpay.com",
           "https://res.cloudinary.com",
@@ -341,6 +343,8 @@ app.use("/api/subcategory-requests", subcategoryRequestRoutes);
 app.use("/api/seller/onboarding", sellerOnboardingRoutes);
 app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/seller", sellerProfileRoutes);
+app.use("/api", occasionRoutes);
+app.use("/api/orders", b2bOrderRoutes);
 
 /* =========================
    HEALTH CHECK

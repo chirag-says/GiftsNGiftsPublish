@@ -8,7 +8,7 @@ import { AppContext } from "../../../context/Appcontext";
 import { MdOutlineShoppingCart, MdSearch } from "react-icons/md";
 import { FiHeart, FiUser, FiLogOut, FiPackage, FiChevronRight, FiX } from "react-icons/fi";
 import Search from "./Search";
-import NavCategory from "./NavCategry.jsx"; 
+import NavCategory from "./NavCategry.jsx";
 import logo from "../../../../assets/roshni/main logo.png";
 
 const StyledBadge = styled(Badge)({
@@ -25,11 +25,11 @@ const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userData, logout, cartItems, wishlistItems } = useContext(AppContext);
-  
+
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   const userMenuRef = useRef(null);
 
   // Scroll logic for premium background transition
@@ -59,14 +59,14 @@ const Navigation = () => {
       <header className={`fixed top-0 left-0 w-full z-[1000] transition-all duration-500 ${scrolled ? 'translate-y-0' : 'translate-y-0'}`}>
         {/* Top Accent Line */}
         <div className="h-[2px] bg-gradient-to-r from-[#0F3D2E] via-[#C5A059] to-[#0F3D2E]" />
-        
+
         <div className={`transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white border-b border-gray-50"}`}>
           <nav className="container mx-auto ">
             <div className="flex items-center justify-between">
-              
+
               {/* Left: Mobile Toggle & Desktop Search Trigger (Optional) */}
               <div className="flex-1 flex items-center lg:hidden">
-                <button 
+                <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="relative w-10 h-10 flex flex-col justify-center items-center group"
                 >
@@ -91,9 +91,9 @@ const Navigation = () => {
                 <div className="lg:hidden">
                   <IconButton onClick={() => navigate('/search-results')} className="!text-[#0F3D2E]"><MdSearch size={26} /></IconButton>
                 </div>
-                
+
                 <NavIcon title="Wishlist" icon={<FiHeart />} to="/wishlist" badgeCount={wishlistItems.length} hideMobile />
-                
+
                 <NavIcon title="Cart" icon={<MdOutlineShoppingCart />} to="/cartlist" badgeCount={cartItems.length} />
 
                 {/* Profile Section */}
@@ -139,7 +139,7 @@ const Navigation = () => {
               </div>
             </div>
           </nav>
-          
+
           {/* Secondary Nav: Categories (Hidden on Scroll or Mobile) */}
           <div className={`hidden lg:block transition-all duration-300 ${scrolled ? 'h-0 opacity-0 overflow-hidden' : 'h-auto opacity-100'}`}>
             <NavCategory />
@@ -150,11 +150,11 @@ const Navigation = () => {
       {/* --- MOBILE HERITAGE DRAWER --- */}
       <div className={`fixed inset-0 z-[1100] transition-visibility duration-500 ${mobileMenuOpen ? "visible" : "invisible"}`}>
         {/* Backdrop */}
-        <div 
+        <div
           className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500 ${mobileMenuOpen ? "opacity-100" : "opacity-0"}`}
           onClick={() => setMobileMenuOpen(false)}
         />
-        
+
         {/* Drawer Content */}
         <div className={`absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-2xl transition-transform duration-500 ease-out p-6 flex flex-col ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-center justify-between mb-8">
@@ -169,75 +169,78 @@ const Navigation = () => {
           <div className="flex-grow overflow-y-auto space-y-2">
             <p className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.2em] mb-4">Explore Heritage</p>
             <MobileNavItem label="Home" to="/" />
-            <MobileNavItem label="Shop by State" to="/states" />
-            <MobileNavItem label="Collections" to="/collections" />
-            <MobileNavItem label="Our Artisans" to="/artisans" />
-            <MobileNavItem label="About Us" to="/about" />
+            <MobileNavItem label="Shop by Occasion" to="/shop-by-occasion" />
+            <MobileNavItem label="Gift Finder Quiz" to="/gift-finder" />
+            <MobileNavItem label="Corporate Gifting" to="/occasion/corporate-gifting" />
+            <MobileNavItem label="Shop by State" to="/stop-by-state" />
+            <MobileNavItem label="All Products" to="/productlist" />
+            <MobileNavItem label="Our Artisans" to="/artician" />
+            <MobileNavItem label="Bulk Orders" to="/bulk-quote" />
           </div>
 
           {/* Mobile Footer (Account) */}
-<div className="mt-auto pt-8 px-2 border-t border-stone-100 bg-[#FDFBF7]/50">
-  {userData ? (
-    <div className="space-y-4">
-      {/* User Profile Summary */}
-      <div className="flex items-center gap-4 mb-6 p-3 bg-white rounded-2xl border border-stone-100 shadow-sm">
-        <div className="relative">
-          <div className="w-12 h-12 rounded-full bg-[#1A3A32] text-white flex items-center justify-center font-serif text-lg font-bold ring-2 ring-[#C5A059]/30 ring-offset-2">
-            {userData.name[0]}
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-        </div>
-        
-        <div className="flex-grow">
-          <p className="text-sm font-serif font-bold text-[#1A3A32] leading-tight">
-            {userData.name}
-          </p>
-          <div className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-[#C5A059]/10 rounded-md border border-[#C5A059]/20">
-            <span className="w-1 h-1 rounded-full bg-[#C5A059]"></span>
-            <p className="text-[10px] font-bold text-[#C5A059] uppercase tracking-widest">
-              Patron Member
-            </p>
-          </div>
-        </div>
-      </div>
+          <div className="mt-auto pt-8 px-2 border-t border-stone-100 bg-[#FDFBF7]/50">
+            {userData ? (
+              <div className="space-y-4">
+                {/* User Profile Summary */}
+                <div className="flex items-center gap-4 mb-6 p-3 bg-white rounded-2xl border border-stone-100 shadow-sm">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-[#1A3A32] text-white flex items-center justify-center font-serif text-lg font-bold ring-2 ring-[#C5A059]/30 ring-offset-2">
+                      {userData.name[0]}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                  </div>
 
-      {/* Navigation Actions */}
-      <div className="grid grid-cols-1 gap-2">
-        <Button 
-          fullWidth 
-          onClick={() => navigate('/myProfile')} 
-          className="!justify-start !text-[#1A3A32] !normal-case !font-bold !py-3 !px-4 !rounded-xl hover:!bg-white !transition-all"
-        >
-          <FiUser className="mr-3 text-[#C5A059]" size={18} /> 
-          Account Settings
-        </Button>
-        
-        <Button 
-          fullWidth 
-          onClick={logout} 
-          className="!justify-start !text-stone-500 hover:!text-red-600 !normal-case !font-semibold !py-3 !px-4 !rounded-xl hover:!bg-red-50 !transition-all"
-        >
-          <FiLogOut className="mr-3" size={18} /> 
-          Sign Out
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <div className="p-2">
-      <Button 
-        fullWidth 
-        variant="contained" 
-        onClick={() => navigate('/login')}
-        className="!bg-[#1A3A32] !rounded-xl !py-4 !font-bold !tracking-[0.2em] !shadow-lg !shadow-[#1A3A32]/10 hover:!bg-[#C5A059] !transition-all"
-      >
-        SIGN IN
-      </Button>
-      <p className="text-center text-[11px] text-stone-400 mt-4 italic">
-        Join our community of heritage lovers
-      </p>
-    </div>
-  )}
-</div>
+                  <div className="flex-grow">
+                    <p className="text-sm font-serif font-bold text-[#1A3A32] leading-tight">
+                      {userData.name}
+                    </p>
+                    <div className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-[#C5A059]/10 rounded-md border border-[#C5A059]/20">
+                      <span className="w-1 h-1 rounded-full bg-[#C5A059]"></span>
+                      <p className="text-[10px] font-bold text-[#C5A059] uppercase tracking-widest">
+                        Patron Member
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Actions */}
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    fullWidth
+                    onClick={() => navigate('/myProfile')}
+                    className="!justify-start !text-[#1A3A32] !normal-case !font-bold !py-3 !px-4 !rounded-xl hover:!bg-white !transition-all"
+                  >
+                    <FiUser className="mr-3 text-[#C5A059]" size={18} />
+                    Account Settings
+                  </Button>
+
+                  <Button
+                    fullWidth
+                    onClick={logout}
+                    className="!justify-start !text-stone-500 hover:!text-red-600 !normal-case !font-semibold !py-3 !px-4 !rounded-xl hover:!bg-red-50 !transition-all"
+                  >
+                    <FiLogOut className="mr-3" size={18} />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-2">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => navigate('/login')}
+                  className="!bg-[#1A3A32] !rounded-xl !py-4 !font-bold !tracking-[0.2em] !shadow-lg !shadow-[#1A3A32]/10 hover:!bg-[#C5A059] !transition-all"
+                >
+                  SIGN IN
+                </Button>
+                <p className="text-center text-[11px] text-stone-400 mt-4 italic">
+                  Join our community of heritage lovers
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

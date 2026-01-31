@@ -85,9 +85,58 @@ const addproductSchema = new mongoose.Schema({
       'Diwali', 'Holi', 'Durga Puja', 'Bihu', 'Christmas', 'Eid',
       'Wedding', 'Anniversary', 'Birthday', 'Housewarming',
       'Corporate Gifting', 'Festive Season', 'Daily Use', 'Home Decor',
-      'Puja', 'Traditional Ceremony', 'Other'
+      'Puja', 'Traditional Ceremony', 'New Year', 'Employee Recognition',
+      'Client Appreciation', 'Farewell', 'Baby Shower', 'Other'
     ]
   }],
+
+  // ⭐ B2B Corporate Gifting Fields
+  // Bulk Pricing Tiers (discounted prices for larger quantities)
+  bulkPricing: {
+    tier25: { type: Number },   // Price for 25-49 units
+    tier50: { type: Number },   // Price for 50-99 units (10% off)
+    tier100: { type: Number },  // Price for 100-499 units (15% off)
+    tier500: { type: Number }   // Price for 500+ units (20% off)
+  },
+
+  // Customization Options
+  customizationAvailable: {
+    logo: { type: Boolean, default: false },     // Company logo printing
+    message: { type: Boolean, default: true },   // Custom message card
+    packaging: { type: Boolean, default: true }  // Premium gift packaging
+  },
+  logoMinQuantity: { type: Number, default: 25 }, // Minimum qty for logo printing
+
+  // Target Recipients (for filtering)
+  recipientTypes: [{
+    type: String,
+    enum: ['Employees', 'Clients', 'VIP Clients', 'Partners', 'Vendors', 'Team', 'Family', 'Friends', 'Everyone']
+  }],
+
+  // "Perfect For" tags (displayed on product card)
+  perfectFor: [{ type: String }],
+
+  // Contents (for hampers/gift boxes)
+  contents: [{ type: String }],
+
+  // Product Type
+  productType: {
+    type: String,
+    enum: ['Hamper', 'Single Item', 'Gift Set', 'Combo', 'Subscription Box'],
+    default: 'Single Item'
+  },
+
+  // Rating & Reviews
+  rating: { type: Number, default: 0, min: 0, max: 5 },
+  reviewCount: { type: Number, default: 0 },
+
+  // Delivery Time
+  deliveryDays: { type: String, default: '5-7 days' },
+
+  // SEO
+  metaTitle: { type: String },
+  metaDescription: { type: String },
+  tags: [{ type: String }],
 
   approved: { type: Boolean, default: false },
 

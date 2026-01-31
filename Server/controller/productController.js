@@ -27,6 +27,26 @@ export const addProduct = async (req, res) => {
       // ▶ State & Occasion fields
       state, occasions,
 
+      // ▶ B2B Corporate Gifting Fields
+      bulkPricing,           // { tier25, tier50, tier100, tier500 }
+      customizationAvailable, // { logo, message, packaging }
+      logoMinQuantity,
+      recipientTypes,        // ['Employees', 'Clients', etc.]
+      perfectFor,            // ['VIP Clients', 'Large Teams', etc.]
+      contents,              // For hampers/gift boxes
+      productType,           // 'Hamper', 'Single Item', 'Gift Set', etc.
+      deliveryDays,          // '5-7 days'
+
+      // ▶ SEO fields
+      metaTitle,
+      metaDescription,
+      tags,
+
+      // ▶ HSN & Compliance
+      hsnCode,
+      gstRate,
+      moq,
+
       stock
     } = req.body;
 
@@ -34,6 +54,15 @@ export const addProduct = async (req, res) => {
       url: file.path,
       altText: title
     })) || [];
+
+    // Parse JSON fields if they come as strings
+    const parseJSON = (field) => {
+      if (!field) return undefined;
+      if (typeof field === 'string') {
+        try { return JSON.parse(field); } catch { return field; }
+      }
+      return field;
+    };
 
     const newProduct = new addproductmodel({
       title, description, categoryname, subcategory,
@@ -46,8 +75,29 @@ export const addProduct = async (req, res) => {
       countryOfOrigin, bestSellerRank,
       materialComposition, outerMaterial, length, careInstructions,
       aboutThisItem,
+
       state,
-      occasions: occasions ? (Array.isArray(occasions) ? occasions : JSON.parse(occasions)) : [],
+      occasions: parseJSON(occasions) || [],
+
+      // B2B Fields
+      bulkPricing: parseJSON(bulkPricing),
+      customizationAvailable: parseJSON(customizationAvailable),
+      logoMinQuantity: Number(logoMinQuantity) || 25,
+      recipientTypes: parseJSON(recipientTypes) || [],
+      perfectFor: parseJSON(perfectFor) || [],
+      contents: parseJSON(contents) || [],
+      productType: productType || 'Single Item',
+      deliveryDays: deliveryDays || '5-7 days',
+
+      // SEO
+      metaTitle,
+      metaDescription,
+      tags: parseJSON(tags) || [],
+
+      // Compliance
+      hsnCode,
+      gstRate: Number(gstRate) || 18,
+      moq: Number(moq) || 1,
 
       images: imageArray,
       sellerId,
@@ -98,7 +148,13 @@ export const updateProduct = async (req, res) => {
       'countryOfOrigin', 'bestSellerRank', 'materialComposition',
       'outerMaterial', 'length', 'careInstructions', 'aboutThisItem',
       // State & Occasion fields
-      'state', 'occasions'
+      'state', 'occasions',
+      // B2B Corporate Gifting fields
+      'bulkPricing', 'customizationAvailable', 'logoMinQuantity',
+      'recipientTypes', 'perfectFor', 'contents', 'productType',
+      'deliveryDays', 'metaTitle', 'metaDescription', 'tags',
+      // Compliance
+      'hsnCode', 'gstRate', 'moq'
     ];
 
     // BLOCKED FIELDS - These should NEVER be updatable via this endpoint:

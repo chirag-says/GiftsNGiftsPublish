@@ -34,10 +34,13 @@ const WishlistPage = lazy(() => import("./Components/Wish List/WishlistPage.jsx"
 
 // Cart & Checkout pages
 const Cartpage = lazy(() => import("./Components/Cart Page/Cartpage.jsx"));
+const B2BCart = lazy(() => import("./Components/Cart Page/B2BCart.jsx"));
 const AddAddress = lazy(() => import("./Components/BillingPage/AddAddress.jsx"));
 const OrderSummery = lazy(() => import("./Components/Order Summery/OrderSummery.jsx"));
 const PaymentSuccess = lazy(() => import("./Components/Order Summery/PaymentSuccess.jsx"));
 const OrderSuccess = lazy(() => import("./Components/Order Summery/OrderSuccess.jsx"));
+const OrderConfirmation = lazy(() => import("./Components/Order Summery/OrderConfirmation.jsx"));
+const B2BCheckout = lazy(() => import("./Components/Checkout/B2BCheckout.jsx"));
 
 // Other pages
 const Feedback = lazy(() => import("./Components/Feedback/Feedback.jsx"));
@@ -63,6 +66,13 @@ const ErrorPage = lazy(() => import("./Components/ErrorPage/ErrorPage.jsx"));
 // Chatbot (load after main content)
 const ChatWidget = lazy(() => import("./Components/Chatbot/ChatWidget.jsx"));
 
+// Shop by Occasion pages
+const ShopByOccasionPage = lazy(() => import("./Components/Occasion/ShopByOccasionPage.jsx"));
+const OccasionLandingPage = lazy(() => import("./Components/Occasion/OccasionLandingPage.jsx"));
+const GiftFinderQuiz = lazy(() => import("./Components/Occasion/GiftFinderQuiz.jsx"));
+const ProductComparison = lazy(() => import("./Components/Occasion/ProductComparison.jsx"));
+const BulkQuoteRequest = lazy(() => import("./Components/Occasion/BulkQuoteRequest.jsx"));
+
 function App() {
   return (
     <ErrorBoundary>
@@ -71,43 +81,55 @@ function App() {
 
       {/* PERFORMANCE: Suspense wrapper for lazy-loaded routes */}
       <main className="pt-[70px] lg:pt-[140px] ">
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          <Route path="/" exact={true} element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/email-verify" element={<Emailverify />} />
-          <Route path="/myProfile" element={<MyProfile />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/productlist" element={<ProductList />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/cartlist" element={<Cartpage />} />
-          <Route path="/addaddress" element={<AddAddress />} />
-          <Route path="/ordersummery" element={<OrderSummery />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="/search-results" element={<SearchResultsPage />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          <Route path="/support-policy" element={<Support_Policy />} />
-          <Route path="/shipping-info" element={<ShippingInfo />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/help-center" element={<HelpCenter />} />
-          <Route path="/order-tracking" element={<OrderTracking />} />
-          <Route path="/terms-of-use" element={<TermsOfUse />} />
-          <Route path="/faqs" element={<FAQs />} />
-          <Route path="/disclaimer" element={<Desclaimer />} />
-          <Route path="/bulk-orders" element={<BulkOrders />} />
-          <Route path="/refund-policy" element={<RefundPlicy />} />
-          <Route path="*" element={<ErrorPage />} />
-          <Route path="/reset-password" element={<Reset_pass />} />
-  <Route path="/stop-by-state" element={<StateSlider />} />
-  <Route path="/collection" element={<CollectionPage />} />
-<Route path="/artician" element={<ArtisanStorySection />} />
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" exact={true} element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/email-verify" element={<Emailverify />} />
+            <Route path="/myProfile" element={<MyProfile />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/productlist" element={<ProductList />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/cartlist" element={<Cartpage />} />
+            <Route path="/addaddress" element={<AddAddress />} />
+            <Route path="/ordersummery" element={<OrderSummery />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/search-results" element={<SearchResultsPage />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/support-policy" element={<Support_Policy />} />
+            <Route path="/shipping-info" element={<ShippingInfo />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/order-tracking" element={<OrderTracking />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/faqs" element={<FAQs />} />
+            <Route path="/disclaimer" element={<Desclaimer />} />
+            <Route path="/bulk-orders" element={<BulkOrders />} />
+            <Route path="/refund-policy" element={<RefundPlicy />} />
+            <Route path="*" element={<ErrorPage />} />
+            <Route path="/reset-password" element={<Reset_pass />} />
+            <Route path="/stop-by-state" element={<StateSlider />} />
+            <Route path="/collection" element={<CollectionPage />} />
+            <Route path="/artician" element={<ArtisanStorySection />} />
 
-        </Routes>
-      </Suspense>
+            {/* Shop by Occasion Routes */}
+            <Route path="/shop-by-occasion" element={<ShopByOccasionPage />} />
+            <Route path="/occasion/:slug" element={<OccasionLandingPage />} />
+            <Route path="/gift-finder" element={<GiftFinderQuiz />} />
+            <Route path="/compare" element={<ProductComparison />} />
+            <Route path="/bulk-quote" element={<BulkQuoteRequest />} />
+
+            {/* B2B Routes */}
+            <Route path="/b2b-cart" element={<B2BCart />} />
+            <Route path="/b2b-checkout" element={<B2BCheckout />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+
+          </Routes>
+        </Suspense>
       </main>
 
       <Footer />

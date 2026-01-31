@@ -68,6 +68,26 @@ const initialProductData = {
     hsnCode: '',
     gstRate: 18,
 
+    // B2B Corporate Gifting Fields
+    bulkPricing: {
+        tier25: '',
+        tier50: '',
+        tier100: '',
+        tier500: ''
+    },
+    customizationAvailable: {
+        logo: false,
+        message: true,
+        packaging: true
+    },
+    logoMinQuantity: 25,
+    recipientTypes: [],
+    perfectFor: [],
+    contents: [],
+    productType: 'Single Item',
+    deliveryDays: '5-7 days',
+    tags: [],
+
     // Dynamic Category-specific attributes
     dynamicAttributes: {},
 
@@ -328,6 +348,29 @@ function AddProductWizard() {
             if (productData.state) formData.append('state', productData.state);
             if (productData.occasions && productData.occasions.length > 0) {
                 formData.append('occasions', JSON.stringify(productData.occasions));
+            }
+
+            // B2B Corporate Gifting fields
+            if (productData.bulkPricing) {
+                formData.append('bulkPricing', JSON.stringify(productData.bulkPricing));
+            }
+            if (productData.customizationAvailable) {
+                formData.append('customizationAvailable', JSON.stringify(productData.customizationAvailable));
+            }
+            if (productData.logoMinQuantity) formData.append('logoMinQuantity', productData.logoMinQuantity);
+            if (productData.recipientTypes && productData.recipientTypes.length > 0) {
+                formData.append('recipientTypes', JSON.stringify(productData.recipientTypes));
+            }
+            if (productData.perfectFor && productData.perfectFor.length > 0) {
+                formData.append('perfectFor', JSON.stringify(productData.perfectFor));
+            }
+            if (productData.contents && productData.contents.length > 0) {
+                formData.append('contents', JSON.stringify(productData.contents));
+            }
+            if (productData.productType) formData.append('productType', productData.productType);
+            if (productData.deliveryDays) formData.append('deliveryDays', productData.deliveryDays);
+            if (productData.tags && productData.tags.length > 0) {
+                formData.append('tags', JSON.stringify(productData.tags));
             }
 
             // Importer details

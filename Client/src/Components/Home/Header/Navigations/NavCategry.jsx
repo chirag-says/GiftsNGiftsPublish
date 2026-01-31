@@ -4,9 +4,11 @@ import { NavLink } from 'react-router-dom';
 const NavCategory = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Shop by Occasion', path: '/shop-by-occasion' },
     { name: 'Shop by State', path: '/stop-by-state' },
     { name: 'Collections', path: '/collection' },
-    { name: 'Artisans', path: '/artician' }, // Shortened for cleaner UI
+    { name: 'Artisans', path: '/artician' },
+    { name: 'Corporate Gifting', path: '/bulk-quote' },
   ];
 
   return (

@@ -13,6 +13,7 @@ import MiddelAds from "../Home/Advertise/MiddelAds.jsx";
 import RelationSlider from "./RelationshipSlider/RelationSlider.jsx";
 import StateSlider from "./HomePageSlider/StateSlider.jsx";
 import ShopByOccasion from "./HomePageSlider/ShopByOccasion.jsx";
+import CorporateGiftingCTA from "./HomePageSlider/CorporateGiftingCTA.jsx";
 
 import assam from "../../assets/newimage/tea.png";
 import state from "../../assets/newimage/state.png";
@@ -24,24 +25,37 @@ import manipur from '../../assets/roshni/manipur.jpg'
 import FeaturesSection from "./HomePageSlider/FeaturesSection.jsx";
 import ArtisanStorySection from "./Artician/ArtisanStorySection.jsx";
 import Banner from "./HomePageSlider/Banner.jsx";
+
 function Home() {
   return (
     <>
-    <Banner/>
-      <StateSlider/>
+      {/* Hero Banner */}
+      <Banner />
 
-      {/* ================= REST OF HOME ================= */}
-      {/* <StateSlider /> */}
+      {/* Shop by State - Regional Identity */}
+      <StateSlider />
+
+      {/* Shop by Occasion - Key Feature */}
       <ShopByOccasion />
-      <FeaturesSection/>
-       <RelationSlider />
+
+      {/* Corporate Gifting CTA - B2B Focus */}
+      <CorporateGiftingCTA />
+
+      {/* Trust & Features */}
+      <FeaturesSection />
+
+      {/* Relationship-Based Shopping */}
+      <RelationSlider />
+
+      {/* Category Navigation */}
       <NavCatSlider />
-      {/* <FreeShip />
-      <Adevert /> */}
-      {/* <MiddelAds /> */}
+
+      {/* Featured Product Sliders */}
       <ProductSlider title="Birthday Gifts That Wow" />
-      <ArtisanStorySection/>
-     
+      <ProductSlider title="Corporate Gift Favorites" />
+
+      {/* Artisan Stories - Brand Value */}
+      <ArtisanStorySection />
     </>
   );
 }

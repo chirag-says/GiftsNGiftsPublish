@@ -105,8 +105,6 @@ router.get('/occasions/:slug/products', async (req, res) => {
     try {
         const { slug } = req.params;
         const {
-            minPrice = 0,
-            maxPrice = 100000,
             minQuantity = 1,
             recipient,
             productType,
@@ -130,8 +128,12 @@ router.get('/occasions/:slug/products', async (req, res) => {
             occasions: { $in: [occasion.name] }
         };
 
-        // Price filter
-        query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
+        // Only add price filter if explicitly provided (not for default browsing)
+        if (req.query.minPrice || req.query.maxPrice) {
+            query.price = {};
+            if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
+            if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
+        }
 
         // MOQ filter for bulk orders
         if (minQuantity > 1) {

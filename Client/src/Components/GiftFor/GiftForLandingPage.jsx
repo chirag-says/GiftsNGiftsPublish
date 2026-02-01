@@ -63,8 +63,10 @@ function GiftForLandingPage() {
 
             const res = await api.get(`/api/gift-for/${slug}/products`, {
                 params: {
-                    minPrice: budgetFilter?.min || 0,
-                    maxPrice: budgetFilter?.max || 100000,
+                    ...(budgetFilter && {
+                        minPrice: budgetFilter.min,
+                        maxPrice: budgetFilter.max
+                    }),
                     sort: filters.sort,
                     page: pagination.page,
                     limit: 24

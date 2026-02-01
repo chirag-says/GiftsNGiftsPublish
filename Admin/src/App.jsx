@@ -15,6 +15,7 @@ import CategoryList from './Pages/Category/CategoryList.jsx';
 import SubCategoryList from './Pages/Category/SubCategoryList.jsx';
 import CategoryRequests from './Pages/Category/CategoryRequests.jsx';
 import SubcategoryRequests from './Pages/Category/SubcategoryRequests.jsx';
+import CatalogManagement from './Pages/Category/CatalogManagement.jsx';
 import UsersList from './Pages/Users Page/UsersList.jsx';
 import Login from './Pages/Login/Login.jsx';
 import ProtectedRoute from './Pages/ProtectedRoute.jsx';
@@ -58,6 +59,9 @@ import CustomReports from './Pages/Reports/CustomReports.jsx';
 // Seller Verification
 import SellerVerificationList from './Pages/Verification/SellerVerificationList.jsx';
 import SellerVerificationDetail from './Pages/Verification/SellerVerificationDetail.jsx';
+
+// Homepage Collections
+import HomeCollections from './Pages/Marketing/HomeCollections.jsx';
 
 
 // import BulkImport from './Pages/Product Pages/BulkImport.jsx';
@@ -121,6 +125,7 @@ function App() {
     { path: '/subcategorylist', element: <ProtectedRoute><Layout><SubCategoryList /></Layout></ProtectedRoute> },
     { path: '/category-requests', element: <ProtectedRoute><Layout><CategoryRequests /></Layout></ProtectedRoute> },
     { path: '/subcategory-requests', element: <ProtectedRoute><Layout><SubcategoryRequests /></Layout></ProtectedRoute> },
+    { path: '/catalog-management', element: <ProtectedRoute><Layout><CatalogManagement /></Layout></ProtectedRoute> },
     { path: '/users', element: <ProtectedRoute><Layout><UsersList /></Layout></ProtectedRoute> },
     { path: '/sellers', element: <ProtectedRoute><Layout><SellersList /></Layout></ProtectedRoute> },
     { path: '/report', element: <ProtectedRoute><Layout><AdminReport /></Layout></ProtectedRoute> },
@@ -169,6 +174,9 @@ function App() {
     // Seller Verification
     { path: '/verification', element: <ProtectedRoute><Layout><SellerVerificationList /></Layout></ProtectedRoute> },
     { path: '/verification/:sellerId', element: <ProtectedRoute><Layout><SellerVerificationDetail /></Layout></ProtectedRoute> },
+
+    // Homepage Collections Management
+    { path: '/home-collections', element: <ProtectedRoute><Layout><HomeCollections /></Layout></ProtectedRoute> },
 
   ]);
 

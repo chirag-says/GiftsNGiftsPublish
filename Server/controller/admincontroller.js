@@ -1208,3 +1208,163 @@ export const adminDeleteProduct = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to delete product' });
   }
 };
+
+// ========================= HOMEPAGE COLLECTION MANAGEMENT =========================
+
+/**
+ * Get products for homepage collections (Best of North East & Under ₹999)
+ * Also returns all approved products for selection
+ */
+export const getHomeCollections = async (req, res) => {
+  try {
+    // Get products in "Best of North East"
+    const bestOfNorthEast = await addproductmodel.find({
+      showInBestOfNorthEast: true,
+      approved: true,
+      isAvailable: true
+    })
+      .select('title price images state rating stock')
+      .populate('sellerId', 'name')
+      .limit(20);
+
+    // Get products in "Under ₹999"
+    const under999 = await addproductmodel.find({
+      showInUnder999: true,
+      approved: true,
+      isAvailable: true
+    })
+      .select('title price images state rating stock')
+      .populate('sellerId', 'name')
+      .limit(20);
+
+    // Get all approved products for selection dropdown
+    const allProducts = await addproductmodel.find({
+      approved: true,
+      isAvailable: true
+    })
+      .select('title price images state rating stock showInBestOfNorthEast showInUnder999')
+      .populate('sellerId', 'name')
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+    res.json({
+      success: true,
+      data: {
+        bestOfNorthEast,
+        under999,
+        allProducts
+      }
+    });
+  } catch (error) {
+    console.error("Get Home Collections Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Toggle product in "Best of North East" collection
+ */
+export const toggleBestOfNorthEast = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await addproductmodel.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    product.showInBestOfNorthEast = !product.showInBestOfNorthEast;
+    await product.save();
+
+    res.json({
+      success: true,
+      message: product.showInBestOfNorthEast
+        ? "Added to Best of North East"
+        : "Removed from Best of North East",
+      product: {
+        _id: product._id,
+        title: product.title,
+        showInBestOfNorthEast: product.showInBestOfNorthEast
+      }
+    });
+  } catch (error) {
+    console.error("Toggle Best of NE Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Toggle product in "Perfect Gifts Under ₹999" collection
+ */
+export const toggleUnder999 = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await addproductmodel.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    product.showInUnder999 = !product.showInUnder999;
+    await product.save();
+
+    res.json({
+      success: true,
+      message: product.showInUnder999
+        ? "Added to Under ₹999"
+        : "Removed from Under ₹999",
+      product: {
+        _id: product._id,
+        title: product.title,
+        showInUnder999: product.showInUnder999
+      }
+    });
+  } catch (error) {
+    console.error("Toggle Under 999 Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Bulk update collections - set multiple products at once
+ * Body: { bestOfNorthEast: [productIds], under999: [productIds] }
+ */
+export const updateHomeCollections = async (req, res) => {
+  try {
+    const { bestOfNorthEast = [], under999 = [] } = req.body;
+
+    // First, reset all products
+    await addproductmodel.updateMany(
+      {},
+      { showInBestOfNorthEast: false, showInUnder999: false }
+    );
+
+    // Set Best of North East products
+    if (bestOfNorthEast.length > 0) {
+      await addproductmodel.updateMany(
+        { _id: { $in: bestOfNorthEast } },
+        { showInBestOfNorthEast: true }
+      );
+    }
+
+    // Set Under ₹999 products
+    if (under999.length > 0) {
+      await addproductmodel.updateMany(
+        { _id: { $in: under999 } },
+        { showInUnder999: true }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Homepage collections updated successfully",
+      counts: {
+        bestOfNorthEast: bestOfNorthEast.length,
+        under999: under999.length
+      }
+    });
+  } catch (error) {
+    console.error("Update Home Collections Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

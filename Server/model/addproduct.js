@@ -187,7 +187,11 @@ const addproductSchema = new mongoose.Schema({
   },
 
   isAvailable: { type: Boolean, default: true },
-  isFeatured: { type: Boolean, default: false }
+  isFeatured: { type: Boolean, default: false },
+
+  // ⭐ Homepage Collection Visibility (Admin-controlled)
+  showInBestOfNorthEast: { type: Boolean, default: false },  // "Best of North East" section
+  showInUnder999: { type: Boolean, default: false }           // "Perfect Gifts Under ₹999" section
 
 
 }, { timestamps: true });

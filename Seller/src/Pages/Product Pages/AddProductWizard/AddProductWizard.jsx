@@ -556,9 +556,9 @@ function AddProductWizard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.1 }}
-                        className="mb-8 overflow-x-auto pb-2"
+                        className="mb-8 overflow-x-auto pb-2 scrollbar-hide"
                     >
-                        <div className="flex items-center justify-between min-w-max lg:min-w-0 bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
+                        <div className="flex items-center justify-between min-w-max lg:min-w-0 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-3 lg:p-4 border border-white/50">
                             {STEPS.map((step, index) => {
                                 const StepIcon = step.icon;
                                 const isActive = currentStep === step.id;
@@ -567,36 +567,50 @@ function AddProductWizard() {
 
                                 return (
                                     <React.Fragment key={step.id}>
-                                        <button
+                                        <motion.button
+                                            whileHover={isClickable ? { scale: 1.05 } : {}}
+                                            whileTap={isClickable ? { scale: 0.95 } : {}}
                                             onClick={() => isClickable && goToStep(step.id)}
                                             disabled={!isClickable}
-                                            className={`flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 rounded-xl transition-all duration-300 ${isActive
-                                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105'
+                                            className={`relative flex items-center gap-2 lg:gap-3 px-3 lg:px-5 py-2.5 lg:py-3 rounded-xl transition-all duration-300 ${isActive
+                                                ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30'
                                                 : isCompleted
-                                                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:shadow-md'
                                                     : isClickable
-                                                        ? 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                                        : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                                        ? 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:shadow-md'
+                                                        : 'bg-gray-50/50 text-gray-400 cursor-not-allowed'
                                                 }`}
                                         >
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive
-                                                ? 'bg-white/20'
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isActive
+                                                ? 'bg-white/25'
                                                 : isCompleted
                                                     ? 'bg-emerald-200'
                                                     : 'bg-gray-200'
                                                 }`}>
                                                 {isCompleted && !isActive ? (
-                                                    <MdCheckCircle className="text-emerald-600" size={18} />
+                                                    <MdCheckCircle className="text-emerald-600" size={20} />
                                                 ) : (
-                                                    <StepIcon size={18} />
+                                                    <StepIcon size={20} />
                                                 )}
                                             </div>
-                                            <span className="hidden lg:block text-sm font-medium whitespace-nowrap">{step.title}</span>
-                                            <span className="lg:hidden text-xs font-medium whitespace-nowrap">{step.shortTitle}</span>
-                                        </button>
+                                            <span className="hidden lg:block text-sm font-semibold whitespace-nowrap">{step.title}</span>
+                                            <span className="lg:hidden text-xs font-semibold whitespace-nowrap">{step.shortTitle}</span>
+
+                                            {/* Active indicator glow */}
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeStep"
+                                                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-lg -z-10"
+                                                />
+                                            )}
+                                        </motion.button>
                                         {index < STEPS.length - 1 && (
-                                            <div className={`hidden lg:block w-8 h-0.5 mx-1 rounded ${completedSteps.includes(step.id) ? 'bg-emerald-300' : 'bg-gray-200'
-                                                }`} />
+                                            <div className={`hidden lg:flex items-center mx-1`}>
+                                                <div className={`w-6 h-1 rounded-full transition-all duration-500 ${completedSteps.includes(step.id)
+                                                        ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                                                        : 'bg-gray-200'
+                                                    }`} />
+                                            </div>
                                         )}
                                     </React.Fragment>
                                 );

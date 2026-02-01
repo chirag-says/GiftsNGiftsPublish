@@ -11,9 +11,11 @@ function StepSubcategory() {
     const [searchQuery, setSearchQuery] = useState('');
     const [openAddModal, setOpenAddModal] = useState(false);
 
-    const filteredSubcategories = subcategories.filter(sub =>
-        sub.subcategory?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredSubcategories = subcategories.filter(sub => {
+        const belongsToCategory = sub.category?._id === productData.categoryId || sub.category === productData.categoryId;
+        const matchesSearch = sub.subcategory?.toLowerCase().includes(searchQuery.toLowerCase());
+        return belongsToCategory && matchesSearch;
+    });
 
     const handleSubcategorySelect = (subcategory) => {
         updateProductData('subcategoryId', subcategory._id);
@@ -83,8 +85,8 @@ function StepSubcategory() {
                                 transition={{ delay: index * 0.03 }}
                                 onClick={() => handleSubcategorySelect(subcategory)}
                                 className={`relative p-5 rounded-xl border-2 transition-all duration-200 text-left group ${isSelected
-                                        ? 'border-purple-500 bg-purple-50/50 shadow-md'
-                                        : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                                    ? 'border-purple-500 bg-purple-50/50 shadow-md'
+                                    : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
                                     }`}
                             >
                                 {/* Selection Indicator */}
@@ -109,8 +111,8 @@ function StepSubcategory() {
                                     </div>
                                 ) : (
                                     <div className={`w-14 h-14 rounded-xl mb-3 flex items-center justify-center transition-colors ${isSelected
-                                            ? 'bg-purple-500 text-white'
-                                            : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'
+                                        ? 'bg-purple-500 text-white'
+                                        : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'
                                         }`}>
                                         {isSelected ? <MdFolderOpen size={24} /> : <MdFolder size={24} />}
                                     </div>

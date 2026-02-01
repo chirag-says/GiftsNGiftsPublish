@@ -10,6 +10,7 @@ import {
   getProductReviews,
   getRelatedProducts,
   canUserReview,
+  getHomePageCollections,
 } from "../controller/productController.js";
 import authseller from "../middleware/authseller.js";
 
@@ -25,6 +26,9 @@ router.post("/review", createReview);
 router.get("/reviews/:id", getProductReviews);
 router.get("/related/:id", getRelatedProducts);
 router.get("/can-review", canUserReview);
+
+// Public route for homepage collections (no auth needed)
+router.get("/home-collections", getHomePageCollections);
 
 export default router;
 

@@ -83,6 +83,7 @@ const CraftCollectionPage = lazy(() => import("./Components/Craft/CraftCollectio
 
 // State pages
 const StateCollectionPage = lazy(() => import("./Components/State/StateCollectionPage.jsx"));
+const AllStatesPage = lazy(() => import("./Components/State/AllStatesPage.jsx"));
 
 // B2B Order Confirmation
 const B2BOrderConfirmation = lazy(() => import("./Components/Order Summery/B2BOrderConfirmation.jsx"));
@@ -130,7 +131,6 @@ function App() {
             <Route path="/disclaimer" element={<Desclaimer />} />
             <Route path="/bulk-orders" element={<BulkOrders />} />
             <Route path="/refund-policy" element={<RefundPlicy />} />
-            <Route path="*" element={<ErrorPage />} />
             <Route path="/reset-password" element={<Reset_pass />} />
             <Route path="/stop-by-state" element={<StateSlider />} />
             <Route path="/collection" element={<CollectionPage />} />
@@ -142,16 +142,6 @@ function App() {
 
             {/* Gift For Routes */}
             <Route path="/gift-for/:slug" element={<GiftForLandingPage />} />
-            {/* Direct aliases for common relationships */}
-            <Route path="/daughter" element={<GiftForLandingPage />} />
-            <Route path="/son" element={<GiftForLandingPage />} />
-            <Route path="/mother" element={<GiftForLandingPage />} />
-            <Route path="/father" element={<GiftForLandingPage />} />
-            <Route path="/brother" element={<GiftForLandingPage />} />
-            <Route path="/sister" element={<GiftForLandingPage />} />
-            <Route path="/wife" element={<GiftForLandingPage />} />
-            <Route path="/husband" element={<GiftForLandingPage />} />
-            <Route path="/friend" element={<GiftForLandingPage />} />
             <Route path="/gift-finder" element={<GiftFinderQuiz />} />
             <Route path="/compare" element={<ProductComparison />} />
             <Route path="/bulk-quote" element={<BulkQuoteRequest />} />
@@ -171,8 +161,46 @@ function App() {
             <Route path="/craft/:slug" element={<CraftCollectionPage />} />
 
             {/* State Routes */}
+            <Route path="/states" element={<AllStatesPage />} />
             <Route path="/state/:slug" element={<StateCollectionPage />} />
 
+            {/* Direct relationship routes (e.g., /daughter, /grandmother, /friend) */}
+            {/* These catch any single-segment path and route to GiftForLandingPage */}
+            <Route path="/daughter" element={<GiftForLandingPage />} />
+            <Route path="/son" element={<GiftForLandingPage />} />
+            <Route path="/mother" element={<GiftForLandingPage />} />
+            <Route path="/father" element={<GiftForLandingPage />} />
+            <Route path="/brother" element={<GiftForLandingPage />} />
+            <Route path="/sister" element={<GiftForLandingPage />} />
+            <Route path="/wife" element={<GiftForLandingPage />} />
+            <Route path="/husband" element={<GiftForLandingPage />} />
+            <Route path="/friend" element={<GiftForLandingPage />} />
+            <Route path="/colleague" element={<GiftForLandingPage />} />
+            <Route path="/boyfriend" element={<GiftForLandingPage />} />
+            <Route path="/girlfriend" element={<GiftForLandingPage />} />
+            <Route path="/grandparents" element={<GiftForLandingPage />} />
+            <Route path="/grandmother" element={<GiftForLandingPage />} />
+            <Route path="/grandfather" element={<GiftForLandingPage />} />
+            <Route path="/uncle" element={<GiftForLandingPage />} />
+            <Route path="/aunt" element={<GiftForLandingPage />} />
+            <Route path="/couple" element={<GiftForLandingPage />} />
+            <Route path="/couples" element={<GiftForLandingPage />} />
+            <Route path="/in-laws" element={<GiftForLandingPage />} />
+            <Route path="/boss" element={<GiftForLandingPage />} />
+            <Route path="/teacher" element={<GiftForLandingPage />} />
+            <Route path="/kids" element={<GiftForLandingPage />} />
+            <Route path="/teens" element={<GiftForLandingPage />} />
+            <Route path="/men" element={<GiftForLandingPage />} />
+            <Route path="/women" element={<GiftForLandingPage />} />
+            <Route path="/parents" element={<GiftForLandingPage />} />
+            <Route path="/newlyweds" element={<GiftForLandingPage />} />
+            <Route path="/new-parents" element={<GiftForLandingPage />} />
+            <Route path="/pet-lovers" element={<GiftForLandingPage />} />
+            <Route path="/anyone" element={<GiftForLandingPage />} />
+            <Route path="/best-friend" element={<GiftForLandingPage />} />
+
+            {/* 404 Catch-all - MUST be last */}
+            <Route path="*" element={<ErrorPage />} />
           </Routes>
         </Suspense>
       </main>

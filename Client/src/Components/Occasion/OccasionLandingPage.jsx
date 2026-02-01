@@ -136,8 +136,10 @@ function OccasionLandingPage() {
 
             const res = await api.get(`/api/occasions/${slug}/products`, {
                 params: {
-                    minPrice: budgetFilter?.min || 0,
-                    maxPrice: budgetFilter?.max || 100000,
+                    ...(budgetFilter && {
+                        minPrice: budgetFilter.min,
+                        maxPrice: budgetFilter.max
+                    }),
                     minQuantity: filters.quantity ? quantityFilters.find(q => q.id === filters.quantity)?.min : 1,
                     recipient: filters.recipient,
                     productType: filters.productType,

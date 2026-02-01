@@ -588,3 +588,42 @@ export const getRelatedProducts = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+/**
+ * Get Homepage Collections (Public API)
+ * Returns products marked for "Best of North East" and "Under ₹999" sections
+ */
+export const getHomePageCollections = async (req, res) => {
+  try {
+    // Get "Best of North East" products (admin-curated)
+    const bestOfNorthEast = await addproductmodel.find({
+      showInBestOfNorthEast: true,
+      approved: true,
+      isAvailable: true
+    })
+      .select('title price oldprice discount images rating reviewCount state')
+      .limit(8)
+      .lean();
+
+    // Get "Perfect Gifts Under ₹999" products (admin-curated)
+    const under999 = await addproductmodel.find({
+      showInUnder999: true,
+      approved: true,
+      isAvailable: true
+    })
+      .select('title price oldprice discount images rating reviewCount state')
+      .limit(8)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bestOfNorthEast,
+        under999
+      }
+    });
+  } catch (error) {
+    console.error("Homepage Collections Error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};

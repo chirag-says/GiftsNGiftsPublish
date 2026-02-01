@@ -117,7 +117,7 @@ function StateCollectionPage() {
                     {/* Stats */}
                     <div className="mt-8 flex gap-8">
                         <div>
-                            <p className="text-3xl font-serif text-[#d4af37]">{stateData?.productCount || 0}</p>
+                            <p className="text-3xl font-serif text-[#d4af37]">{pagination.total || stateData?.productCount || 0}</p>
                             <p className="text-white/60 text-sm">Products</p>
                         </div>
                         <div>
@@ -279,14 +279,38 @@ function formatStateName(slug) {
 
 function getStateFallback(slug) {
     const states = {
-        'assam': { name: 'Assam', description: 'Home of Muga silk and world-famous Assam tea', highlights: ['Muga Silk', 'Tea', 'Bamboo'] },
-        'meghalaya': { name: 'Meghalaya', description: 'Land of clouds with pristine organic products', highlights: ['Organic Honey', 'Cane & Bamboo'] },
-        'nagaland': { name: 'Nagaland', description: 'Rich tribal heritage with distinctive shawls', highlights: ['Naga Shawls', 'Tribal Jewelry'] },
-        'manipur': { name: 'Manipur', description: 'Elegant handloom and unique Longpi pottery', highlights: ['Longpi Pottery', 'Handloom'] },
-        'mizoram': { name: 'Mizoram', description: 'Traditional Mizo fabrics and crafts', highlights: ['Puan Textiles', 'Bamboo'] },
-        'arunachal-pradesh': { name: 'Arunachal Pradesh', description: 'Land of the rising sun with diverse tribal crafts', highlights: ['Tribal Textiles', 'Organic'] },
-        'tripura': { name: 'Tripura', description: 'Exquisite bamboo work and tribal handloom', highlights: ['Bamboo Crafts', 'Handloom'] },
-        'sikkim': { name: 'Sikkim', description: 'Fully organic state with Himalayan treasures', highlights: ['Organic Tea', 'Thangka'] }
+        // Northeast India
+        'assam': { name: 'Assam', description: 'Home of the world-famous Assam tea and the exquisite golden Muga silk. Rich cultural heritage reflected in traditional crafts.', highlights: ['Muga Silk', 'Assam Tea', 'Bamboo Crafts', 'Bell Metal'] },
+        'meghalaya': { name: 'Meghalaya', description: 'The "Abode of Clouds" is home to pristine organic products and unique living root bridges.', highlights: ['Organic Honey', 'Cane & Bamboo', 'Khasi Textiles'] },
+        'nagaland': { name: 'Nagaland', description: 'Land of festivals featuring rich tribal heritage with distinctive shawls and jewelry.', highlights: ['Naga Shawls', 'Tribal Jewelry', 'Wood Carvings'] },
+        'manipur': { name: 'Manipur', description: 'Known for elegant handloom traditions and unique black Longpi pottery.', highlights: ['Longpi Pottery', 'Moirang Phee', 'Kouna Craft'] },
+        'mizoram': { name: 'Mizoram', description: 'Land of rolling hills featuring traditional Mizo Puan fabrics.', highlights: ['Puan Textiles', 'Bamboo Products', 'Cane Furniture'] },
+        'arunachal-pradesh': { name: 'Arunachal Pradesh', description: 'The Land of the Rising Sun with diverse tribal cultures and crafts.', highlights: ['Monpa Carpets', 'Yak Products', 'Tribal Textiles'] },
+        'tripura': { name: 'Tripura', description: 'Known for exquisite bamboo and cane work, traditional Risa textiles.', highlights: ['Bamboo Crafts', 'Risa Textile', 'Bamboo Dolls'] },
+        'sikkim': { name: 'Sikkim', description: 'India\'s first fully organic state offering Himalayan treasures.', highlights: ['Organic Tea', 'Thangka Paintings', 'Large Cardamom'] },
+
+        // Other major states
+        'rajasthan': { name: 'Rajasthan', description: 'Land of kings featuring vibrant textiles, block printing, and blue pottery.', highlights: ['Block Printing', 'Blue Pottery', 'Bandhani', 'Jewelry'] },
+        'jammu-and-kashmir': { name: 'Jammu and Kashmir', description: 'Paradise on Earth known for Pashmina shawls and Kashmiri carpets.', highlights: ['Pashmina Shawls', 'Kashmiri Carpets', 'Walnut Wood Carving'] },
+        'kerala': { name: 'Kerala', description: 'God\'s Own Country famous for coir products and traditional Kasavu sarees.', highlights: ['Kasavu Sarees', 'Coir Products', 'Spices', 'Kathakali Masks'] },
+        'gujarat': { name: 'Gujarat', description: 'Land of the White Desert featuring traditional Patola silk and Kutchi embroidery.', highlights: ['Patola Silk', 'Kutchi Embroidery', 'Bandhani'] },
+        'west-bengal': { name: 'West Bengal', description: 'Cultural capital of India known for Durga Puja artistry and terracotta.', highlights: ['Baluchari Sarees', 'Terracotta', 'Dokra Craft'] },
+        'tamil-nadu': { name: 'Tamil Nadu', description: 'Land of temples famous for Kanchipuram silk and Tanjore paintings.', highlights: ['Kanchipuram Silk', 'Tanjore Paintings', 'Bronze Sculptures'] },
+        'maharashtra': { name: 'Maharashtra', description: 'Land of Maratha heritage featuring Paithani sarees and Kolhapuri chappals.', highlights: ['Paithani Sarees', 'Kolhapuri Chappal', 'Warli Art'] },
+        'karnataka': { name: 'Karnataka', description: 'Land of sandalwood and silk featuring Mysore silk and Channapatna toys.', highlights: ['Mysore Silk', 'Sandalwood Products', 'Channapatna Toys'] },
+        'uttar-pradesh': { name: 'Uttar Pradesh', description: 'Heart of India featuring Chikankari embroidery and Banarasi sarees.', highlights: ['Chikankari', 'Banarasi Sarees', 'Brassware'] },
+        'madhya-pradesh': { name: 'Madhya Pradesh', description: 'Heart of India known for Chanderi silk and tribal Gond art.', highlights: ['Chanderi Silk', 'Gond Art', 'Bagh Prints'] },
+        'odisha': { name: 'Odisha', description: 'Land of temples featuring Pattachitra paintings and Sambalpuri ikat.', highlights: ['Pattachitra', 'Sambalpuri Ikat', 'Silver Filigree'] },
+        'andhra-pradesh': { name: 'Andhra Pradesh', description: 'Land of Kohinoor featuring Kalamkari and Kondapalli toys.', highlights: ['Kalamkari', 'Kondapalli Toys', 'Mangalagiri Cotton'] },
+        'telangana': { name: 'Telangana', description: 'Land of pearls featuring Hyderabadi pearls and Bidri work.', highlights: ['Hyderabadi Pearls', 'Bidri Work', 'Pochampally Ikat'] },
+        'punjab': { name: 'Punjab', description: 'Land of five rivers featuring vibrant Phulkari embroidery.', highlights: ['Phulkari', 'Punjabi Juttis', 'Paranda'] },
+        'himachal-pradesh': { name: 'Himachal Pradesh', description: 'Land of gods featuring world-famous Kullu shawls.', highlights: ['Kullu Shawls', 'Chamba Rumals', 'Kangra Paintings'] },
+        'uttarakhand': { name: 'Uttarakhand', description: 'Land of spirituality featuring Ringal bamboo craft and Aipan art.', highlights: ['Ringal Craft', 'Aipan Art', 'Woolen Products'] },
+        'bihar': { name: 'Bihar', description: 'Ancient land of learning featuring Madhubani paintings.', highlights: ['Madhubani Art', 'Sikki Craft', 'Bhagalpuri Silk'] },
+        'jharkhand': { name: 'Jharkhand', description: 'Land of forests featuring tribal Paitkar paintings.', highlights: ['Paitkar Paintings', 'Dokra Craft', 'Bamboo Products'] },
+        'chhattisgarh': { name: 'Chhattisgarh', description: 'Heart of tribal India featuring Bell metal and Kosa silk.', highlights: ['Bell Metal', 'Kosa Silk', 'Bamboo Craft'] },
+        'goa': { name: 'Goa', description: 'Pearl of the Orient featuring cashew products and coconut crafts.', highlights: ['Cashew Products', 'Coconut Crafts', 'Crochet Work'] },
+        'ladakh': { name: 'Ladakh', description: 'Land of high passes featuring ultra-fine Ladakhi Pashmina.', highlights: ['Ladakhi Pashmina', 'Thangka Art', 'Apricot Products'] },
     };
     return states[slug] || { name: formatStateName(slug), description: '', highlights: [] };
 }

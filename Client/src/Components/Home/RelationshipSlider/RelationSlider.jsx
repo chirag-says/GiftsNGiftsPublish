@@ -1,16 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import { Link } from "react-router-dom";
+import api from "../../../utils/api";
 
 // Swiper Styles
 import "swiper/css";
 import "swiper/css/navigation";
 
-// Data
-import RelationData from '../../Consone/RelationData.js';
-
 const RelationSlider = () => {
+  const [relations, setRelations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRelations();
+  }, []);
+
+  const fetchRelations = async () => {
+    try {
+      const response = await api.get('/api/gift-for');
+      if (response.data.success) {
+        // Use 'all' array which is sorted by displayOrder
+        setRelations(response.data.all || []);
+      }
+    } catch (error) {
+      console.error('Error fetching relations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="w-full px-4 md:px-8 bg-[#fdfcfb] py-12 overflow-hidden">
       {/* Import Premium Fonts */}
@@ -28,7 +47,7 @@ const RelationSlider = () => {
             </span>
             <span className="h-[1px] w-8 bg-[#d4af37]" />
           </div>
-          <h2 
+          <h2
             style={{ fontFamily: "'Playfair Display', serif" }}
             className="text-3xl md:text-4xl text-[#332a21] tracking-tight"
           >
@@ -53,16 +72,16 @@ const RelationSlider = () => {
               1280: { slidesPerView: 4 },
             }}
           >
-            {RelationData.map((slide, index) => (
-              <SwiperSlide key={index}>
-                <Link 
-                  to={slide.to} 
+            {relations.map((relation, index) => (
+              <SwiperSlide key={relation._id || index}>
+                <Link
+                  to={`/gift-for/${relation.slug}`}
                   className="relative block h-[250px] rounded-2xl overflow-hidden group/card cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500"
                 >
                   {/* Image with subtle zoom */}
                   <img
-                    src={slide.url}
-                    alt={slide.text}
+                    src={relation.image?.url || 'https://via.placeholder.com/300x400?text=Gift'}
+                    alt={relation.name}
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
                   />
 
@@ -71,14 +90,14 @@ const RelationSlider = () => {
 
                   {/* Glassmorphism Content Box matching Reference */}
                   <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 transform transition-transform duration-500 group-hover/card:-translate-y-2">
-                    <h3 
+                    <h3
                       style={{ fontFamily: "'Playfair Display', serif" }}
                       className="text-xl text-white mb-1 capitalize"
                     >
-                      {slide.text}
+                      {relation.name}
                     </h3>
                     <div className="flex items-center justify-between">
-                      <span 
+                      <span
                         style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                         className="text-[10px] text-white/80 uppercase tracking-widest font-medium"
                       >

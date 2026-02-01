@@ -1,50 +1,102 @@
 /**
- * Gift For Routes
- * API endpoints for "Gift For" feature (Relationships)
+ * Gift For Routes (Public)
+ * API endpoints for "Gift For" / "Shop by Relation" feature
+ * Products filtered by recipient relationship
  */
 import express from 'express';
 import Product from '../model/addproduct.js';
-import mongoose from 'mongoose';
+import GiftFor from '../model/GiftFor.js';
 
 const router = express.Router();
 
-// Defined Relationships (matching frontend constants)
-const RELATIONSHIPS = [
-    { name: 'Brother', slug: 'brother', emoji: '👨', description: 'Cool and thoughtful gifts for your brother' },
-    { name: 'Sister', slug: 'sister', emoji: '👩', description: 'Special treasures for your lovely sister' },
-    { name: 'Mother', slug: 'mother', emoji: '🤱', description: 'Heartfelt gifts to show mom you care' },
-    { name: 'Father', slug: 'father', emoji: '👨‍🦳', description: 'Classic and premium picks for dad' },
-    { name: 'Wife', slug: 'wife', emoji: '💍', description: 'Romantic and elegant gifts for her' },
-    { name: 'Husband', slug: 'husband', emoji: '🎩', description: 'Unique finds for him' },
-    { name: 'Son', slug: 'son', emoji: '👦', description: 'Gifts he will cherish forever' },
-    { name: 'Daughter', slug: 'daughter', emoji: '👧', description: 'Beautiful gifts for your little princess' },
-    { name: 'Friend', slug: 'friend', emoji: '🤝', description: 'Fun and meaningful gifts for friends' },
-    { name: 'Colleague', slug: 'colleague', emoji: '💼', description: 'Professional yet personal office gifts' },
-    { name: 'Boyfriend', slug: 'boyfriend', emoji: '💑', description: 'Something special for your guy' },
-    { name: 'Girlfriend', slug: 'girlfriend', emoji: '💏', description: 'Sweet surprises for your girl' },
-    { name: 'Grandparents', slug: 'grandparents', emoji: '👴', description: 'Timeless gifts for the elders' },
-    { name: 'Couple', slug: 'couple', emoji: '👫', description: 'Perfect pairs for the perfect pair' },
-    { name: 'In-Laws', slug: 'in-laws', emoji: '👪', description: 'Respectful and elegant gifts' }
-];
+// ============================================
+// GET ALL RELATIONSHIPS (Public)
+// Fetches from MongoDB, grouped by category
+// ============================================
+router.get('/gift-for', async (req, res) => {
+    try {
+        const { featured, category } = req.query;
+
+        let query = { isActive: true };
+        if (featured === 'true') query.isFeatured = true;
+        if (category) query.category = category;
+
+        const relations = await GiftFor.find(query).sort({ displayOrder: 1, name: 1 });
+
+        // Group by category
+        const grouped = {
+            family: [],
+            romantic: [],
+            friends: [],
+            professional: [],
+            'age-gender': [],
+            special: []
+        };
+
+        for (const rel of relations) {
+            // Get product count
+            const productCount = await Product.countDocuments({
+                approved: true,
+                isAvailable: true,
+                giftFor: new RegExp(`^${rel.name}$`, 'i')
+            });
+
+            const relationData = {
+                _id: rel._id,
+                name: rel.name,
+                slug: rel.slug,
+                emoji: rel.emoji,
+                description: rel.description,
+                image: rel.image,
+                productCount,
+                isFeatured: rel.isFeatured
+            };
+
+            if (grouped[rel.category]) {
+                grouped[rel.category].push(relationData);
+            } else {
+                grouped.family.push(relationData);
+            }
+        }
+
+        res.json({
+            success: true,
+            data: grouped,
+            all: relations.map(r => ({
+                _id: r._id,
+                name: r.name,
+                slug: r.slug,
+                emoji: r.emoji,
+                description: r.description,
+                image: r.image,
+                category: r.category,
+                isFeatured: r.isFeatured
+            })),
+            total: relations.length
+        });
+    } catch (error) {
+        console.error('Error fetching gift-for relations:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch relations' });
+    }
+});
 
 // ============================================
-// GET RELATIONSHIP DETAILS & PRODUCTS
+// GET RELATIONSHIP DETAILS & PRODUCTS (Public)
 // ============================================
 router.get('/gift-for/:slug/products', async (req, res) => {
     try {
         const { slug } = req.params;
         const {
-            minPrice = 0,
-            maxPrice = 100000,
             sort = 'popular',
             page = 1,
             limit = 24
         } = req.query;
 
-        // Find relationship config or create fallback
-        let relationship = RELATIONSHIPS.find(r => r.slug === slug);
+        // Find relationship from database
+        let relationship = await GiftFor.findOne({ slug, isActive: true });
+
+        // Fallback for unknown slugs
         if (!relationship) {
-            // Fallback for dynamic/unknown slugs
             const name = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             relationship = {
                 name: name,
@@ -55,15 +107,18 @@ router.get('/gift-for/:slug/products', async (req, res) => {
         }
 
         // Build query
-        // Matches if 'giftFor' array contains the Relationship Name (case insensitive regex for safety)
         let query = {
             approved: true,
             isAvailable: true,
             giftFor: new RegExp(`^${relationship.name}$`, 'i')
         };
 
-        // Price filter
-        query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
+        // Only add price filter if explicitly provided
+        if (req.query.minPrice || req.query.maxPrice) {
+            query.price = {};
+            if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
+            if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
+        }
 
         // Sorting
         let sortOption = {};
@@ -89,7 +144,14 @@ router.get('/gift-for/:slug/products', async (req, res) => {
         res.json({
             success: true,
             data: {
-                relationship,
+                relationship: {
+                    _id: relationship._id,
+                    name: relationship.name,
+                    slug: relationship.slug,
+                    emoji: relationship.emoji,
+                    description: relationship.description,
+                    image: relationship.image
+                },
                 products,
                 pagination: {
                     page: Number(page),
@@ -103,6 +165,42 @@ router.get('/gift-for/:slug/products', async (req, res) => {
     } catch (error) {
         console.error('Error fetching gift-for products:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch products' });
+    }
+});
+
+// ============================================
+// GET SINGLE RELATIONSHIP DETAILS (Public)
+// ============================================
+router.get('/gift-for/:slug', async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const relationship = await GiftFor.findOne({ slug, isActive: true });
+
+        if (!relationship) {
+            return res.status(404).json({
+                success: false,
+                message: 'Relationship not found'
+            });
+        }
+
+        // Get product count
+        const productCount = await Product.countDocuments({
+            approved: true,
+            isAvailable: true,
+            giftFor: new RegExp(`^${relationship.name}$`, 'i')
+        });
+
+        res.json({
+            success: true,
+            data: {
+                ...relationship.toObject(),
+                productCount
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching relationship details:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch relationship details' });
     }
 });
 

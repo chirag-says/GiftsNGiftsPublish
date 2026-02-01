@@ -45,7 +45,13 @@ import {
     getAdminProfile,
     updateAdminProfile,
     logoutAdmin,
-    adminDeleteProduct
+    adminDeleteProduct,
+
+    // Homepage Collection Management
+    getHomeCollections,
+    toggleBestOfNorthEast,
+    toggleUnder999,
+    updateHomeCollections
 } from '../controller/admincontroller.js';
 import adminAuth from '../middleware/authAdmin.js';
 
@@ -112,5 +118,11 @@ router.get('/analytics/export', adminAuth, exportSalesReport);
 router.get("/analytics/advanced", adminAuth, getAdvancedAnalytics);
 router.get("/sellers/check-inactive", adminAuth, checkInactiveVendors);
 router.get("/sellers/inactivity", adminAuth, getSellerInactivityReport);
+
+// ========================= HOMEPAGE COLLECTION MANAGEMENT =========================
+router.get('/home-collections', adminAuth, getHomeCollections);
+router.put('/toggle-best-of-ne/:id', adminAuth, toggleBestOfNorthEast);
+router.put('/toggle-under-999/:id', adminAuth, toggleUnder999);
+router.put('/home-collections', adminAuth, updateHomeCollections);
 
 export default router;

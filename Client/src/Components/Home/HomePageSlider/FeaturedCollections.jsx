@@ -1,6 +1,7 @@
 /**
  * Featured Collections Component
  * Curated product collections like "Best of North East" and "Perfect Gifts Under ₹999"
+ * Now fetches REAL products from the database (admin-curated)
  */
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -16,22 +17,27 @@ import "swiper/css/navigation";
 const COLLECTIONS = [
     {
         id: 'best-of-northeast',
+        key: 'bestOfNorthEast',
         title: 'Best of North East',
         subtitle: 'Top-rated authentic crafts',
         emoji: '⭐',
-        filter: { isFeatured: true, rating: { $gte: 4 } }
+        viewAllLink: '/productlist?collection=best-of-northeast'
     },
     {
         id: 'under-999',
+        key: 'under999',
         title: 'Perfect Gifts Under ₹999',
         subtitle: 'Thoughtful gifts for every budget',
         emoji: '💰',
-        filter: { price: { $lte: 999 } }
+        viewAllLink: '/productlist?maxPrice=999'
     }
 ];
 
 function FeaturedCollections() {
-    const [products, setProducts] = useState({});
+    const [products, setProducts] = useState({
+        bestOfNorthEast: [],
+        under999: []
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -40,26 +46,33 @@ function FeaturedCollections() {
 
     const fetchProducts = async () => {
         try {
-            // Fetch featured products
-            const featured = await api.get('/product/featured?limit=8');
-            // Fetch budget products
-            const budget = await api.get('/product/all?maxPrice=999&limit=8');
+            // Fetch from the new public API that returns admin-curated products
+            const response = await api.get('/api/product/home-collections');
 
-            setProducts({
-                'best-of-northeast': featured.data.products || featured.data.data || [],
-                'under-999': budget.data.products || budget.data.data || []
-            });
+            if (response.data.success) {
+                setProducts({
+                    bestOfNorthEast: response.data.data.bestOfNorthEast || [],
+                    under999: response.data.data.under999 || []
+                });
+            }
         } catch (error) {
-            console.error('Error fetching products:', error);
-            // Use sample products
+            console.error('Error fetching homepage collections:', error);
+            // Products will remain empty - no fallback to static data
             setProducts({
-                'best-of-northeast': getSampleProducts(),
-                'under-999': getSampleProducts()
+                bestOfNorthEast: [],
+                under999: []
             });
         } finally {
             setLoading(false);
         }
     };
+
+    // Don't render section if no products in either collection
+    const hasProducts = products.bestOfNorthEast.length > 0 || products.under999.length > 0;
+
+    if (!loading && !hasProducts) {
+        return null; // Don't show section if admin hasn't curated any products
+    }
 
     return (
         <section className="py-16 px-4 md:px-8 bg-[#fdfcfb]">
@@ -68,87 +81,96 @@ function FeaturedCollections() {
             </style>
 
             <div className="max-w-7xl mx-auto">
-                {COLLECTIONS.map((collection, index) => (
-                    <div key={collection.id} className={index > 0 ? 'mt-16' : ''}>
-                        {/* Collection Header */}
-                        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8">
-                            <div className="flex items-center gap-3 mb-4 md:mb-0">
-                                <span className="text-3xl">{collection.emoji}</span>
-                                <div>
-                                    <h2
-                                        style={{ fontFamily: "'Playfair Display', serif" }}
-                                        className="text-2xl md:text-3xl text-[#332a21]"
-                                    >
-                                        {collection.title}
-                                    </h2>
-                                    <p className="text-gray-500 text-sm">{collection.subtitle}</p>
-                                </div>
-                            </div>
-                            <Link
-                                to={`/productlist?collection=${collection.id}`}
-                                className="group flex items-center gap-2 text-[#d4af37] hover:underline text-sm font-medium"
-                            >
-                                View All
-                                <HiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
+                {COLLECTIONS.map((collection, index) => {
+                    const collectionProducts = products[collection.key] || [];
 
-                        {/* Products Slider */}
-                        <div className="relative group/slider">
-                            {loading ? (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {[...Array(4)].map((_, i) => (
-                                        <div key={i} className="animate-pulse">
-                                            <div className="bg-gray-200 aspect-square rounded-xl mb-2" />
-                                            <div className="bg-gray-200 h-4 rounded w-3/4 mb-1" />
-                                            <div className="bg-gray-200 h-4 rounded w-1/2" />
-                                        </div>
-                                    ))}
+                    // Skip this collection if it has no products
+                    if (!loading && collectionProducts.length === 0) {
+                        return null;
+                    }
+
+                    return (
+                        <div key={collection.id} className={index > 0 ? 'mt-16' : ''}>
+                            {/* Collection Header */}
+                            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8">
+                                <div className="flex items-center gap-3 mb-4 md:mb-0">
+                                    <span className="text-3xl">{collection.emoji}</span>
+                                    <div>
+                                        <h2
+                                            style={{ fontFamily: "'Playfair Display', serif" }}
+                                            className="text-2xl md:text-3xl text-[#332a21]"
+                                        >
+                                            {collection.title}
+                                        </h2>
+                                        <p className="text-gray-500 text-sm">{collection.subtitle}</p>
+                                    </div>
                                 </div>
-                            ) : (
-                                <Swiper
-                                    modules={[Navigation, Autoplay]}
-                                    spaceBetween={16}
-                                    slidesPerView={4}
-                                    navigation={{
-                                        nextEl: `.${collection.id}-next`,
-                                        prevEl: `.${collection.id}-prev`,
-                                    }}
-                                    autoplay={{ delay: 5000 + index * 1000, disableOnInteraction: false }}
-                                    breakpoints={{
-                                        0: { slidesPerView: 2 },
-                                        640: { slidesPerView: 3 },
-                                        1024: { slidesPerView: 4 },
-                                    }}
+                                <Link
+                                    to={collection.viewAllLink}
+                                    className="group flex items-center gap-2 text-[#d4af37] hover:underline text-sm font-medium"
                                 >
-                                    {(products[collection.id] || []).slice(0, 8).map((product, pIndex) => (
-                                        <SwiperSlide key={product._id || pIndex}>
-                                            <ProductCard product={product} />
-                                        </SwiperSlide>
-                                    ))}
-                                </Swiper>
-                            )}
+                                    View All
+                                    <HiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </div>
 
-                            {/* Navigation Arrows */}
-                            <button
-                                className={`${collection.id}-prev absolute left-[-15px] top-1/2 -translate-y-1/2 z-10 
-                                    w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg 
-                                    text-[#333] opacity-0 group-hover/slider:opacity-100 transition-all 
-                                    hover:bg-[#d4af37] hover:text-white`}
-                            >
-                                ‹
-                            </button>
-                            <button
-                                className={`${collection.id}-next absolute right-[-15px] top-1/2 -translate-y-1/2 z-10 
-                                    w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg 
-                                    text-[#333] opacity-0 group-hover/slider:opacity-100 transition-all 
-                                    hover:bg-[#d4af37] hover:text-white`}
-                            >
-                                ›
-                            </button>
+                            {/* Products Slider */}
+                            <div className="relative group/slider">
+                                {loading ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="animate-pulse">
+                                                <div className="bg-gray-200 aspect-square rounded-xl mb-2" />
+                                                <div className="bg-gray-200 h-4 rounded w-3/4 mb-1" />
+                                                <div className="bg-gray-200 h-4 rounded w-1/2" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <Swiper
+                                        modules={[Navigation, Autoplay]}
+                                        spaceBetween={16}
+                                        slidesPerView={4}
+                                        navigation={{
+                                            nextEl: `.${collection.id}-next`,
+                                            prevEl: `.${collection.id}-prev`,
+                                        }}
+                                        autoplay={{ delay: 5000 + index * 1000, disableOnInteraction: false }}
+                                        breakpoints={{
+                                            0: { slidesPerView: 2 },
+                                            640: { slidesPerView: 3 },
+                                            1024: { slidesPerView: 4 },
+                                        }}
+                                    >
+                                        {collectionProducts.slice(0, 8).map((product, pIndex) => (
+                                            <SwiperSlide key={product._id || pIndex}>
+                                                <ProductCard product={product} />
+                                            </SwiperSlide>
+                                        ))}
+                                    </Swiper>
+                                )}
+
+                                {/* Navigation Arrows */}
+                                <button
+                                    className={`${collection.id}-prev absolute left-[-15px] top-1/2 -translate-y-1/2 z-10 
+                                        w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg 
+                                        text-[#333] opacity-0 group-hover/slider:opacity-100 transition-all 
+                                        hover:bg-[#d4af37] hover:text-white`}
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    className={`${collection.id}-next absolute right-[-15px] top-1/2 -translate-y-1/2 z-10 
+                                        w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg 
+                                        text-[#333] opacity-0 group-hover/slider:opacity-100 transition-all 
+                                        hover:bg-[#d4af37] hover:text-white`}
+                                >
+                                    ›
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </section>
     );
@@ -193,16 +215,6 @@ function ProductCard({ product }) {
             </div>
         </Link>
     );
-}
-
-// Sample products fallback
-function getSampleProducts() {
-    return [
-        { _id: '1', title: 'Premium Assam Tea Gift Box', price: 799, oldprice: 999, discount: 20, rating: 4.8, images: [{ url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300' }] },
-        { _id: '2', title: 'Handwoven Muga Silk Scarf', price: 1499, oldprice: 1999, discount: 25, rating: 4.9, images: [{ url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300' }] },
-        { _id: '3', title: 'Bamboo Desk Organizer Set', price: 649, oldprice: 799, discount: 19, rating: 4.5, images: [{ url: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=300' }] },
-        { _id: '4', title: 'Organic Meghalaya Honey', price: 399, oldprice: 499, discount: 20, rating: 4.7, images: [{ url: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300' }] },
-    ];
 }
 
 export default FeaturedCollections;

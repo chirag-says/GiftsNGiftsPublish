@@ -183,12 +183,12 @@ export const verifyOtp = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(payload.password, 10);
     // 🔥 GENERATE UNIQUE SELLER ID
-const uniqueId = generateSellerUniqueId(
-  payload.pincode,
-  payload.nickName
-);
+    const uniqueId = generateSellerUniqueId(
+      payload.pincode,
+      payload.nickName
+    );
     const seller = await sellermodel.create({
-       uniqueId, // ✅ ADD THIS
+      uniqueId, // ✅ ADD THIS
       name: payload.name,
       email: payload.email,
       password: hashedPassword,
@@ -205,15 +205,15 @@ const uniqueId = generateSellerUniqueId(
     });
 
     await sendEmail(
-  seller.email,
-  "Seller Account Verified 🎉",
-  `
+      seller.email,
+      "Seller Account Verified 🎉",
+      `
     <h2>Welcome to GNG!</h2>
     <p>Your seller account has been verified successfully.</p>
     <p><b>Your Unique Seller ID:</b> ${seller.uniqueId}</p>
     <p>Please keep this ID for future reference.</p>
   `
-);
+    );
 
     const token = jwt.sign(
       { id: seller._id, role: "seller" },
@@ -363,7 +363,14 @@ export const addproducts = async (req, res) => {
       productDimensions, itemWeight, itemDimensionsLxWxH, netQuantity,
       genericName, asin, itemPartNumber, dateFirstAvailable, bestSellerRank,
       materialComposition, outerMaterial, length, careInstructions, aboutThisItem,
-      manufacturer, packer, department, countryOfOrigin
+      manufacturer, packer, department, countryOfOrigin,
+      // ⭐ State & Occasion Fields
+      state, occasions, giftFor,
+      // ⭐ B2B Corporate Gifting Fields
+      bulkPricing, customizationAvailable, logoMinQuantity,
+      recipientTypes, perfectFor, contents, productType, deliveryDays,
+      // ⭐ SEO & Compliance
+      metaTitle, metaDescription, tags, hsnCode, gstRate, moq
     } = req.body;
 
     // Basic required field validation
@@ -458,6 +465,15 @@ export const addproducts = async (req, res) => {
       // If parsing fails, treat additional_details as regular text
     }
 
+    // Parse JSON fields if they come as strings
+    const parseJSON = (field) => {
+      if (!field) return undefined;
+      if (typeof field === 'string') {
+        try { return JSON.parse(field); } catch { return field; }
+      }
+      return field;
+    };
+
     const newProduct = new addproductmodel({
       title: title.trim(),
       description: description.trim(),
@@ -485,7 +501,34 @@ export const addproducts = async (req, res) => {
       length: dynamicAttributes.length || length,
       careInstructions: dynamicAttributes.care_instructions || careInstructions,
       aboutThisItem,
-      manufacturer, packer, department, countryOfOrigin
+      manufacturer, packer, department, countryOfOrigin,
+
+      // ⭐ State & Occasion Fields (For Regional Handicrafts)
+      state: state || '',
+      occasions: parseJSON(occasions) || [],
+      giftFor: parseJSON(giftFor) || [],
+
+      // ⭐ B2B Corporate Gifting Fields
+      bulkPricing: parseJSON(bulkPricing),
+      customizationAvailable: parseJSON(customizationAvailable),
+      logoMinQuantity: Number(logoMinQuantity) || 25,
+      recipientTypes: parseJSON(recipientTypes) || [],
+      perfectFor: parseJSON(perfectFor) || [],
+      contents: parseJSON(contents) || [],
+      productType: productType || 'Single Item',
+      deliveryDays: deliveryDays || '5-7 days',
+
+      // ⭐ SEO & Compliance
+      metaTitle,
+      metaDescription,
+      tags: parseJSON(tags) || [],
+      hsnCode,
+      gstRate: Number(gstRate) || 18,
+      moq: Number(moq) || 1,
+
+      // Auto-approve products
+      approved: true,
+      isAvailable: true
     });
 
     await newProduct.save();

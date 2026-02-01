@@ -163,7 +163,11 @@ function SideBar() {
         { title: "Category Images", path: "/categorylist?tab=3" },
         { title: "Bulk Management", path: "/categorylist?tab=4" },
 
+        { type: "header", title: "SHOP BY MANAGEMENT" },
+        { title: "Occasions, States, Relations", path: "/catalog-management" },
+
         { type: "header", title: "MARKETING & PROMOTION" },
+        { title: "Homepage Collections", path: "/home-collections" },
         { title: "All Campaigns", path: "/marketing?tab=0" },
         { title: "Coupons & Discounts", path: "/marketing?tab=1" },
         { title: "Flash Sales", path: "/marketing?tab=2" },

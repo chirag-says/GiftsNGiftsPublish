@@ -1,41 +1,254 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWizard } from '../AddProductWizard';
-import { TextField, Select, MenuItem, FormControl } from '@mui/material';
-import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete, MdLocationCity, MdCelebration, MdCheckCircle, MdFavorite } from 'react-icons/md';
+import { TextField, Select, MenuItem, FormControl, Chip, Box, OutlinedInput, Checkbox, ListItemText } from '@mui/material';
+import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete, MdLocationCity, MdCelebration, MdCheckCircle, MdFavorite, MdClose, MdExpandMore, MdSearch } from 'react-icons/md';
+import api from '../../../../utils/api';
 
-// Indian States (focusing on Northeast and all India)
-const INDIAN_STATES = [
-    // Northeast States (Primary focus for GNG)
-    'Tripura', 'Assam', 'Meghalaya', 'Manipur', 'Mizoram', 'Nagaland', 'Arunachal Pradesh', 'Sikkim',
-    // Other States
-    'Andhra Pradesh', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
-    'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Odisha', 'Punjab',
-    'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-    'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
-    'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
-];
+// Custom Multi-Select Dropdown Component
+function MultiSelectDropdown({
+    label,
+    icon: Icon,
+    iconColor,
+    iconBg,
+    selectedItems,
+    groups,
+    allItems,
+    onChange,
+    placeholder,
+    chipColor
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
-// Occasions for product tagging (matches MongoDB schema)
-const OCCASIONS = [
-    'Diwali', 'Holi', 'Durga Puja', 'Bihu', 'Christmas', 'Eid',
-    'Wedding', 'Anniversary', 'Birthday', 'Housewarming',
-    'Corporate Gifting', 'Festive Season', 'Daily Use', 'Home Decor',
-    'Puja', 'Traditional Ceremony', 'New Year', 'Employee Recognition',
-    'Client Appreciation', 'Farewell', 'Baby Shower', 'Other'
-];
+    const toggleItem = (item) => {
+        if (selectedItems.includes(item)) {
+            onChange(selectedItems.filter(i => i !== item));
+        } else {
+            onChange([...selectedItems, item]);
+        }
+    };
 
-// Relationship-based gifting (Gift For Whom)
-const GIFT_FOR = [
-    'Brother', 'Sister', 'Mother', 'Father', 'Wife', 'Husband',
-    'Son', 'Daughter', 'Grandfather', 'Grandmother', 'Uncle', 'Aunt',
-    'Friend', 'Best Friend', 'Boyfriend', 'Girlfriend', 'Boss', 'Colleague',
-    'Teacher', 'Kids', 'Teens', 'Men', 'Women', 'Couples', 'Parents',
-    'In-Laws', 'Newlyweds', 'New Parents', 'Pet Lovers', 'Anyone'
-];
+    const removeItem = (item) => {
+        onChange(selectedItems.filter(i => i !== item));
+    };
+
+    const clearAll = () => {
+        onChange([]);
+    };
+
+    const filteredGroups = {};
+    Object.entries(groups).forEach(([group, items]) => {
+        const filtered = items.filter(item =>
+            item.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        if (filtered.length > 0) {
+            filteredGroups[group] = filtered;
+        }
+    });
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+        >
+            <div className="flex items-center gap-3 mb-4">
+                <div className={`w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center`}>
+                    <Icon className={iconColor} size={18} />
+                </div>
+                <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800 text-sm">{label}</h3>
+                    <p className="text-xs text-gray-500">{placeholder}</p>
+                </div>
+                {selectedItems.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                        Clear all
+                    </button>
+                )}
+            </div>
+
+            {/* Selected Items Display */}
+            {selectedItems.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                    {selectedItems.map((item) => (
+                        <motion.span
+                            key={item}
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 ${chipColor} rounded-lg text-sm font-medium`}
+                        >
+                            {item}
+                            <button
+                                type="button"
+                                onClick={() => removeItem(item)}
+                                className="ml-1 hover:opacity-70"
+                            >
+                                <MdClose size={14} />
+                            </button>
+                        </motion.span>
+                    ))}
+                </div>
+            )}
+
+            {/* Dropdown Toggle */}
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all ${isOpen
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                    }`}
+            >
+                <span className={`text-sm ${selectedItems.length > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
+                    {selectedItems.length > 0
+                        ? `${selectedItems.length} selected`
+                        : `Click to select ${label.toLowerCase()}`}
+                </span>
+                <MdExpandMore
+                    size={24}
+                    className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
+            </button>
+
+            {/* Dropdown Content */}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="mt-3 border border-gray-200 rounded-xl bg-white shadow-lg max-h-80 overflow-hidden">
+                            {/* Search */}
+                            <div className="p-3 border-b border-gray-100 sticky top-0 bg-white z-10">
+                                <div className="relative">
+                                    <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Groups */}
+                            <div className="overflow-y-auto max-h-60 p-2">
+                                {Object.entries(filteredGroups).map(([group, items]) => (
+                                    <div key={group} className="mb-3">
+                                        <div className="px-2 py-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                            {group}
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 px-1">
+                                            {items.map((item) => {
+                                                const isSelected = selectedItems.includes(item);
+                                                return (
+                                                    <button
+                                                        key={item}
+                                                        type="button"
+                                                        onClick={() => toggleItem(item)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${isSelected
+                                                            ? `${chipColor} border-transparent shadow-sm`
+                                                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-100'
+                                                            }`}
+                                                    >
+                                                        {isSelected && <MdCheckCircle className="inline mr-1" size={12} />}
+                                                        {item}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {Object.keys(filteredGroups).length === 0 && (
+                                    <div className="text-center py-6 text-gray-400 text-sm">
+                                        No options found
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Count Badge */}
+            {selectedItems.length > 0 && !isOpen && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-emerald-600">
+                    <MdCheckCircle size={16} />
+                    <span>{selectedItems.length} {label.toLowerCase()} selected</span>
+                </div>
+            )}
+        </motion.div>
+    );
+}
 
 function StepBasicInfo() {
     const { productData, updateProductData, errors } = useWizard();
+
+    // Dynamic Data States
+    const [occasionGroups, setOccasionGroups] = useState({});
+    const [allOccasions, setAllOccasions] = useState([]);
+    const [giftForGroups, setGiftForGroups] = useState({});
+    const [allGiftFor, setAllGiftFor] = useState([]);
+    const [statesList, setStatesList] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch dynamic data
+    useEffect(() => {
+        const fetchOptions = async () => {
+            try {
+                const [occRes, giftRes, stateRes] = await Promise.all([
+                    api.get('/api/occasions'),
+                    api.get('/api/gift-for'),
+                    api.get('/api/states')
+                ]);
+
+                // Process Occasions
+                if (occRes.data.success && occRes.data.data) {
+                    const groups = {};
+                    Object.entries(occRes.data.data).forEach(([key, items]) => {
+                        const groupName = key.charAt(0).toUpperCase() + key.slice(1);
+                        groups[groupName] = items.map(i => i.name);
+                    });
+                    setOccasionGroups(groups);
+                    setAllOccasions(Object.values(groups).flat());
+                }
+
+                // Process GiftFor
+                if (giftRes.data.success && giftRes.data.data) {
+                    const groups = {};
+                    Object.entries(giftRes.data.data).forEach(([key, items]) => {
+                        const groupName = key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                        groups[groupName] = items.map(i => i.name);
+                    });
+                    setGiftForGroups(groups);
+                    setAllGiftFor(Object.values(groups).flat());
+                }
+
+                // Process States
+                if (stateRes.data.success && Array.isArray(stateRes.data.data)) {
+                    setStatesList(stateRes.data.data.map(s => s.name));
+                }
+            } catch (error) {
+                console.error('Error fetching form options:', error);
+                // Fallback to minimal defaults if fetch fails
+                setStatesList(['Assam', 'Tripura', 'Meghalaya', 'Manipur', 'Mizoram', 'Nagaland', 'Arunachal Pradesh', 'Sikkim']);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOptions();
+    }, []);
 
     const handleChange = (field) => (e) => {
         updateProductData(field, e.target.value);
@@ -258,15 +471,16 @@ function StepBasicInfo() {
                             value={productData.state}
                             onChange={(e) => updateProductData('state', e.target.value)}
                             displayEmpty
+                            disabled={loading || statesList.length === 0}
                             sx={{
                                 borderRadius: '10px',
                                 backgroundColor: '#f9fafb',
                             }}
                         >
                             <MenuItem value="">
-                                <em>Select State (Optional)</em>
+                                <em>{loading ? 'Loading states...' : 'Select State (Optional)'}</em>
                             </MenuItem>
-                            {INDIAN_STATES.map((state) => (
+                            {statesList.map((state) => (
                                 <MenuItem key={state} value={state}>
                                     {state}
                                 </MenuItem>
@@ -282,107 +496,33 @@ function StepBasicInfo() {
                     </div>
                 </motion.div>
 
-                {/* Occasions */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
-                >
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-9 h-9 rounded-lg bg-pink-100 flex items-center justify-center">
-                            <MdCelebration className="text-pink-600" size={18} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-800 text-sm">Suitable Occasions</h3>
-                            <p className="text-xs text-gray-500">Select occasions where this product is perfect (if applicable)</p>
-                        </div>
-                    </div>
+                {/* Occasions - Multi-Select Dropdown */}
+                <MultiSelectDropdown
+                    label="Suitable Occasions"
+                    icon={MdCelebration}
+                    iconColor="text-pink-600"
+                    iconBg="bg-pink-100"
+                    selectedItems={productData.occasions || []}
+                    groups={occasionGroups}
+                    allItems={allOccasions}
+                    onChange={(items) => updateProductData('occasions', items)}
+                    placeholder={loading ? "Loading occasions..." : "Select occasions when this product is perfect"}
+                    chipColor="bg-pink-500 text-white"
+                />
 
-                    <div className="flex flex-wrap gap-2">
-                        {OCCASIONS.map((occasion) => {
-                            const isSelected = productData.occasions?.includes(occasion);
-                            return (
-                                <button
-                                    key={occasion}
-                                    type="button"
-                                    onClick={() => {
-                                        const current = productData.occasions || [];
-                                        if (isSelected) {
-                                            updateProductData('occasions', current.filter(o => o !== occasion));
-                                        } else {
-                                            updateProductData('occasions', [...current, occasion]);
-                                        }
-                                    }}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${isSelected
-                                        ? 'bg-pink-500 text-white border-pink-500 shadow-sm'
-                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'
-                                        }`}
-                                >
-                                    {occasion}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {productData.occasions?.length > 0 && (
-                        <div className="mt-4 flex items-center gap-2 text-sm text-pink-600">
-                            <MdCheckCircle size={16} />
-                            <span>{productData.occasions.length} occasion(s) selected</span>
-                        </div>
-                    )}
-                </motion.div>
-
-                {/* Gift For (Relationship-based) */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
-                >
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
-                            <MdFavorite className="text-red-600" size={18} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-800 text-sm">Gift For</h3>
-                            <p className="text-xs text-gray-500">Select who this gift is perfect for (by relationship)</p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        {GIFT_FOR.map((relation) => {
-                            const isSelected = productData.giftFor?.includes(relation);
-                            return (
-                                <button
-                                    key={relation}
-                                    type="button"
-                                    onClick={() => {
-                                        const current = productData.giftFor || [];
-                                        if (isSelected) {
-                                            updateProductData('giftFor', current.filter(r => r !== relation));
-                                        } else {
-                                            updateProductData('giftFor', [...current, relation]);
-                                        }
-                                    }}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${isSelected
-                                        ? 'bg-red-500 text-white border-red-500 shadow-sm'
-                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-red-300 hover:bg-red-50'
-                                        }`}
-                                >
-                                    {relation}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {productData.giftFor?.length > 0 && (
-                        <div className="mt-4 flex items-center gap-2 text-sm text-red-600">
-                            <MdCheckCircle size={16} />
-                            <span>{productData.giftFor.length} relationship(s) selected</span>
-                        </div>
-                    )}
-                </motion.div>
+                {/* Gift For - Multi-Select Dropdown */}
+                <MultiSelectDropdown
+                    label="Gift For"
+                    icon={MdFavorite}
+                    iconColor="text-red-600"
+                    iconBg="bg-red-100"
+                    selectedItems={productData.giftFor || []}
+                    groups={giftForGroups}
+                    allItems={allGiftFor}
+                    onChange={(items) => updateProductData('giftFor', items)}
+                    placeholder={loading ? "Loading relations..." : "Select who this gift is perfect for (by relationship)"}
+                    chipColor="bg-red-500 text-white"
+                />
             </div>
 
             {/* Preview Card */}
@@ -390,11 +530,11 @@ function StepBasicInfo() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="max-w-3xl mx-auto mt-6 p-5 bg-gray-50 rounded-xl border border-gray-200"
+                    className="max-w-3xl mx-auto mt-6 p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm"
                 >
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Preview</h4>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">📦 Product Preview</h4>
                     <div className="flex gap-5">
-                        <div className="w-20 h-20 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0">
                             <MdDescription className="text-gray-400" size={24} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -420,7 +560,7 @@ function StepBasicInfo() {
                                 <div className="mt-2 flex flex-wrap gap-1">
                                     {productData.occasions.slice(0, 3).map(occ => (
                                         <span key={occ} className="px-2 py-0.5 bg-pink-100 text-pink-600 text-xs rounded">
-                                            {occ}
+                                            🎉 {occ}
                                         </span>
                                     ))}
                                     {productData.occasions.length > 3 && (
@@ -434,7 +574,7 @@ function StepBasicInfo() {
                                 <div className="mt-2 flex flex-wrap gap-1">
                                     {productData.giftFor.slice(0, 3).map(rel => (
                                         <span key={rel} className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded">
-                                            For {rel}
+                                            ❤️ For {rel}
                                         </span>
                                     ))}
                                     {productData.giftFor.length > 3 && (

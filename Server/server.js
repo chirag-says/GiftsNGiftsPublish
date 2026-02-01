@@ -48,6 +48,7 @@ import artisanRoutes from "./routes/artisanRoutes.js";
 import craftRoutes from "./routes/craftRoutes.js";
 import stateRoutes from "./routes/stateRoutes.js";
 import giftForRoutes from "./routes/giftForRoutes.js";
+import catalogRoutes from "./routes/catalogRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -353,6 +354,7 @@ app.use("/api", artisanRoutes);
 app.use("/api", craftRoutes);
 app.use("/api", stateRoutes);
 app.use("/api", giftForRoutes);
+app.use("/api/admin/catalog", catalogRoutes);
 
 /* =========================
    HEALTH CHECK

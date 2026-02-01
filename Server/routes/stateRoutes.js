@@ -1,98 +1,62 @@
 /**
- * State Routes
+ * State Routes (Public)
  * API endpoints for "Shop by State" feature
  * Products filtered by origin state (North East India)
  */
 import express from 'express';
 import Product from '../model/addproduct.js';
 import Artisan from '../model/Artisan.js';
+import State from '../model/State.js';
 
 const router = express.Router();
 
 // ============================================
-// STATE DEFINITIONS
-// ============================================
-const STATES = [
-    {
-        name: 'Assam',
-        slug: 'assam',
-        products: 'Tea, Silk, Cane',
-        description: 'Home of Muga silk and world-famous Assam tea',
-        highlights: ['Muga Silk', 'Assam Tea', 'Bamboo Crafts', 'Bell Metal']
-    },
-    {
-        name: 'Meghalaya',
-        slug: 'meghalaya',
-        products: 'Organic Honey, Pottery',
-        description: 'Land of clouds with pristine organic products',
-        highlights: ['Organic Honey', 'Cane & Bamboo', 'Orange Blossom', 'Khasi Textiles']
-    },
-    {
-        name: 'Nagaland',
-        slug: 'nagaland',
-        products: 'Textiles, Jewelry',
-        description: 'Rich tribal heritage with distinctive shawls and ornaments',
-        highlights: ['Naga Shawls', 'Tribal Jewelry', 'Wood Carvings', 'Bamboo Crafts']
-    },
-    {
-        name: 'Manipur',
-        slug: 'manipur',
-        products: 'Handloom, Bamboo Weave',
-        description: 'Elegant handloom traditions and unique Longpi pottery',
-        highlights: ['Longpi Pottery', 'Moirang Phee', 'Kouna Craft', 'Wood Lacquer']
-    },
-    {
-        name: 'Mizoram',
-        slug: 'mizoram',
-        products: 'Traditional Fabrics, Music Crafts',
-        description: 'Traditional Mizo fabrics and handcrafted instruments',
-        highlights: ['Puan Textiles', 'Bamboo Products', 'Cane Furniture', 'Traditional Attire']
-    },
-    {
-        name: 'Arunachal Pradesh',
-        slug: 'arunachal-pradesh',
-        products: 'Organic Produce, Handcrafted Decor',
-        description: 'Land of the rising sun with diverse tribal crafts',
-        highlights: ['Monpa Carpets', 'Yak Products', 'Tribal Textiles', 'Organic Kiwi']
-    },
-    {
-        name: 'Tripura',
-        slug: 'tripura',
-        products: 'Bamboo Crafts, Handloom',
-        description: 'Exquisite bamboo work and tribal handloom',
-        highlights: ['Tripura Handloom', 'Bamboo Dolls', 'Risa Textile', 'Wood Carvings']
-    },
-    {
-        name: 'Sikkim',
-        slug: 'sikkim',
-        products: 'Organic Products, Handicrafts',
-        description: 'Fully organic state with Himalayan treasures',
-        highlights: ['Organic Tea', 'Thangka Paintings', 'Choktse Tables', 'Large Cardamom']
-    }
-];
-
-// ============================================
-// GET ALL STATES WITH PRODUCT COUNTS
+// GET ALL STATES WITH PRODUCT COUNTS (Public)
+// Fetches from MongoDB, sorted by displayOrder
 // ============================================
 router.get('/states', async (req, res) => {
     try {
+        const { featured, northeast } = req.query;
+
+        let query = { isActive: true };
+        if (featured === 'true') query.isFeatured = true;
+        // Only filter by isNorthEast if northeast is explicitly 'true'
+        // When northeast is 'false' or not provided, get all states
+        if (northeast === 'true') query.isNorthEast = true;
+
+        const states = await State.find(query).sort({ displayOrder: 1, name: 1 });
+
         const statesWithCounts = await Promise.all(
-            STATES.map(async (state) => {
+            states.map(async (state) => {
                 const productCount = await Product.countDocuments({
                     approved: true,
                     isAvailable: true,
                     state: new RegExp(`^${state.name}$`, 'i')
                 });
 
-                const artisanCount = await Artisan.countDocuments({
-                    isActive: true,
-                    state: state.name
-                });
+                let artisanCount = 0;
+                try {
+                    artisanCount = await Artisan.countDocuments({
+                        isActive: true,
+                        state: state.name
+                    });
+                } catch (e) {
+                    // Artisan model may not exist
+                }
 
                 return {
-                    ...state,
+                    _id: state._id,
+                    name: state.name,
+                    slug: state.slug,
+                    description: state.description,
+                    shortDescription: state.shortDescription,
+                    famousFor: state.famousFor,
+                    highlights: state.highlights,
+                    image: state.image,
+                    bannerImage: state.bannerImage,
                     productCount,
-                    artisanCount
+                    artisanCount,
+                    isFeatured: state.isFeatured
                 };
             })
         );
@@ -108,13 +72,13 @@ router.get('/states', async (req, res) => {
 });
 
 // ============================================
-// GET STATE DETAILS
+// GET STATE DETAILS BY SLUG (Public)
 // ============================================
 router.get('/states/:slug', async (req, res) => {
     try {
         const { slug } = req.params;
 
-        const state = STATES.find(s => s.slug === slug);
+        const state = await State.findOne({ slug, isActive: true });
 
         if (!state) {
             return res.status(404).json({
@@ -132,23 +96,33 @@ router.get('/states/:slug', async (req, res) => {
             Artisan.countDocuments({
                 isActive: true,
                 state: state.name
-            }),
+            }).catch(() => 0),
             Product.find({
                 approved: true,
                 isAvailable: true,
                 state: new RegExp(`^${state.name}$`, 'i'),
                 isFeatured: true
-            }).limit(4).select('title price images rating'),
+            }).limit(4).select('title price images rating discount'),
             Artisan.find({
                 isActive: true,
                 state: state.name
-            }).limit(3).select('name slug profileImage craftType')
+            }).limit(3).select('name slug profileImage craftType').catch(() => [])
         ]);
 
         res.json({
             success: true,
             data: {
-                ...state,
+                _id: state._id,
+                name: state.name,
+                slug: state.slug,
+                description: state.description,
+                shortDescription: state.shortDescription,
+                famousFor: state.famousFor,
+                highlights: state.highlights,
+                image: state.image,
+                bannerImage: state.bannerImage,
+                metaTitle: state.metaTitle,
+                metaDescription: state.metaDescription,
                 productCount,
                 artisanCount,
                 featuredProducts,
@@ -162,21 +136,19 @@ router.get('/states/:slug', async (req, res) => {
 });
 
 // ============================================
-// GET PRODUCTS BY STATE
+// GET PRODUCTS BY STATE (Public)
 // ============================================
 router.get('/states/:slug/products', async (req, res) => {
     try {
         const { slug } = req.params;
         const {
-            minPrice = 0,
-            maxPrice = 100000,
             craft,
             sort = 'popular',
             page = 1,
             limit = 24
         } = req.query;
 
-        const state = STATES.find(s => s.slug === slug);
+        const state = await State.findOne({ slug, isActive: true });
 
         if (!state) {
             return res.status(404).json({
@@ -188,9 +160,15 @@ router.get('/states/:slug/products', async (req, res) => {
         let query = {
             approved: true,
             isAvailable: true,
-            state: new RegExp(`^${state.name}$`, 'i'),
-            price: { $gte: Number(minPrice), $lte: Number(maxPrice) }
+            state: new RegExp(`^${state.name}$`, 'i')
         };
+
+        // Only add price filter if explicitly provided
+        if (req.query.minPrice || req.query.maxPrice) {
+            query.price = {};
+            if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
+            if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
+        }
 
         if (craft) {
             query.tags = new RegExp(craft, 'i');
@@ -231,9 +209,12 @@ router.get('/states/:slug/products', async (req, res) => {
             success: true,
             data: products,
             state: {
+                _id: state._id,
                 name: state.name,
+                slug: state.slug,
                 description: state.description,
-                highlights: state.highlights
+                highlights: state.highlights,
+                image: state.image
             },
             pagination: {
                 page: Number(page),

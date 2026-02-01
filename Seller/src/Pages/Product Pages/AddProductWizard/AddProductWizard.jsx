@@ -6,6 +6,7 @@ import StepSubcategory from './steps/StepSubcategory';
 import StepBasicInfo from './steps/StepBasicInfo';
 import StepCategoryDetails from './steps/StepCategoryDetails';
 import StepPricing from './steps/StepPricing';
+import StepB2B from './steps/StepB2B';
 import StepImages from './steps/StepImages';
 import StepShipping from './steps/StepShipping';
 import StepReview from './steps/StepReview';
@@ -16,6 +17,7 @@ import {
     MdDescription,
     MdTune,
     MdAttachMoney,
+    MdBusinessCenter,
     MdPhotoLibrary,
     MdLocalShipping,
     MdCheckCircle,
@@ -37,9 +39,10 @@ const STEPS = [
     { id: 3, title: 'Basic Info', shortTitle: 'Basic', icon: MdDescription, description: 'Product details' },
     { id: 4, title: 'Category Details', shortTitle: 'Details', icon: MdTune, description: 'Category-specific info' },
     { id: 5, title: 'Pricing', shortTitle: 'Pricing', icon: MdAttachMoney, description: 'Set price & stock' },
-    { id: 6, title: 'Images', shortTitle: 'Images', icon: MdPhotoLibrary, description: 'Upload product photos' },
-    { id: 7, title: 'Shipping', shortTitle: 'Shipping', icon: MdLocalShipping, description: 'Shipping & compliance' },
-    { id: 8, title: 'Review', shortTitle: 'Review', icon: MdCheckCircle, description: 'Review & publish' },
+    { id: 6, title: 'B2B Options', shortTitle: 'B2B', icon: MdBusinessCenter, description: 'Corporate gifting options' },
+    { id: 7, title: 'Images', shortTitle: 'Images', icon: MdPhotoLibrary, description: 'Upload product photos' },
+    { id: 8, title: 'Shipping', shortTitle: 'Shipping', icon: MdLocalShipping, description: 'Shipping & compliance' },
+    { id: 9, title: 'Review', shortTitle: 'Review', icon: MdCheckCircle, description: 'Review & publish' },
 ];
 
 const initialProductData = {
@@ -58,6 +61,7 @@ const initialProductData = {
     // State & Occasion (for regional handicrafts)
     state: '',
     occasions: [],
+    giftFor: [],  // Relationship-based gifting (Brother, Sister, Mother, etc.)
 
     // Pricing
     oldprice: '',
@@ -260,9 +264,13 @@ function AddProductWizard() {
                 else if (Number(productData.stock) <= 0) newErrors.stock = 'Stock must be at least 1';
                 break;
             case 6:
-                if (productData.images.length === 0) newErrors.images = 'Upload at least one product image';
+                // B2B Options - all fields are optional, no validation required
                 break;
             case 7:
+                // Images validation
+                if (productData.images.length === 0) newErrors.images = 'Upload at least one product image';
+                break;
+            case 8:
                 // Shipping validations (optional mostly)
                 if (productData.isImported) {
                     if (!productData.importerName.trim()) newErrors.importerName = 'Importer name is required for imported products';
@@ -348,6 +356,9 @@ function AddProductWizard() {
             if (productData.state) formData.append('state', productData.state);
             if (productData.occasions && productData.occasions.length > 0) {
                 formData.append('occasions', JSON.stringify(productData.occasions));
+            }
+            if (productData.giftFor && productData.giftFor.length > 0) {
+                formData.append('giftFor', JSON.stringify(productData.giftFor));
             }
 
             // B2B Corporate Gifting fields
@@ -485,9 +496,10 @@ function AddProductWizard() {
             case 3: return <StepBasicInfo />;
             case 4: return <StepCategoryDetails />;
             case 5: return <StepPricing />;
-            case 6: return <StepImages />;
-            case 7: return <StepShipping />;
-            case 8: return <StepReview />;
+            case 6: return <StepB2B />;
+            case 7: return <StepImages />;
+            case 8: return <StepShipping />;
+            case 9: return <StepReview />;
             default: return <StepCategory />;
         }
     };

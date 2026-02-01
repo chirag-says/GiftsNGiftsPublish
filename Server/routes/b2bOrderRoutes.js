@@ -5,6 +5,7 @@
 import express from 'express';
 import userAuth from '../middleware/userAuth.js';
 import addproductmodel from '../model/addproduct.js';
+import B2BOrder from '../model/B2BOrder.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -160,16 +161,12 @@ router.post('/b2b-checkout', userAuth, upload.single('logoFile'), async (req, re
             createdAt: new Date()
         };
 
-        // TODO: Save to B2B Orders collection
-        // const b2bOrder = new B2BOrder(orderData);
-        // await b2bOrder.save();
+        // Save to B2B Orders collection
+        const b2bOrder = new B2BOrder(orderData);
+        await b2bOrder.save();
 
-        // For now, we'll return success with the order data
-        // In production, you would:
-        // 1. Save to database
-        // 2. Send confirmation emails
-        // 3. Initiate payment flow if online payment
-        // 4. Clear cart items
+        // Send confirmation emails (would be implemented with nodemailer)
+        // await sendB2BOrderConfirmation(b2bOrder, parsedCompanyInfo.billingContact.email);
 
         res.json({
             success: true,
@@ -263,17 +260,19 @@ router.get('/b2b/:orderId', userAuth, async (req, res) => {
     try {
         const { orderId } = req.params;
 
-        // TODO: Fetch from B2B Orders collection
-        // const order = await B2BOrder.findOne({ orderId, userId: req.user._id });
+        // Fetch from B2B Orders collection
+        const order = await B2BOrder.findOne({ orderId, userId: req.user._id });
 
-        // For demo, return mock data
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
         res.json({
             success: true,
-            data: {
-                orderId,
-                status: 'processing',
-                message: 'Order details would be fetched from database'
-            }
+            data: order
         });
 
     } catch (error) {

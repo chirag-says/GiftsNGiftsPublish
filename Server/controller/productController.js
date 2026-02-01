@@ -25,7 +25,7 @@ export const addProduct = async (req, res) => {
       aboutThisItem,
 
       // ▶ State & Occasion fields
-      state, occasions,
+      state, occasions, giftFor,
 
       // ▶ B2B Corporate Gifting Fields
       bulkPricing,           // { tier25, tier50, tier100, tier500 }
@@ -78,6 +78,7 @@ export const addProduct = async (req, res) => {
 
       state,
       occasions: parseJSON(occasions) || [],
+      giftFor: parseJSON(giftFor) || [],
 
       // B2B Fields
       bulkPricing: parseJSON(bulkPricing),
@@ -101,7 +102,11 @@ export const addProduct = async (req, res) => {
 
       images: imageArray,
       sellerId,
-      stock: Number(stock)
+      stock: Number(stock),
+
+      // Auto-approve products (make them visible immediately)
+      approved: true,
+      isAvailable: true
     });
 
     await newProduct.save();
@@ -148,7 +153,7 @@ export const updateProduct = async (req, res) => {
       'countryOfOrigin', 'bestSellerRank', 'materialComposition',
       'outerMaterial', 'length', 'careInstructions', 'aboutThisItem',
       // State & Occasion fields
-      'state', 'occasions',
+      'state', 'occasions', 'giftFor',
       // B2B Corporate Gifting fields
       'bulkPricing', 'customizationAvailable', 'logoMinQuantity',
       'recipientTypes', 'perfectFor', 'contents', 'productType',

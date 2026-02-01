@@ -23,6 +23,7 @@ import three from '../../assets/roshni/main three.png'
 import four from '../../assets/roshni/main four.png'
 import manipur from '../../assets/roshni/manipur.jpg'
 import FeaturesSection from "./HomePageSlider/FeaturesSection.jsx";
+import FeaturedCollections from "./HomePageSlider/FeaturedCollections.jsx";
 import ArtisanStorySection from "./Artician/ArtisanStorySection.jsx";
 import Banner from "./HomePageSlider/Banner.jsx";
 
@@ -43,6 +44,9 @@ function Home() {
 
       {/* Trust & Features */}
       <FeaturesSection />
+
+      {/* Featured Collections - Best of North East & Budget Picks */}
+      <FeaturedCollections />
 
       {/* Relationship-Based Shopping */}
       <RelationSlider />

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 
@@ -15,12 +16,12 @@ import arunachal from "../../../assets/newimage/arunachal.jpg";
 import tripura from "../../../assets/newimage/tripura.jpg";
 
 const states = [
-  { name: "Assam", image: assam ,products:`Tea, Silk, Cane `},
-  { name: "Meghalaya", image: meghalaya ,products:`Organic Honey, Pottery`},
-  { name: "Nagaland", image: nagalend,products:`Textiles, Jewelry`},
-  { name: "Manipur", image: manipur ,products:`Handloom, Bamboo Weave`},
-  { name: "Tripura", image: arunachal,products:`Organic Produce, Handcrafted Decor`},
-  { name: "Arunachal", image: arunachal,products:`Traditional Fabrics & Musics Crafts`},
+  { name: "Assam", slug: "assam", image: assam, products: "Tea, Silk, Cane" },
+  { name: "Meghalaya", slug: "meghalaya", image: meghalaya, products: "Organic Honey, Pottery" },
+  { name: "Nagaland", slug: "nagaland", image: nagalend, products: "Textiles, Jewelry" },
+  { name: "Manipur", slug: "manipur", image: manipur, products: "Handloom, Bamboo Weave" },
+  { name: "Tripura", slug: "tripura", image: tripura, products: "Bamboo Crafts, Handloom" },
+  { name: "Arunachal", slug: "arunachal-pradesh", image: arunachal, products: "Traditional Fabrics & Crafts" },
 ];
 
 function StateSlider() {
@@ -41,7 +42,7 @@ function StateSlider() {
             </span>
             <span className="h-[1px] w-8 bg-[#d4af37]" />
           </div>
-          <h2 
+          <h2
             style={{ fontFamily: "'Playfair Display', serif" }}
             className="text-3xl md:text-4xl text-[#332a21] tracking-tight"
           >
@@ -68,40 +69,42 @@ function StateSlider() {
           >
             {states.map((state, index) => (
               <SwiperSlide key={index}>
-                <div className="relative h-[250px] rounded-2xl overflow-hidden group/card cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500">
-                  
-                  {/* Image with subtle zoom */}
-                  <img
-                    src={state.image}
-                    alt={state.name}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
-                  />
+                <Link to={`/state/${state.slug}`} className="block">
+                  <div className="relative h-[250px] rounded-2xl overflow-hidden group/card cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500">
 
-                  {/* Gradient Overlay for Text Readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80" />
+                    {/* Image with subtle zoom */}
+                    <img
+                      src={state.image}
+                      alt={state.name}
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+                    />
 
-                  {/* Glassmorphism Label Container */}
-                  <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 transform transition-transform duration-500 group-hover/card:-translate-y-2">
-                    <h3 
-                      style={{ fontFamily: "'Playfair Display', serif" }}
-                      className="text-xl text-white mb-1"
-                    >
-                      {state.name}
-                    </h3>
-                   <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="text-gray-200  tracking-widest uppercase font-medium text-[10px]">{state.products}</span>
-                   <div className="flex items-center justify-between">
-                      <span 
-                        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                        className="text-[10px] text-white/80 uppercase tracking-widest font-medium"
+                    {/* Gradient Overlay for Text Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80" />
+
+                    {/* Glassmorphism Label Container */}
+                    <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 transform transition-transform duration-500 group-hover/card:-translate-y-2">
+                      <h3
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                        className="text-xl text-white mb-1"
                       >
-                        Explore Collection
-                      </span>
-                      <span className="text-white text-lg transform transition-transform duration-300 group-hover/card:translate-x-1">
-                        →
-                      </span>
+                        {state.name}
+                      </h3>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="text-gray-200  tracking-widest uppercase font-medium text-[10px]">{state.products}</span>
+                      <div className="flex items-center justify-between">
+                        <span
+                          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                          className="text-[10px] text-white/80 uppercase tracking-widest font-medium"
+                        >
+                          Explore Collection
+                        </span>
+                        <span className="text-white text-lg transform transition-transform duration-300 group-hover/card:translate-x-1">
+                          →
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               </SwiperSlide>
             ))}
           </Swiper>

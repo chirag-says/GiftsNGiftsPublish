@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useWizard } from '../AddProductWizard';
 import { TextField, Select, MenuItem, FormControl } from '@mui/material';
-import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete, MdLocationCity, MdCelebration, MdCheckCircle } from 'react-icons/md';
+import { MdDescription, MdTitle, MdStar, MdBusiness, MdInfo, MdAdd, MdDelete, MdLocationCity, MdCelebration, MdCheckCircle, MdFavorite } from 'react-icons/md';
 
 // Indian States (focusing on Northeast and all India)
 const INDIAN_STATES = [
@@ -16,12 +16,22 @@ const INDIAN_STATES = [
     'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
-// Occasions for product tagging
+// Occasions for product tagging (matches MongoDB schema)
 const OCCASIONS = [
     'Diwali', 'Holi', 'Durga Puja', 'Bihu', 'Christmas', 'Eid',
     'Wedding', 'Anniversary', 'Birthday', 'Housewarming',
     'Corporate Gifting', 'Festive Season', 'Daily Use', 'Home Decor',
-    'Puja', 'Traditional Ceremony', 'Other'
+    'Puja', 'Traditional Ceremony', 'New Year', 'Employee Recognition',
+    'Client Appreciation', 'Farewell', 'Baby Shower', 'Other'
+];
+
+// Relationship-based gifting (Gift For Whom)
+const GIFT_FOR = [
+    'Brother', 'Sister', 'Mother', 'Father', 'Wife', 'Husband',
+    'Son', 'Daughter', 'Grandfather', 'Grandmother', 'Uncle', 'Aunt',
+    'Friend', 'Best Friend', 'Boyfriend', 'Girlfriend', 'Boss', 'Colleague',
+    'Teacher', 'Kids', 'Teens', 'Men', 'Women', 'Couples', 'Parents',
+    'In-Laws', 'Newlyweds', 'New Parents', 'Pet Lovers', 'Anyone'
 ];
 
 function StepBasicInfo() {
@@ -322,6 +332,57 @@ function StepBasicInfo() {
                         </div>
                     )}
                 </motion.div>
+
+                {/* Gift For (Relationship-based) */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
+                            <MdFavorite className="text-red-600" size={18} />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-800 text-sm">Gift For</h3>
+                            <p className="text-xs text-gray-500">Select who this gift is perfect for (by relationship)</p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        {GIFT_FOR.map((relation) => {
+                            const isSelected = productData.giftFor?.includes(relation);
+                            return (
+                                <button
+                                    key={relation}
+                                    type="button"
+                                    onClick={() => {
+                                        const current = productData.giftFor || [];
+                                        if (isSelected) {
+                                            updateProductData('giftFor', current.filter(r => r !== relation));
+                                        } else {
+                                            updateProductData('giftFor', [...current, relation]);
+                                        }
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${isSelected
+                                        ? 'bg-red-500 text-white border-red-500 shadow-sm'
+                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-red-300 hover:bg-red-50'
+                                        }`}
+                                >
+                                    {relation}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {productData.giftFor?.length > 0 && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-red-600">
+                            <MdCheckCircle size={16} />
+                            <span>{productData.giftFor.length} relationship(s) selected</span>
+                        </div>
+                    )}
+                </motion.div>
             </div>
 
             {/* Preview Card */}
@@ -365,6 +426,20 @@ function StepBasicInfo() {
                                     {productData.occasions.length > 3 && (
                                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
                                             +{productData.occasions.length - 3} more
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            {productData.giftFor?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                    {productData.giftFor.slice(0, 3).map(rel => (
+                                        <span key={rel} className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded">
+                                            For {rel}
+                                        </span>
+                                    ))}
+                                    {productData.giftFor.length > 3 && (
+                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                                            +{productData.giftFor.length - 3} more
                                         </span>
                                     )}
                                 </div>

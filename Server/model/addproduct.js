@@ -90,6 +90,18 @@ const addproductSchema = new mongoose.Schema({
     ]
   }],
 
+  // ⭐ Relationship-Based Gifting (Gift For Whom)
+  giftFor: [{
+    type: String,
+    enum: [
+      'Brother', 'Sister', 'Mother', 'Father', 'Wife', 'Husband',
+      'Son', 'Daughter', 'Grandfather', 'Grandmother', 'Uncle', 'Aunt',
+      'Friend', 'Best Friend', 'Boyfriend', 'Girlfriend', 'Boss', 'Colleague',
+      'Teacher', 'Kids', 'Teens', 'Men', 'Women', 'Couples', 'Parents',
+      'In-Laws', 'Newlyweds', 'New Parents', 'Pet Lovers', 'Anyone'
+    ]
+  }],
+
   // ⭐ B2B Corporate Gifting Fields
   // Bulk Pricing Tiers (discounted prices for larger quantities)
   bulkPricing: {

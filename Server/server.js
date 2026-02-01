@@ -44,6 +44,10 @@ import sellerOnboardingRoutes from "./routes/sellerOnboardingRoutes.js";
 import adminVerificationRoutes from "./routes/adminVerificationRoutes.js";
 import occasionRoutes from "./routes/occasionRoutes.js";
 import b2bOrderRoutes from "./routes/b2bOrderRoutes.js";
+import artisanRoutes from "./routes/artisanRoutes.js";
+import craftRoutes from "./routes/craftRoutes.js";
+import stateRoutes from "./routes/stateRoutes.js";
+import giftForRoutes from "./routes/giftForRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -345,6 +349,10 @@ app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/seller", sellerProfileRoutes);
 app.use("/api", occasionRoutes);
 app.use("/api/orders", b2bOrderRoutes);
+app.use("/api", artisanRoutes);
+app.use("/api", craftRoutes);
+app.use("/api", stateRoutes);
+app.use("/api", giftForRoutes);
 
 /* =========================
    HEALTH CHECK

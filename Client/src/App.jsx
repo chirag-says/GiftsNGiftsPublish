@@ -66,12 +66,32 @@ const ErrorPage = lazy(() => import("./Components/ErrorPage/ErrorPage.jsx"));
 // Chatbot (load after main content)
 const ChatWidget = lazy(() => import("./Components/Chatbot/ChatWidget.jsx"));
 
-// Shop by Occasion pages
 const ShopByOccasionPage = lazy(() => import("./Components/Occasion/ShopByOccasionPage.jsx"));
-const OccasionLandingPage = lazy(() => import("./Components/Occasion/OccasionLandingPage.jsx"));
+const OccasionLandingPage = lazy(() => import('./Components/Occasion/OccasionLandingPage.jsx'));
+const GiftForLandingPage = lazy(() => import('./Components/GiftFor/GiftForLandingPage.jsx'));
 const GiftFinderQuiz = lazy(() => import("./Components/Occasion/GiftFinderQuiz.jsx"));
 const ProductComparison = lazy(() => import("./Components/Occasion/ProductComparison.jsx"));
 const BulkQuoteRequest = lazy(() => import("./Components/Occasion/BulkQuoteRequest.jsx"));
+
+// Artisan pages
+const ArtisansPage = lazy(() => import("./Components/Artisan/ArtisansPage.jsx"));
+const ArtisanProfile = lazy(() => import("./Components/Artisan/ArtisanProfile.jsx"));
+
+// Craft pages
+const ShopByCraftPage = lazy(() => import("./Components/Craft/ShopByCraftPage.jsx"));
+const CraftCollectionPage = lazy(() => import("./Components/Craft/CraftCollectionPage.jsx"));
+
+// State pages
+const StateCollectionPage = lazy(() => import("./Components/State/StateCollectionPage.jsx"));
+
+// B2B Order Confirmation
+const B2BOrderConfirmation = lazy(() => import("./Components/Order Summery/B2BOrderConfirmation.jsx"));
+
+// WhatsApp Button (global component)
+import WhatsAppButton from "./Components/WhatsAppButton/WhatsAppButton.jsx";
+
+// Trust Bar
+import TrustBar from "./Components/Home/TrustBar/TrustBar.jsx";
 
 function App() {
   return (
@@ -119,6 +139,19 @@ function App() {
             {/* Shop by Occasion Routes */}
             <Route path="/shop-by-occasion" element={<ShopByOccasionPage />} />
             <Route path="/occasion/:slug" element={<OccasionLandingPage />} />
+
+            {/* Gift For Routes */}
+            <Route path="/gift-for/:slug" element={<GiftForLandingPage />} />
+            {/* Direct aliases for common relationships */}
+            <Route path="/daughter" element={<GiftForLandingPage />} />
+            <Route path="/son" element={<GiftForLandingPage />} />
+            <Route path="/mother" element={<GiftForLandingPage />} />
+            <Route path="/father" element={<GiftForLandingPage />} />
+            <Route path="/brother" element={<GiftForLandingPage />} />
+            <Route path="/sister" element={<GiftForLandingPage />} />
+            <Route path="/wife" element={<GiftForLandingPage />} />
+            <Route path="/husband" element={<GiftForLandingPage />} />
+            <Route path="/friend" element={<GiftForLandingPage />} />
             <Route path="/gift-finder" element={<GiftFinderQuiz />} />
             <Route path="/compare" element={<ProductComparison />} />
             <Route path="/bulk-quote" element={<BulkQuoteRequest />} />
@@ -127,10 +160,25 @@ function App() {
             <Route path="/b2b-cart" element={<B2BCart />} />
             <Route path="/b2b-checkout" element={<B2BCheckout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/b2b-order-confirmation/:orderId" element={<B2BOrderConfirmation />} />
+
+            {/* Artisan Routes */}
+            <Route path="/artisans" element={<ArtisansPage />} />
+            <Route path="/artisan/:slug" element={<ArtisanProfile />} />
+
+            {/* Craft Routes */}
+            <Route path="/shop-by-craft" element={<ShopByCraftPage />} />
+            <Route path="/craft/:slug" element={<CraftCollectionPage />} />
+
+            {/* State Routes */}
+            <Route path="/state/:slug" element={<StateCollectionPage />} />
 
           </Routes>
         </Suspense>
       </main>
+
+      {/* Trust Bar (before footer) */}
+      <TrustBar />
 
       <Footer />
 
@@ -138,6 +186,9 @@ function App() {
       <Suspense fallback={null}>
         <ChatWidget />
       </Suspense>
+
+      {/* WhatsApp Support Button */}
+      <WhatsAppButton />
     </ErrorBoundary>
   );
 }

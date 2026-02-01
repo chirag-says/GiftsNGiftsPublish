@@ -1,6 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 // Import the artisan image as provided in your assets
-import artisanImg from "../../../assets/roshni/artician.png"; 
+import artisanImg from "../../../assets/roshni/artician.png";
 
 const ArtisanStorySection = () => {
   return (
@@ -15,7 +16,7 @@ const ArtisanStorySection = () => {
           <div className="relative group">
             {/* Decorative Offset Frame behind the image */}
             <div className="absolute -inset-4 border border-[#d4af37]/20 rounded-3xl translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-700 ease-out" />
-            
+
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src={artisanImg}
@@ -57,7 +58,7 @@ const ArtisanStorySection = () => {
 
             <div className="space-y-6 text-[#6b5a4c] text-sm md:text-base leading-relaxed font-light">
               <p>
-                Every gift you choose supports a living culture and the families who sustain it. 
+                Every gift you choose supports a living culture and the families who sustain it.
                 In the quiet corners of <span className="font-medium text-[#332a21] border-b border-[#d4af37]/30">North East India</span>, traditions are not just taught; they are lived.
               </p>
 
@@ -84,12 +85,15 @@ const ArtisanStorySection = () => {
 
             {/* CTA - Refined Boutique Style */}
             <div className="pt-6">
-              <button className="group relative px-8 py-4 overflow-hidden rounded-full border border-[#332a21] text-[#332a21] transition-all duration-500 hover:text-white">
+              <Link
+                to="/artisans"
+                className="group relative inline-block px-8 py-4 overflow-hidden rounded-full border border-[#332a21] text-[#332a21] transition-all duration-500 hover:text-white"
+              >
                 <span className="relative z-10 text-xs font-bold uppercase tracking-[0.2em]">
                   Read Their Stories
                 </span>
                 <div className="absolute inset-0 bg-[#332a21] translate-y-full transition-transform duration-500 group-hover:translate-y-0" />
-              </button>
+              </Link>
             </div>
           </div>
 
